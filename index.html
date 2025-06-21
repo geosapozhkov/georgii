@@ -4,21 +4,31 @@
   <meta charset="UTF-8">
   <title>georgii</title>
   <style>
+    @font-face {
+      font-family: 'CoFoHolz';
+      src: url('CoFoHolz-Regular.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
     body {
-      font-family: sans-serif;
+      font-family: 'CoFoHolz', sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
       background: #f9f9f9;
     }
+
     h1 {
       font-size: 2em;
       margin-bottom: 10px;
     }
+
     nav {
       margin-top: 20px;
       margin-bottom: 20px;
     }
+
     nav a {
       margin-right: 15px;
       text-decoration: none;
@@ -26,12 +36,15 @@
       font-weight: bold;
       cursor: pointer;
     }
+
     .tab {
       display: none;
     }
+
     .tab.active {
       display: block;
     }
+
     .gallery img {
       max-width: 100%;
       margin-bottom: 10px;
@@ -52,7 +65,7 @@
   <div id="photo" class="tab">
     <h2>Фотография</h2>
     <div class="gallery">
-      <img src="IMG_9602.jpg" alt="Фотография Гоши">
+      <img src="001234380010.jpg" alt="Фотография Гоши">
     </div>
   </div>
 
@@ -77,7 +90,6 @@
       document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
-    // Показывать первую вкладку по умолчанию
     showTab('photo');
   </script>
 
