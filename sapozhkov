@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Портфолио Георгия</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+    nav {
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin-right: 15px;
+      text-decoration: none;
+      color: #007acc;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+    .gallery img {
+      max-width: 100%;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Привет! Я Георгий, дизайнер</h1>
+  <p>Я работаю с фотографией, цифровой графикой и CGI. На этом сайте ты можешь посмотреть мои работы по каждому направлению.</p>
+
+  <nav>
+    <a onclick="showTab('photo')">Фотография</a>
+    <a onclick="showTab('drawing')">Рисунок</a>
+    <a onclick="showTab('cgi')">CGI</a>
+  </nav>
+
+  <div id="photo" class="tab">
+    <h2>Фотография</h2>
+    <div class="gallery">
+      <p>Добавь сюда свои фотографии с помощью тега &lt;img&gt;:</p>
+      <!-- Пример -->
+      <!-- <img src="photo1.jpg" alt="Пример фото"> -->
+    </div>
+  </div>
+
+  <div id="drawing" class="tab">
+    <h2>Рисунок</h2>
+    <div class="gallery">
+      <p>Добавь сюда рисунки:</p>
+      <!-- <img src="drawing1.jpg" alt="Пример рисунка"> -->
+    </div>
+  </div>
+
+  <div id="cgi" class="tab">
+    <h2>CGI</h2>
+    <div class="gallery">
+      <p>CGI-графика и 3D-работы:</p>
+      <!-- <img src="cgi1.jpg" alt="CGI работа"> -->
+    </div>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    // Показывать первую вкладку по умолчанию
+    showTab('photo');
+  </script>
+
+</body>
+</html>
