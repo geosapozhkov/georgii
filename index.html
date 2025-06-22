@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>georgii</title>
+  <title>Gosha Sapozhkov</title>
   <style>
     @font-face {
       font-family: 'CoFoHolz';
@@ -12,86 +12,90 @@
     }
 
     body {
+      margin: 0;
+      padding: 40px;
       font-family: 'CoFoHolz', sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      background: #f9f9f9;
+      color: #222;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
     }
 
-    h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .intro {
+      max-width: 40%;
+      line-height: 1.5;
+    }
+
+    .intro p {
+      margin: 0 0 20px 0;
     }
 
     nav {
-      margin-top: 20px;
-      margin-bottom: 20px;
+      display: flex;
+      gap: 30px;
+      font-size: 14px;
+      text-align: center;
     }
 
-    nav a {
-      margin-right: 15px;
-      text-decoration: none;
-      color: #007acc;
-      font-weight: bold;
-      cursor: pointer;
+    nav div {
+      line-height: 1.4;
+      white-space: nowrap;
     }
 
-    .tab {
-      display: none;
+    main {
+      flex-grow: 1;
     }
 
-    .tab.active {
-      display: block;
-    }
-
-    .gallery img {
-      max-width: 100%;
-      margin-bottom: 10px;
+    footer {
+      margin-top: auto;
+      font-size: 14px;
+      color: #555;
     }
   </style>
 </head>
 <body>
 
-  <h1>Привет! Я Гоша, дизайнер</h1>
-  <p>Я исследую и создаю разное. Вот мои картинки.</p>
-
-  <nav>
-    <a onclick="showTab('photo')">Фотография</a>
-    <a onclick="showTab('drawing')">Граф диз</a>
-    <a onclick="showTab('cgi')">CGI</a>
-  </nav>
-
-  <div id="photo" class="tab">
-    <h2>Фотография</h2>
-    <div class="gallery">
-      <img src="001234380010.jpg" alt="Фотография Гоши">
+  <header>
+    <div class="intro">
+      <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
+      <p>Hi, I'm Gosha — a designer exploring and<br>creating images, texts and sounds</p>
     </div>
-  </div>
 
-  <div id="drawing" class="tab">
-    <h2>Рисунок</h2>
-    <div class="gallery">
-      <p>Добавь сюда рисунки:</p>
-      <!-- <img src="drawing1.jpg" alt="Пример рисунка"> -->
-    </div>
-  </div>
+    <nav>
+      <div>
+        Тексты<br><span>Texts</span>
+      </div>
+      <div>
+        Звуки<br><span>Sounds</span>
+      </div>
+      <div>
+        Рисунок<br><span>Drawings</span>
+      </div>
+      <div>
+        Графический дизайн<br><span>Graphic design</span>
+      </div>
+      <div>
+        Фотография<br><span>Photography</span>
+      </div>
+    </nav>
+  </header>
 
-  <div id="cgi" class="tab">
-    <h2>CGI</h2>
-    <div class="gallery">
-      <p>CGI-графика и 3D-работы:</p>
-      <!-- <img src="cgi1.jpg" alt="CGI работа"> -->
-    </div>
-  </div>
+  <main>
+    <!-- Здесь можешь позже добавить контент по вкладкам -->
+  </main>
 
-  <script>
-    function showTab(id) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-    showTab('photo');
-  </script>
+  <footer>
+    <p>@georgiisapozhkov<br>sapozhkov.george@gmail.com</p>
+  </footer>
 
 </body>
 </html>
