@@ -7,54 +7,62 @@
     @font-face {
       font-family: 'CoFoHolz';
       src: url('CoFoHolz-Regular.otf') format('opentype');
-      font-weight: normal;
-      font-style: normal;
     }
-
     body {
       margin: 0;
       padding: 40px;
       font-family: 'CoFoHolz', sans-serif;
-      color: #222;
-      background: #fff;
+      box-sizing: border-box;
+      font-size: 1.2em;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      box-sizing: border-box;
-      font-size: 1.2em; /* Один универсальный размер текста */
+      min-height: 100vh;
     }
-
     header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       flex-wrap: wrap;
     }
-
     .intro {
       max-width: 40%;
       line-height: 1.5;
     }
-
-    .intro p {
-      margin: 0 0 20px 0;
-    }
-
     nav {
       display: flex;
       gap: 30px;
     }
-
-    nav div {
-      line-height: 1.4;
-      white-space: nowrap;
-      text-align: left;
+    nav button {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: #007acc;
+      cursor: pointer;
     }
-
+    nav button.active {
+      font-weight: bold;
+    }
     main {
       flex-grow: 1;
+      margin-top: 20px;
     }
-
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+      gap: 20px;
+    }
+    .gallery img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
     footer {
       margin-top: auto;
       color: #555;
@@ -70,21 +78,69 @@
     </div>
 
     <nav>
-      <div>Тексты<br>Texts</div>
-      <div>Звуки<br>Sounds</div>
-      <div>Рисунок<br>Drawings</div>
-      <div>Графический дизайн<br>Graphic design</div>
-      <div>Фотография<br>Photography</div>
+      <button data-tab="texts">Тексты</button>
+      <button data-tab="sounds">Звуки</button>
+      <button data-tab="drawings">Рисунок</button>
+      <button data-tab="graphic">Графический дизайн</button>
+      <button data-tab="photo" class="active">Фотография</button>
     </nav>
   </header>
 
   <main>
-    <!-- Контент можно добавить позже -->
+    <div id="texts" class="tab">
+      <div class="gallery">
+        <!-- Примеры текстов: можно вставить изображения превью или оригинальные тексты -->
+        <!-- <img src="text1.jpg" alt="Example text"> -->
+      </div>
+    </div>
+
+    <div id="sounds" class="tab">
+      <div class="gallery">
+        <!-- Примеры звуковых файлов (или превью) -->
+      </div>
+    </div>
+
+    <div id="drawings" class="tab">
+      <div class="gallery">
+        <!-- <img src="drawing1.jpg" alt="Drawing 1"> -->
+      </div>
+    </div>
+
+    <div id="graphic" class="tab">
+      <div class="gallery">
+        <!-- <img src="graphic1.jpg" alt="Graphic design 1"> -->
+      </div>
+    </div>
+
+    <div id="photo" class="tab active">
+      <div class="gallery">
+        <img src="001234380010.jpg" alt="Фотография Гоши">
+        <!-- Добавь другие фото -->
+      </div>
+    </div>
   </main>
 
   <footer>
     <p>@georgiisapozhkov<br>sapozhkov.george@gmail.com</p>
   </footer>
+
+  <script>
+    const buttons = document.querySelectorAll('nav button');
+    const tabs = document.querySelectorAll('.tab');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Делаем все кнопки неактивными
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Прячем все табы
+        tabs.forEach(t => t.classList.remove('active'));
+        // Показываем выбранный
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
 
 </body>
 </html>
