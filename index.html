@@ -1,105 +1,93 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gosha's Portfolio</title>
+  <meta charset="UTF-8">
+  <title>Gosha — designer</title>
+  <link rel="stylesheet" href="CoFoHolz-Regular.otf" />
   <style>
     body {
-      font-family: 'CoFoHolz-Regular', sans-serif;
       margin: 0;
-      padding: 0;
-      background-color: white;
+      font-family: 'CoFoHolz-Regular', serif;
+      background-color: #fff;
       color: #222;
+      font-size: 16px;
     }
 
     nav {
       position: fixed;
       top: 20px;
       left: 20px;
-      z-index: 10;
+      display: flex;
+      gap: 20px;
+      z-index: 1000;
     }
 
     nav a {
-      margin-right: 12px;
       text-decoration: none;
-      color: #222;
-      font-weight: normal;
-      transition: opacity 0.3s;
+      color: #333;
+      opacity: 1;
+      transition: opacity 0.3s ease;
     }
 
     nav a.active {
       opacity: 0.3;
-      pointer-events: none;
     }
 
     .intro {
       position: fixed;
       top: 20px;
       right: 20px;
-      max-width: 420px;
-      line-height: 1.6;
+      width: 300px;
+      text-align: left;
+      line-height: 1.4;
     }
 
     .footer {
       position: fixed;
       bottom: 20px;
-      right: 20px;
+      left: 20px;
       font-size: 0.9em;
-      text-align: right;
+      text-align: left;
     }
 
     .section {
       display: none;
-      padding: 120px 40px 40px;
+      padding: 100px 20px 40px;
     }
 
     .section.active {
       display: block;
     }
 
-    .section img {
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 20px;
-    }
-
     .gallery {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      padding-top: 60px;
       justify-content: center;
     }
 
     .gallery img {
       max-width: 300px;
       height: auto;
-      object-fit: cover;
-    }
-
-    @font-face {
-      font-family: 'CoFoHolz-Regular';
-      src: url('CoFoHolz-Regular.otf') format('opentype');
     }
   </style>
 </head>
 <body>
 
   <nav>
-    <a href="#" onclick="showSection('texts')">Texts</a>
-    <a href="#" onclick="showSection('sounds')">Sounds</a>
-    <a href="#" onclick="showSection('drawings')">Drawings</a>
-    <a href="#" onclick="showSection('graphic')">Graphic design</a>
-    <a href="#" onclick="showSection('photo')">Photography</a>
+    <a href="#" data-section="texts">Texts</a>
+    <a href="#" data-section="sounds">Sounds</a>
+    <a href="#" data-section="drawings">Drawings</a>
+    <a href="#" data-section="graphic">Graphic design</a>
+    <a href="#" data-section="photography">Photography</a>
   </nav>
 
   <div class="intro" id="intro">
-    <p>
-      Привет, я Гоша — дизайнер, исследующий и создающий картинки, тексты и звуки
-    </p>
-    <p>
-      Hi, I'm Gosha — a designer exploring and creating images, texts and sounds
-    </p>
+    <p>Привет, я Гоша — дизайнер, исследующий<br>
+    и создающий картинки, тексты и звуки</p>
+    <p>Hi, I’m Gosha — a designer exploring and<br>
+    creating images, texts and sounds</p>
   </div>
 
   <div class="footer">
@@ -107,39 +95,41 @@
     <p>sapozhkov.george@gmail.com</p>
   </div>
 
-  <!-- Sections -->
-  <div id="texts" class="section"></div>
-  <div id="sounds" class="section"></div>
-  <div id="drawings" class="section"></div>
-  <div id="graphic" class="section"></div>
+  <div id="texts" class="section"><p>Texts section</p></div>
+  <div id="sounds" class="section"><p>Sounds section</p></div>
+  <div id="drawings" class="section"><p>Drawings section</p></div>
+  <div id="graphic" class="section"><p>Graphic design section</p></div>
 
-  <div id="photo" class="section">
+  <div id="photography" class="section">
     <div class="gallery">
-      <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
-      <img src="photography/001240250035.jpg" alt="Photo 2" />
+      <img src="photography/000030080032 copy.jpg" alt="Photo 1">
+      <img src="photography/001240250035.jpg" alt="Photo 2">
     </div>
   </div>
 
   <script>
-    function showSection(id) {
-      // Hide intro
-      document.getElementById('intro').style.display = 'none';
+    const links = document.querySelectorAll('nav a');
+    const sections = document.querySelectorAll('.section');
+    const intro = document.getElementById('intro');
 
-      // Hide all sections
-      const sections = document.querySelectorAll('.section');
-      sections.forEach(section => section.classList.remove('active'));
+    links.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
 
-      // Remove active from nav
-      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        const target = link.getAttribute('data-section');
 
-      // Show target section
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active');
+        sections.forEach(section => {
+          section.classList.remove('active');
+        });
 
-      // Highlight active tab
-      const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
-      if (link) link.classList.add('active');
-    }
+        document.getElementById(target).classList.add('active');
+
+        intro.style.display = 'none';
+
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
   </script>
 
 </body>
