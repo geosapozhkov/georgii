@@ -1,115 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Georgii Sapozhkov</title>
+  <meta charset="UTF-8">
+  <title>georgii</title>
   <style>
-    body {
-      margin: 40px;
-      font-family: "CoFoHolz-Regular", sans-serif;
-      background-color: #fff;
-      color: #1a1a1a;
-      font-size: 18px;
-      line-height: 1.4;
-    }
-
     @font-face {
-      font-family: "CoFoHolz-Regular";
-      src: url("CoFoHolz-Regular.otf") format("opentype");
+      font-family: 'CoFoHolz';
+      src: url('CoFoHolz-Regular.otf') format('opentype');
     }
 
-    .menu {
+    body {
+      font-family: 'CoFoHolz', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #333;
+    }
+
+    nav {
       position: fixed;
       top: 20px;
-      left: 40px;
-      display: flex;
-      gap: 20px;
-      z-index: 1000;
+      left: 20px;
+      z-index: 10;
     }
 
-    .menu a {
+    nav a {
+      margin-right: 15px;
       text-decoration: none;
-      color: #1a1a1a;
+      color: #333;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    nav a.active {
       opacity: 0.5;
-      transition: opacity 0.3s;
     }
 
-    .menu a.active {
-      opacity: 1;
-    }
-
-    .section {
-      display: none;
-    }
-
-    .section.active {
-      display: flex;
-      gap: 40px;
-      flex-wrap: wrap;
-      margin-top: 100px;
-      margin-left: 40px;
-    }
-
-    .bio {
-      max-width: 400px;
-      margin-top: 80px;
-      margin-left: 40px;
-      margin-bottom: 60px;
+    .intro {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      max-width: 300px;
     }
 
     .footer {
       position: fixed;
       bottom: 20px;
-      right: 40px;
+      left: 20px;
       font-size: 14px;
-      text-align: right;
+      line-height: 1.5;
     }
 
-    img {
-      max-width: 300px;
+    .tab {
+      display: none;
+      padding: 100px 20px 60px;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .gallery img {
+      max-width: 30%;
       height: auto;
     }
   </style>
 </head>
 <body>
-  <div class="menu" id="menu">
-    <a href="#" onclick="showSection('texts', this)">Texts</a>
-    <a href="#" onclick="showSection('sounds', this)">Sounds</a>
-    <a href="#" onclick="showSection('drawings', this)">Drawings</a>
-    <a href="#" onclick="showSection('graphic', this)">Graphic design</a>
-    <a href="#" onclick="showSection('photography', this)">Photography</a>
-  </div>
 
-  <div class="bio" id="bio">
-    Привет, я Гоша — дизайнер, исследующий и создающий картинки, тексты и звуки
-  </div>
+  <nav>
+    <a onclick="showTab('texts')">Texts</a>
+    <a onclick="showTab('sounds')">Sounds</a>
+    <a onclick="showTab('drawings')">Drawings</a>
+    <a onclick="showTab('graphic')">Graphic design</a>
+    <a onclick="showTab('photo')">Photography</a>
+  </nav>
 
-  <!-- Photo Section -->
-  <div class="section" id="photography">
-    <img src="photography/000030080032%20copy.jpg" alt="Photo 1">
-    <img src="photography/001240250035.jpg" alt="Photo 2">
+  <div class="intro" id="intro">
+    <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
+    <p>Hi, I'm Gosha — a designer exploring and<br>creating images, texts and sounds</p>
   </div>
-
-  <!-- Placeholder Sections -->
-  <div class="section" id="texts"><p>Texts will go here...</p></div>
-  <div class="section" id="sounds"><p>Sounds will go here...</p></div>
-  <div class="section" id="drawings"><p>Drawings will go here...</p></div>
-  <div class="section" id="graphic"><p>Graphic design will go here...</p></div>
 
   <div class="footer">
     @georgiisapozhkov<br>
     sapozhkov.george@gmail.com
   </div>
 
-  <script>
-    function showSection(id, el) {
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      document.getElementById('bio').style.display = 'none';
+  <div id="photo" class="tab">
+    <div class="gallery">
+      <img src="photography/000030080032 copy.jpg" alt="Photo 1">
+      <img src="photography/001240250035.jpg" alt="Photo 2">
+      <!-- Добавь больше фото по желанию -->
+    </div>
+  </div>
 
-      document.querySelectorAll('.menu a').forEach(link => link.classList.remove('active'));
-      el.classList.add('active');
+  <div id="texts" class="tab">
+    <div class="gallery">
+      <p>Texts coming soon...</p>
+    </div>
+  </div>
+
+  <div id="sounds" class="tab">
+    <div class="gallery">
+      <p>Sounds coming soon...</p>
+    </div>
+  </div>
+
+  <div id="drawings" class="tab">
+    <div class="gallery">
+      <p>Drawings coming soon...</p>
+    </div>
+  </div>
+
+  <div id="graphic" class="tab">
+    <div class="gallery">
+      <p>Graphic design work coming soon...</p>
+    </div>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById(id).classList.add('active');
+      const activeLink = Array.from(document.querySelectorAll('nav a')).find(a => a.textContent.toLowerCase().includes(id));
+      if (activeLink) activeLink.classList.add('active');
     }
   </script>
+
 </body>
 </html>
