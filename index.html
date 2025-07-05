@@ -81,7 +81,7 @@
     .gallery {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       gap: 60px;
       padding: 40px 0;
     }
@@ -89,8 +89,10 @@
     .gallery img {
       width: 90vw;
       max-width: 900px;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      height: auto;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
       opacity: 1;
       transform: none;
       transition: none;
@@ -150,6 +152,21 @@
       if (target) target.classList.add('active');
       const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
       if (link) link.classList.add('active');
+      // Apply randomization to galleries when shown
+      if (id === 'photo' || id === 'cgi') {
+        randomizeGalleryImages(id);
+      }
+    }
+
+    function randomizeGalleryImages(sectionId) {
+      const images = document.querySelectorAll(`#${sectionId} .gallery img`);
+      images.forEach(img => {
+        // Random scale between 0.85 and 1.15
+        const scale = 0.85 + Math.random() * 0.3;
+        // Random horizontal shift: -40px to +40px
+        const shift = Math.floor(Math.random() * 81) - 40;
+        img.style.transform = `scale(${scale}) translateX(${shift}px)`;
+      });
     }
   </script>
 
