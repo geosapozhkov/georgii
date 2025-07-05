@@ -172,11 +172,21 @@
       if (target) target.classList.add('active');
       const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
       if (link) link.classList.add('active');
+      // Update the URL hash
+      window.location.hash = id;
       // Apply randomization to galleries when shown
       if (id === 'photo' || id === 'cgi') {
         randomizeGalleryGrid(id);
       }
     }
+
+    // On page load, show the section from the hash if present
+    window.addEventListener('DOMContentLoaded', function() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && document.getElementById(hash)) {
+        showSection(hash);
+      }
+    });
 
     function randomizeGalleryGrid(sectionId) {
       const images = document.querySelectorAll(`#${sectionId} .gallery img`);
