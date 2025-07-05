@@ -60,7 +60,7 @@
     }
 
     .footer p:first-child {
-      margin-bottom: 4px; /* уменьшенный отступ */
+      margin-bottom: 4px;
     }
 
     .section {
@@ -75,20 +75,21 @@
     .section img {
       max-width: 100%;
       height: auto;
-      margin-bottom: 20px;
+      display: block;
     }
 
     .gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
     }
 
     .gallery img {
-      max-width: 300px;
+      width: 100%;
       height: auto;
       object-fit: cover;
+      border-radius: 4px;
     }
   </style>
 </head>
