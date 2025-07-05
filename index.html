@@ -85,7 +85,7 @@
       padding: 40px 0;
     }
 
-    .gallery img {
+    .gallery img, .gallery video {
       width: 100%;
       height: auto;
       display: block;
@@ -94,18 +94,19 @@
       transform: none;
       transition: none;
     }
+    .gallery video {
+      cursor: pointer;
+    }
     .draggable-text {
       box-shadow: none;
-      transition: box-shadow 0.2s, transform 0.2s;
+      transition: box-shadow 0.2s;
       z-index: 1;
       cursor: grab;
-      transform: none;
     }
-    .draggable-text.lifted {
-      box-shadow: 0 12px 32px 0 rgba(0,0,0,0.25), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+    .draggable-text.dragging {
+      box-shadow: 0 12px 32px 0 rgba(0,0,0,0.18), 0 1.5px 6px 0 rgba(0,0,0,0.10);
       z-index: 10;
       cursor: grabbing;
-      transform: translateY(-16px) scale(1.04);
     }
   </style>
 </head>
@@ -132,7 +133,7 @@
 
   <!-- Sections -->
   <div id="texts" class="section">
-    <div class="texts-canvas" id="texts-canvas" style="position:relative;width:100vw;height:90vh;min-height:600px;"></div>
+    <div class="texts-canvas" id="texts-canvas" style="position:relative;width:100vw;height:90vh;min-height:600px;overflow:hidden;"></div>
   </div>
   <div id="sounds" class="section"></div>
   <div id="drawings" class="section"></div>
@@ -142,28 +143,30 @@
       <img src="cgi/Frame 175.png" alt="CGI 1" />
       <img src="cgi/Frame 176.png" alt="CGI 2" />
       <img src="cgi/Frame 177.png" alt="CGI 3" />
-      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="CGI 4" />
-      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="CGI 5" />
-      <video src="cgi/Composition 1.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation"></video>
+      <img src="cgi/IMG_8567.PNG" alt="CGI 4" />
+      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="CGI 5" />
+      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="CGI 6" />
+      <video src="cgi/Composition 1.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 1"></video>
+      <video src="cgi/Img 8565.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 2"></video>
     </div>
   </div>
 
   <div id="photo" class="section">
     <div class="gallery">
-      <img src="photography/000030080010.jpg" alt="Photo 1" />
-      <img src="photography/000030080032 copy.jpg" alt="Photo 2" />
-      <img src="photography/001240250035.jpg" alt="Photo 3" />
-      <img src="photography/Person.jpg" alt="Person" />
-      <img src="photography/R0003325.jpg" alt="Photo 4" />
-      <img src="photography/R0003368.jpg" alt="Photo 5" />
-      <img src="photography/R0003526.jpg" alt="Photo 6" />
-      <img src="photography/R0003862.jpg" alt="Photo 7" />
-      <img src="photography/R0003863.jpg" alt="Photo 8" />
-      <img src="photography/R0003872.jpg" alt="Photo 9" />
+      <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
+      <img src="photography/001240250035.jpg" alt="Photo 2" />
     </div>
   </div>
 
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('video').forEach(video => {
+        video.addEventListener('click', function() {
+          video.muted = !video.muted;
+        });
+      });
+    });
+
     function showSection(id) {
       document.getElementById('intro').style.display = 'none';
       const sections = document.querySelectorAll('.section');
@@ -192,69 +195,55 @@
       });
     }
 
-    // Dynamically generate draggable text images for all .png files in the texts folder
-    (async function() {
+    // Dynamically generate draggable text images with random positions
+    (function() {
       const canvas = document.getElementById('texts-canvas');
       if (canvas) {
-        // List of all .png files in the texts folder
-        const imageNames = [
-          '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
-          '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
-          '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
-          '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
-          '40.png','41.png','42.png','43.png'
-        ];
+        const numImages = 44; // 0.png to 43.png
         const canvasW = canvas.offsetWidth || window.innerWidth;
         const canvasH = canvas.offsetHeight || 800;
-        imageNames.forEach((name, i) => {
+        for (let i = 0; i < numImages; i++) {
           const img = document.createElement('img');
-          img.src = `texts/${name}`;
+          img.src = `texts/${i}.png`;
           img.className = 'draggable-text';
-          img.alt = `Text ${name}`;
+          img.alt = `Text ${i}`;
           img.style.position = 'absolute';
-          img.style.width = '360px';
+          img.style.width = '180px';
           // Random position within the canvas
           const left = Math.floor(Math.random() * (canvasW - 200));
           const top = Math.floor(Math.random() * (canvasH - 200));
           img.style.left = left + 'px';
           img.style.top = top + 'px';
           canvas.appendChild(img);
-        });
+        }
       }
     })();
 
-    // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
+    // Drag and drop for .draggable-text images
     (function() {
       let dragImg = null;
       let offsetX = 0;
       let offsetY = 0;
-      let zCounter = 10;
-      let isDragging = false;
-      document.addEventListener('click', function(e) {
+      document.addEventListener('mousedown', function(e) {
         if (e.target.classList.contains('draggable-text')) {
-          if (!dragImg) {
-            dragImg = e.target;
-            offsetX = e.clientX - dragImg.offsetLeft;
-            offsetY = e.clientY - dragImg.offsetTop;
-            dragImg.classList.add('lifted');
-            zCounter++;
-            dragImg.style.zIndex = zCounter;
-            isDragging = true;
-            document.addEventListener('mousemove', moveHandler);
-          } else if (dragImg === e.target) {
-            dragImg.classList.remove('lifted');
-            dragImg = null;
-            isDragging = false;
-            document.removeEventListener('mousemove', moveHandler);
-          }
+          dragImg = e.target;
+          offsetX = e.clientX - dragImg.offsetLeft;
+          offsetY = e.clientY - dragImg.offsetTop;
+          dragImg.classList.add('dragging');
         }
       });
-      function moveHandler(e) {
-        if (dragImg && isDragging) {
+      document.addEventListener('mousemove', function(e) {
+        if (dragImg) {
           dragImg.style.left = (e.clientX - offsetX) + 'px';
           dragImg.style.top = (e.clientY - offsetY) + 'px';
         }
-      }
+      });
+      document.addEventListener('mouseup', function() {
+        if (dragImg) {
+          dragImg.classList.remove('dragging');
+          dragImg = null;
+        }
+      });
     })();
   </script>
 
