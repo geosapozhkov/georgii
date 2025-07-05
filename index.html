@@ -15,7 +15,7 @@
       font-size: 16px;
       margin: 0;
       padding: 0;
-      background: #fff;
+      background-color: white;
       color: #222;
     }
 
@@ -25,14 +25,15 @@
       left: 20px;
       z-index: 10;
     }
+
     nav a {
-      margin-right: 16px;
+      margin-right: 12px;
       text-decoration: none;
       color: #222;
-      font-weight: 500;
-      opacity: 0.85;
-      transition: opacity 0.2s;
+      font-weight: normal;
+      transition: opacity 0.3s;
     }
+
     nav a.active {
       opacity: 0.3;
       pointer-events: none;
@@ -53,55 +54,41 @@
       font-size: 16px;
       text-align: left;
     }
+
     .footer p {
-      margin: 0 0 4px 0;
+      margin: 0;
+    }
+
+    .footer p:first-child {
+      margin-bottom: 4px;
     }
 
     .section {
       display: none;
       padding: 120px 40px 40px;
-      min-height: 100vh;
-      box-sizing: border-box;
     }
+
     .section.active {
       display: block;
     }
 
+    .section img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
     .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      grid-auto-rows: 180px;
-      gap: 60px 60px; /* Large gaps for white space */
-      max-width: 1400px;
-      margin: 0 auto;
-      padding-bottom: 100px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
     }
+
     .gallery img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain; /* Never crop, always keep proportions */
-      display: block;
-      background: #f6f6f6;
-      transition: box-shadow 0.2s;
-    }
-    @media (max-width: 700px) {
-      .section {
-        padding: 100px 10px 20px;
-      }
-      .intro {
-        position: static;
-        max-width: 100%;
-        margin: 20px 10px 0 10px;
-      }
-      nav, .footer {
-        position: static;
-        margin: 10px;
-      }
-      .gallery {
-        grid-template-columns: repeat(2, 1fr);
-        grid-auto-rows: 120px;
-        gap: 30px 10px;
-      }
+      max-width: 300px;
+      height: auto;
+      object-fit: cover;
     }
   </style>
 </head>
@@ -134,10 +121,9 @@
   <div id="cgi" class="section"></div>
 
   <div id="photo" class="section">
-    <div class="gallery" id="photoGallery">
+    <div class="gallery">
       <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
       <img src="photography/001240250035.jpg" alt="Photo 2" />
-      <!-- Add more images here -->
     </div>
   </div>
 
@@ -152,22 +138,6 @@
       const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
       if (link) link.classList.add('active');
     }
-
-    // Assign random grid spans to images for a dynamic, non-overlapping grid
-    function randomizeGalleryGrid(galleryId) {
-      const gallery = document.getElementById(galleryId);
-      if (!gallery) return;
-      const images = Array.from(gallery.children);
-      images.forEach(img => {
-        const colSpan = Math.random() < 0.5 ? 1 : 2; // 1 or 2
-        const rowSpan = Math.random() < 0.5 ? 1 : 2; // 1 or 2
-        img.style.gridColumn = `span ${colSpan}`;
-        img.style.gridRow = `span ${rowSpan}`;
-      });
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      randomizeGalleryGrid('photoGallery');
-    });
   </script>
 
 </body>
