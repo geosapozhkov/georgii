@@ -94,6 +94,17 @@
       transform: none;
       transition: none;
     }
+    .draggable-text {
+      box-shadow: none;
+      transition: box-shadow 0.2s;
+      z-index: 1;
+      cursor: grab;
+    }
+    .draggable-text.dragging {
+      box-shadow: 0 12px 32px 0 rgba(0,0,0,0.18), 0 1.5px 6px 0 rgba(0,0,0,0.10);
+      z-index: 10;
+      cursor: grabbing;
+    }
   </style>
 </head>
 <body>
@@ -118,7 +129,9 @@
   </div>
 
   <!-- Sections -->
-  <div id="texts" class="section"></div>
+  <div id="texts" class="section">
+    <div class="texts-canvas" id="texts-canvas" style="position:relative;width:100vw;height:90vh;min-height:600px;overflow:hidden;"></div>
+  </div>
   <div id="sounds" class="section"></div>
   <div id="drawings" class="section"></div>
   <div id="graphic" class="section"></div>
@@ -168,6 +181,57 @@
         }
       });
     }
+
+    // Dynamically generate draggable text images with random positions
+    (function() {
+      const canvas = document.getElementById('texts-canvas');
+      if (canvas) {
+        const numImages = 44; // 0.png to 43.png
+        const canvasW = canvas.offsetWidth || window.innerWidth;
+        const canvasH = canvas.offsetHeight || 800;
+        for (let i = 0; i < numImages; i++) {
+          const img = document.createElement('img');
+          img.src = `texts/${i}.png`;
+          img.className = 'draggable-text';
+          img.alt = `Text ${i}`;
+          img.style.position = 'absolute';
+          img.style.width = '180px';
+          // Random position within the canvas
+          const left = Math.floor(Math.random() * (canvasW - 200));
+          const top = Math.floor(Math.random() * (canvasH - 200));
+          img.style.left = left + 'px';
+          img.style.top = top + 'px';
+          canvas.appendChild(img);
+        }
+      }
+    })();
+
+    // Drag and drop for .draggable-text images
+    (function() {
+      let dragImg = null;
+      let offsetX = 0;
+      let offsetY = 0;
+      document.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('draggable-text')) {
+          dragImg = e.target;
+          offsetX = e.clientX - dragImg.offsetLeft;
+          offsetY = e.clientY - dragImg.offsetTop;
+          dragImg.classList.add('dragging');
+        }
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (dragImg) {
+          dragImg.style.left = (e.clientX - offsetX) + 'px';
+          dragImg.style.top = (e.clientY - offsetY) + 'px';
+        }
+      });
+      document.addEventListener('mouseup', function() {
+        if (dragImg) {
+          dragImg.classList.remove('dragging');
+          dragImg = null;
+        }
+      });
+    })();
   </script>
 
 </body>
