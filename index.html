@@ -1,60 +1,188 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Collage Grid Example</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gosha's Portfolio</title>
   <style>
+    @font-face {
+      font-family: 'CoFoHolz-Regular';
+      src: url('CoFoHolz-Regular.otf') format('opentype');
+    }
+
     body {
+      font-family: 'CoFoHolz-Regular', sans-serif;
+      font-size: 16px;
       margin: 0;
-      background: #fff;
+      padding: 0;
+      background-color: white;
       color: #222;
-      font-family: sans-serif;
     }
-    .collage-wrapper {
-      position: relative;
-      width: 100vw;
-      min-height: 200vh; /* Make it tall for scrolling */
-      overflow-x: hidden;
-      padding-bottom: 100px;
+
+    nav {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
     }
-    .collage-img {
-      position: absolute;
+
+    nav a {
+      margin-right: 12px;
+      text-decoration: none;
+      color: #222;
+      font-weight: normal;
+      transition: opacity 0.3s;
+    }
+
+    nav a.active {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .intro {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      max-width: 420px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      font-size: 16px;
+      text-align: left;
+    }
+
+    .footer p {
+      margin: 0;
+    }
+
+    .footer p:first-child {
+      margin-bottom: 4px;
+    }
+
+    .section {
+      display: none;
+      padding: 120px 40px 40px;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      grid-auto-rows: 120px;
+      gap: 18px;
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+    .gallery img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
+      display: block;
       /* No border-radius, no box-shadow */
-      /* You can add a border if you want, but the reference doesn't have one */
     }
-    /* Example positions and sizes for images */
-    .img1 { top: 40px; left: 10vw; width: 320px; height: 220px; z-index: 1; }
-    .img2 { top: 180px; left: 35vw; width: 400px; height: 300px; z-index: 2; }
-    .img3 { top: 400px; left: 5vw; width: 260px; height: 180px; z-index: 3; }
-    .img4 { top: 600px; left: 50vw; width: 350px; height: 250px; z-index: 1; }
-    .img5 { top: 900px; left: 25vw; width: 300px; height: 200px; z-index: 2; }
-    /* Add more .imgN classes for more images */
-    @media (max-width: 900px) {
-      .img1, .img2, .img3, .img4, .img5 {
-        width: 60vw !important;
-        left: 10vw !important;
-        /* Stack vertically for mobile */
-        position: static !important;
-        display: block;
-        margin: 40px auto;
+    @media (max-width: 700px) {
+      .section {
+        padding: 100px 10px 20px;
       }
-      .collage-wrapper {
-        min-height: auto;
-        height: auto;
+      .intro {
+        position: static;
+        max-width: 100%;
+        margin: 20px 10px 0 10px;
+      }
+      nav, .footer {
+        position: static;
+        margin: 10px;
+      }
+      .gallery {
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: 100px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="collage-wrapper">
-    <img src="your-image1.jpg" class="collage-img img1" alt="Image 1">
-    <img src="your-image2.jpg" class="collage-img img2" alt="Image 2">
-    <img src="your-image3.jpg" class="collage-img img3" alt="Image 3">
-    <img src="your-image4.jpg" class="collage-img img4" alt="Image 4">
-    <img src="your-image5.jpg" class="collage-img img5" alt="Image 5">
-    <!-- Add more images as needed -->
+
+  <nav>
+    <a href="#" onclick="showSection('texts')">Texts</a>
+    <a href="#" onclick="showSection('sounds')">Sounds</a>
+    <a href="#" onclick="showSection('drawings')">Drawings</a>
+    <a href="#" onclick="showSection('graphic')">Graphic design</a>
+    <a href="#" onclick="showSection('cgi')">CGI</a>
+    <a href="#" onclick="showSection('photo')">Photography</a>
+  </nav>
+
+  <div class="intro" id="intro">
+    <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
+    <p>Hi, I'm Gosha — a designer exploring and creating images, texts and sounds</p>
   </div>
+
+  <div class="footer">
+    <p>@georgiisapozhkov</p>
+    <p>sapozhkov.george@gmail.com</p>
+  </div>
+
+  <!-- Sections -->
+  <div id="texts" class="section"></div>
+  <div id="sounds" class="section"></div>
+  <div id="drawings" class="section"></div>
+  <div id="graphic" class="section"></div>
+  <div id="cgi" class="section"></div>
+
+  <div id="photo" class="section">
+    <div class="gallery" id="photoGallery">
+      <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
+      <img src="photography/001240250035.jpg" alt="Photo 2" />
+      <img src="photography/001240250036.jpg" alt="Photo 3" />
+      <img src="photography/001240250037.jpg" alt="Photo 4" />
+      <img src="photography/001240250038.jpg" alt="Photo 5" />
+      <!-- Add more images as needed -->
+    </div>
+  </div>
+
+  <script>
+    function showSection(id) {
+      document.getElementById('intro').style.display = 'none';
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => section.classList.remove('active'));
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) target.classList.add('active');
+      const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
+      if (link) link.classList.add('active');
+    }
+
+    // Randomize grid-area for each image for collage effect
+    function randomizeGalleryGrid(galleryId) {
+      const gallery = document.getElementById(galleryId);
+      if (!gallery) return;
+      const images = Array.from(gallery.children);
+      // Shuffle images
+      for (let i = images.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [images[i], images[j]] = [images[j], images[i]];
+      }
+      gallery.innerHTML = '';
+      images.forEach(img => gallery.appendChild(img));
+      // Assign random grid spans
+      images.forEach(img => {
+        const colSpan = Math.floor(Math.random() * 2) + 1; // 1 or 2
+        const rowSpan = Math.floor(Math.random() * 2) + 1; // 1 or 2
+        img.style.gridColumn = `span ${colSpan}`;
+        img.style.gridRow = `span ${rowSpan}`;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      randomizeGalleryGrid('photoGallery');
+    });
+  </script>
+
 </body>
 </html>
