@@ -180,20 +180,13 @@
       }
     }
 
-    // Show section from hash, or show intro if no valid hash
-    function showSectionFromHash() {
+    // On page load, show the section from the hash if present
+    window.addEventListener('DOMContentLoaded', function() {
       const hash = window.location.hash.replace('#', '');
       if (hash && document.getElementById(hash)) {
         showSection(hash);
-      } else {
-        document.getElementById('intro').style.display = '';
-        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       }
-    }
-
-    window.addEventListener('DOMContentLoaded', showSectionFromHash);
-    window.addEventListener('hashchange', showSectionFromHash);
+    });
 
     function randomizeGalleryGrid(sectionId) {
       const images = document.querySelectorAll(`#${sectionId} .gallery img`);
