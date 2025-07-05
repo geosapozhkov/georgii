@@ -177,7 +177,7 @@
       if (id === 'photo' || id === 'cgi') {
         randomizeGalleryGrid(id);
         randomizeVerticalOffsets(id);
-        randomizeVerticalStagger(id);
+        combineGalleryEffects(id);
       }
     }
 
@@ -280,6 +280,39 @@
         const offset = Math.floor(Math.random() * 200);
         item.style.marginTop = offset + 'px';
       });
+    }
+
+    function combineGalleryEffects(sectionId) {
+      const gallery = document.querySelector(`#${sectionId} .gallery`);
+      if (!gallery) return;
+      const items = Array.from(gallery.children);
+      // Reset all transforms and margins
+      items.forEach(item => {
+        item.style.marginTop = '0';
+        item.style.marginBottom = '0';
+        item.style.transform = '';
+      });
+      for (let i = 0; i < items.length; i += 3) {
+        const group = items.slice(i, i + 3);
+        // 1. Staggered Layout: offset second item
+        if (group[1]) {
+          group[1].style.marginTop = (group[1].offsetHeight * 0.4) + 'px';
+        }
+        // 2. Mixed Sizes: randomly scale one or two
+        if (group.length === 3) {
+          const idx = Math.floor(Math.random() * 3);
+          group[idx].style.transform = 'scale(1.08)';
+          if (Math.random() > 0.5) {
+            const idx2 = (idx + 1) % 3;
+            group[idx2].style.transform = 'scale(0.92)';
+          }
+        }
+        // 3. Negative Space: randomly add margin-bottom to one item
+        if (group.length > 0 && Math.random() > 0.5) {
+          const idx = Math.floor(Math.random() * group.length);
+          group[idx].style.marginBottom = (40 + Math.floor(Math.random() * 120)) + 'px';
+        }
+      }
     }
 
     // Dynamically generate draggable text images for all .png files in the texts folder
