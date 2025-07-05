@@ -79,21 +79,18 @@
     }
 
     .gallery {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 60px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
       padding: 40px 0;
     }
 
     .gallery img {
-      width: 90vw;
-      max-width: 900px;
+      width: 100%;
       height: auto;
       display: block;
-      margin-left: auto;
-      margin-right: auto;
-      opacity: 1;
+      margin: 0;
+      grid-column: span 1;
       transform: none;
       transition: none;
     }
@@ -154,18 +151,20 @@
       if (link) link.classList.add('active');
       // Apply randomization to galleries when shown
       if (id === 'photo' || id === 'cgi') {
-        randomizeGalleryImages(id);
+        randomizeGalleryGrid(id);
       }
     }
 
-    function randomizeGalleryImages(sectionId) {
+    function randomizeGalleryGrid(sectionId) {
       const images = document.querySelectorAll(`#${sectionId} .gallery img`);
       images.forEach(img => {
-        // Random scale between 0.85 and 1.15
-        const scale = 0.85 + Math.random() * 0.3;
-        // Random horizontal shift: -40px to +40px
-        const shift = Math.floor(Math.random() * 81) - 40;
-        img.style.transform = `scale(${scale}) translateX(${shift}px)`;
+        // 25% chance to span all 3 columns, otherwise randomly pick 1 column
+        if (Math.random() < 0.25) {
+          img.style.gridColumn = '1 / span 3';
+        } else {
+          const col = Math.floor(Math.random() * 3) + 1;
+          img.style.gridColumn = `${col} / span 1`;
+        }
       });
     }
   </script>
