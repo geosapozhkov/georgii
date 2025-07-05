@@ -202,7 +202,7 @@
           img.className = 'draggable-text';
           img.alt = `Text ${name}`;
           img.style.position = 'absolute';
-          img.style.width = '180px';
+          img.style.width = '360px';
           // Random position within the canvas
           const left = Math.floor(Math.random() * (canvasW - 200));
           const top = Math.floor(Math.random() * (canvasH - 200));
@@ -219,7 +219,7 @@
       let offsetX = 0;
       let offsetY = 0;
       document.addEventListener('mousedown', function(e) {
-        if (e.target.classList.contains('draggable-text')) {
+        if (e.button === 0 && e.target.classList.contains('draggable-text')) {
           dragImg = e.target;
           offsetX = e.clientX - dragImg.offsetLeft;
           offsetY = e.clientY - dragImg.offsetTop;
@@ -227,7 +227,7 @@
         }
       });
       document.addEventListener('mousemove', function(e) {
-        if (dragImg) {
+        if (dragImg && e.buttons === 1) {
           dragImg.style.left = (e.clientX - offsetX) + 'px';
           dragImg.style.top = (e.clientY - offsetY) + 'px';
         }
