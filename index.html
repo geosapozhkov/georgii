@@ -1,154 +1,199 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gosha's Portfolio</title>
-  <style>
-    @font-face {
-      font-family: 'CoFoHolz-Regular';
-      src: url('CoFoHolz-Regular.otf') format('opentype');
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gosha's Portfolio</title>
+<style>
+@font-face {
+  font-family: 'CoFoHolz-Regular';
+  src: url('CoFoHolz-Regular.otf') format('opentype');
+}
 
-    body {
-      font-family: 'CoFoHolz-Regular', sans-serif;
-      font-size: 16px;
-      margin: 0;
-      padding: 0;
-      background-color: white;
-      color: #222;
-    }
+body {
+  font-family: 'CoFoHolz-Regular', sans-serif;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  background-color: white;
+  color: #222;
+}
 
-    nav {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
-    }
+nav {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
 
-    nav a {
-      margin-right: 12px;
-      text-decoration: none;
-      color: #222;
-      font-weight: normal;
-      transition: opacity 0.3s;
-    }
+nav a {
+  margin-right: 12px;
+  text-decoration: none;
+  color: #222;
+  font-weight: normal;
+  transition: opacity 0.3s;
+}
 
-    nav a.active {
-      opacity: 0.3;
-      pointer-events: none;
-    }
+nav a.active {
+  opacity: 0.3;
+  pointer-events: none;
+}
 
-    .intro {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      max-width: 420px;
-      line-height: 1.6;
-    }
+.intro {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  max-width: 420px;
+  line-height: 1.6;
+}
 
-    .footer {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      font-size: 16px;
-      text-align: left;
-    }
+.footer {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-size: 16px;
+  text-align: left;
+}
 
-    .footer p {
-      margin: 0;
-    }
+.footer p {
+  margin: 0;
+}
 
-    .footer p:first-child {
-      margin-bottom: 4px;
-    }
+.footer p:first-child {
+  margin-bottom: 4px;
+}
 
-    .section {
-      display: none;
-      padding: 120px 40px 40px;
-    }
+.section {
+  display: none;
+  padding: 120px 40px 40px;
+}
 
-    .section.active {
-      display: block;
-    }
+.section.active {
+  display: block;
+}
 
-    .section img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
+.section img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
 
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
-      margin-top: 20px;
-    }
+.gallery {
+  column-count: 4;
+  column-gap: 10px;
+  margin-top: 20px;
+}
 
-    .gallery img {
-      width: 100%;
-      height: auto;
-      object-fit: cover;
-      border-radius: 4px;
-    }
-  </style>
+.gallery img {
+  width: 100%;
+  margin-bottom: 10px;
+  break-inside: avoid;
+  object-fit: contain;
+}
+
+@media (max-width: 1200px) {
+  .gallery {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 800px) {
+  .gallery {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 500px) {
+  .gallery {
+    column-count: 1;
+  }
+}
+</style>
 </head>
+
 <body>
 
-  <nav>
-    <a href="#" onclick="showSection('texts')">Texts</a>
-    <a href="#" onclick="showSection('sounds')">Sounds</a>
-    <a href="#" onclick="showSection('drawings')">Drawings</a>
-    <a href="#" onclick="showSection('graphic')">Graphic design</a>
-    <a href="#" onclick="showSection('cgi')">CGI</a>
-    <a href="#" onclick="showSection('photo')">Photography</a>
-  </nav>
+<nav>
+  <a href="#" onclick="showSection('texts')">Texts</a>
+  <a href="#" onclick="showSection('sounds')">Sounds</a>
+  <a href="#" onclick="showSection('drawings')">Drawings</a>
+  <a href="#" onclick="showSection('graphic')">Graphic design</a>
+  <a href="#" onclick="showSection('cgi')">CGI</a>
+  <a href="#" onclick="showSection('photo')">Photography</a>
+</nav>
 
-  <div class="intro" id="intro">
-    <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
-    <p>Hi, I'm Gosha — a designer exploring and creating images, texts and sounds</p>
+<div class="intro" id="intro">
+  <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
+  <p>Hi, I'm Gosha — a designer exploring and creating images, texts and sounds</p>
+</div>
+
+<div class="footer">
+  <p>@georgiisapozhkov</p>
+  <p>sapozhkov.george@gmail.com</p>
+</div>
+
+<!-- Sections -->
+<div id="texts" class="section"></div>
+<div id="sounds" class="section"></div>
+<div id="drawings" class="section"></div>
+<div id="graphic" class="section"></div>
+
+<div id="cgi" class="section">
+  <div class="gallery" id="cgiGallery">
+    <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="Render 1" />
+    <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="Render 2" />
+    <img src="cgi/Frame 177.png" alt="Render 3" />
+    <img src="cgi/Frame 175.png" alt="Render 4" />
+    <img src="cgi/Frame 176.png" alt="Render 5" />
   </div>
+</div>
 
-  <div class="footer">
-    <p>@georgiisapozhkov</p>
-    <p>sapozhkov.george@gmail.com</p>
+<div id="photo" class="section">
+  <div class="gallery" id="photoGallery">
+    <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
+    <img src="photography/001240250035.jpg" alt="Photo 2" />
   </div>
+</div>
 
-  <!-- Sections -->
-  <div id="texts" class="section"></div>
-  <div id="sounds" class="section"></div>
-  <div id="drawings" class="section"></div>
-  <div id="graphic" class="section"></div>
+<script>
+// показывать секции
+function showSection(id) {
+  document.getElementById('intro').style.display = 'none';
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(section => section.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+  const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
+  if (link) link.classList.add('active');
+}
 
-  <div id="cgi" class="section">
-    <div class="gallery">
-      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="Render 1" />
-      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="Render 2" />
-      <img src="cgi/Frame 177.png" alt="Render 3" />
-      <img src="cgi/Frame 175.png" alt="Render 4" />
-      <img src="cgi/Frame 176.png" alt="Render 5" />
-    </div>
-  </div>
+// перемешивание
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 
-  <div id="photo" class="section">
-    <div class="gallery">
-      <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
-      <img src="photography/001240250035.jpg" alt="Photo 2" />
-    </div>
-  </div>
+// рандомизация картинок
+function randomizeGallery(galleryId) {
+  const gallery = document.getElementById(galleryId);
+  if (!gallery) return;
 
-  <script>
-    function showSection(id) {
-      document.getElementById('intro').style.display = 'none';
-      const sections = document.querySelectorAll('.section');
-      sections.forEach(section => section.classList.remove('active'));
-      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active');
-      const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
-      if (link) link.classList.add('active');
-    }
-  </script>
+  const images = Array.from(gallery.children);
+  const shuffled = shuffle(images);
+
+  gallery.innerHTML = '';
+  shuffled.forEach(img => gallery.appendChild(img));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  randomizeGallery('cgiGallery');
+  randomizeGallery('photoGallery');
+});
+</script>
 
 </body>
 </html>
