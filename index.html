@@ -175,7 +175,6 @@
         randomizeGalleryGrid(id);
         randomizeVerticalOffsets(id);
         combineGalleryEffects(id);
-        applyExtremeRandomScales(id);
       }
     }
 
@@ -311,35 +310,6 @@
           group[idx].style.marginBottom = (40 + Math.floor(Math.random() * 120)) + 'px';
         }
       }
-    }
-
-    function applyExtremeRandomScales(sectionId) {
-      const gallery = document.querySelector(`#${sectionId} .gallery`);
-      if (!gallery) return;
-      const items = Array.from(gallery.children);
-      // Define allowed scales (minimum 2x difference)
-      const scales = [1, 2];
-      const maxPerScale = Math.ceil(items.length / scales.length);
-      // Build a pool of scales, each repeated maxPerScale times
-      let scalePool = [];
-      scales.forEach(scale => {
-        for (let i = 0; i < maxPerScale; i++) scalePool.push(scale);
-      });
-      // Ensure pool is at least as long as items
-      while (scalePool.length < items.length) {
-        scalePool = scalePool.concat(scalePool);
-      }
-      // Shuffle the pool and assign
-      for (let i = scalePool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [scalePool[i], scalePool[j]] = [scalePool[j], scalePool[i]];
-      }
-      // Always ensure at least one min and one max scale
-      scalePool[0] = Math.min(...scales);
-      scalePool[1] = Math.max(...scales);
-      items.forEach((item, idx) => {
-        item.style.transform = `scale(${scalePool[idx]})`;
-      });
     }
 
     // Dynamically generate draggable text images for all .png files in the texts folder
