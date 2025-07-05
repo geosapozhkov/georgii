@@ -104,6 +104,20 @@
       cursor: grabbing;
       transform: translateY(-16px) scale(1.04);
     }
+    .gallery-item {
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gallery-item img,
+    .gallery-item video {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.3s;
+    }
   </style>
 </head>
 <body>
@@ -136,28 +150,28 @@
   <div id="graphic" class="section"></div>
   <div id="cgi" class="section">
     <div class="gallery">
-      <video src="cgi/Composition 1.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 1"></video>
-      <img src="cgi/Frame 175.png" alt="CGI 1" />
-      <img src="cgi/Frame 176.png" alt="CGI 2" />
-      <img src="cgi/Frame 177.png" alt="CGI 3" />
-      <img src="cgi/IMG_8567.jpg" alt="CGI 4" />
-      <video src="cgi/Img 8565.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 2"></video>
-      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="CGI 5" />
-      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="CGI 6" />
+      <div class="gallery-item"><video src="cgi/Composition 1.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 1"></video></div>
+      <div class="gallery-item"><img src="cgi/Frame 175.png" alt="CGI 1" /></div>
+      <div class="gallery-item"><img src="cgi/Frame 176.png" alt="CGI 2" /></div>
+      <div class="gallery-item"><img src="cgi/Frame 177.png" alt="CGI 3" /></div>
+      <div class="gallery-item"><img src="cgi/IMG_8567.jpg" alt="CGI 4" /></div>
+      <div class="gallery-item"><video src="cgi/Img 8565.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 2"></video></div>
+      <div class="gallery-item"><img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="CGI 5" /></div>
+      <div class="gallery-item"><img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="CGI 6" /></div>
     </div>
   </div>
 
   <div id="photo" class="section">
     <div class="gallery">
-      <img src="photography/000030080010.jpg" alt="Photo 1" />
-      <img src="photography/000030080032 copy.jpg" alt="Photo 2" />
-      <img src="photography/001240250035.jpg" alt="Photo 3" />
-      <img src="photography/R0003325.jpg" alt="Photo 4" />
-      <img src="photography/R0003368.jpg" alt="Photo 5" />
-      <img src="photography/R0003526.jpg" alt="Photo 6" />
-      <img src="photography/R0003862.jpg" alt="Photo 7" />
-      <img src="photography/R0003863.jpg" alt="Photo 8" />
-      <img src="photography/R0003872.jpg" alt="Photo 9" />
+      <div class="gallery-item"><img src="photography/000030080010.jpg" alt="Photo 1" /></div>
+      <div class="gallery-item"><img src="photography/000030080032 copy.jpg" alt="Photo 2" /></div>
+      <div class="gallery-item"><img src="photography/001240250035.jpg" alt="Photo 3" /></div>
+      <div class="gallery-item"><img src="photography/R0003325.jpg" alt="Photo 4" /></div>
+      <div class="gallery-item"><img src="photography/R0003368.jpg" alt="Photo 5" /></div>
+      <div class="gallery-item"><img src="photography/R0003526.jpg" alt="Photo 6" /></div>
+      <div class="gallery-item"><img src="photography/R0003862.jpg" alt="Photo 7" /></div>
+      <div class="gallery-item"><img src="photography/R0003863.jpg" alt="Photo 8" /></div>
+      <div class="gallery-item"><img src="photography/R0003872.jpg" alt="Photo 9" /></div>
     </div>
   </div>
 
@@ -338,7 +352,8 @@
       scalePool[0] = Math.min(...scales);
       scalePool[1] = Math.max(...scales);
       items.forEach((item, idx) => {
-        item.style.transform = `scale(${scalePool[idx]})`;
+        const child = item.querySelector('img,video');
+        if (child) child.style.transform = `scale(${scalePool[idx]})`;
       });
     }
 
