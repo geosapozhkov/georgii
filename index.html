@@ -15,7 +15,7 @@
       font-size: 16px;
       margin: 0;
       padding: 0;
-      background-color: white;
+      background: #fff;
       color: #222;
     }
 
@@ -25,15 +25,14 @@
       left: 20px;
       z-index: 10;
     }
-
     nav a {
-      margin-right: 12px;
+      margin-right: 16px;
       text-decoration: none;
       color: #222;
-      font-weight: normal;
-      transition: opacity 0.3s;
+      font-weight: 500;
+      opacity: 0.85;
+      transition: opacity 0.2s;
     }
-
     nav a.active {
       opacity: 0.3;
       pointer-events: none;
@@ -54,20 +53,16 @@
       font-size: 16px;
       text-align: left;
     }
-
     .footer p {
-      margin: 0;
-    }
-
-    .footer p:first-child {
-      margin-bottom: 4px;
+      margin: 0 0 4px 0;
     }
 
     .section {
       display: none;
       padding: 120px 40px 40px;
+      min-height: 100vh;
+      box-sizing: border-box;
     }
-
     .section.active {
       display: block;
     }
@@ -76,18 +71,17 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       grid-auto-rows: 180px;
-      gap: 18px;
-      grid-auto-flow: dense;
+      gap: 60px 60px; /* Large gaps for white space */
+      max-width: 1400px;
       margin: 0 auto;
-      max-width: 1200px;
+      padding-bottom: 100px;
     }
     .gallery img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain; /* Never crop, always keep proportions */
       display: block;
-      /* No border-radius, no box-shadow */
-      /* Will be sized/positioned by JS */
+      background: #f6f6f6;
       transition: box-shadow 0.2s;
     }
     @media (max-width: 700px) {
@@ -106,6 +100,7 @@
       .gallery {
         grid-template-columns: repeat(2, 1fr);
         grid-auto-rows: 120px;
+        gap: 30px 10px;
       }
     }
   </style>
@@ -136,20 +131,13 @@
   <div id="sounds" class="section"></div>
   <div id="drawings" class="section"></div>
   <div id="graphic" class="section"></div>
-  <div id="cgi" class="section">
-    <div class="gallery" id="cgiGallery">
-      <img src="cgi/Frame 175.png" alt="Frame 175" />
-      <img src="cgi/Frame 176.png" alt="Frame 176" />
-      <img src="cgi/Frame 177.png" alt="Frame 177" />
-      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="Photo 2025-07-05 12-22-13" />
-      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="Photo 2025-07-05 12-22-26" />
-    </div>
-  </div>
+  <div id="cgi" class="section"></div>
 
   <div id="photo" class="section">
     <div class="gallery" id="photoGallery">
       <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
       <img src="photography/001240250035.jpg" alt="Photo 2" />
+      <!-- Add more images here -->
     </div>
   </div>
 
@@ -170,14 +158,6 @@
       const gallery = document.getElementById(galleryId);
       if (!gallery) return;
       const images = Array.from(gallery.children);
-      // Shuffle images
-      for (let i = images.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [images[i], images[j]] = [images[j], images[i]];
-      }
-      gallery.innerHTML = '';
-      images.forEach(img => gallery.appendChild(img));
-      // Assign random grid spans
       images.forEach(img => {
         const colSpan = Math.random() < 0.5 ? 1 : 2; // 1 or 2
         const rowSpan = Math.random() < 0.5 ? 1 : 2; // 1 or 2
@@ -185,10 +165,8 @@
         img.style.gridRow = `span ${rowSpan}`;
       });
     }
-
     document.addEventListener('DOMContentLoaded', () => {
       randomizeGalleryGrid('photoGallery');
-      randomizeGalleryGrid('cgiGallery');
     });
   </script>
 
