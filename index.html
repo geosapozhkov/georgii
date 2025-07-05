@@ -1,186 +1,60 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gosha's Portfolio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Collage Grid Example</title>
   <style>
-    @font-face {
-      font-family: 'CoFoHolz-Regular';
-      src: url('CoFoHolz-Regular.otf') format('opentype');
-    }
-
     body {
-      font-family: 'CoFoHolz-Regular', sans-serif;
-      font-size: 16px;
       margin: 0;
-      padding: 0;
       background: #fff;
       color: #222;
+      font-family: sans-serif;
     }
-
-    nav {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
+    .collage-wrapper {
+      position: relative;
+      width: 100vw;
+      min-height: 200vh; /* Make it tall for scrolling */
+      overflow-x: hidden;
+      padding-bottom: 100px;
     }
-    nav a {
-      margin-right: 16px;
-      text-decoration: none;
-      color: #222;
-      font-weight: 500;
-      opacity: 0.85;
-      transition: opacity 0.2s;
-    }
-    nav a.active {
-      opacity: 0.3;
-      pointer-events: none;
-    }
-
-    .intro {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      max-width: 420px;
-      line-height: 1.6;
-    }
-
-    .footer {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      font-size: 16px;
-      text-align: left;
-    }
-    .footer p {
-      margin: 0 0 4px 0;
-    }
-
-    .section {
-      display: none;
-      padding: 120px 40px 40px;
-      min-height: 100vh;
-      box-sizing: border-box;
-    }
-    .section.active {
-      display: block;
-    }
-
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-      margin-top: 20px;
-    }
-    .gallery img {
-      width: 100%;
-      height: auto;
-      display: block;
+    .collage-img {
+      position: absolute;
       object-fit: cover;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      background: #f6f6f6;
-      transition: transform 0.2s;
+      /* No border-radius, no box-shadow */
+      /* You can add a border if you want, but the reference doesn't have one */
     }
-    .gallery img:hover {
-      transform: scale(1.03);
-    }
-
-    @media (max-width: 700px) {
-      .section {
-        padding: 100px 10px 20px;
+    /* Example positions and sizes for images */
+    .img1 { top: 40px; left: 10vw; width: 320px; height: 220px; z-index: 1; }
+    .img2 { top: 180px; left: 35vw; width: 400px; height: 300px; z-index: 2; }
+    .img3 { top: 400px; left: 5vw; width: 260px; height: 180px; z-index: 3; }
+    .img4 { top: 600px; left: 50vw; width: 350px; height: 250px; z-index: 1; }
+    .img5 { top: 900px; left: 25vw; width: 300px; height: 200px; z-index: 2; }
+    /* Add more .imgN classes for more images */
+    @media (max-width: 900px) {
+      .img1, .img2, .img3, .img4, .img5 {
+        width: 60vw !important;
+        left: 10vw !important;
+        /* Stack vertically for mobile */
+        position: static !important;
+        display: block;
+        margin: 40px auto;
       }
-      .intro {
-        position: static;
-        max-width: 100%;
-        margin: 20px 10px 0 10px;
-      }
-      nav, .footer {
-        position: static;
-        margin: 10px;
+      .collage-wrapper {
+        min-height: auto;
+        height: auto;
       }
     }
   </style>
 </head>
 <body>
-
-  <nav>
-    <a href="#" onclick="showSection('texts')">Texts</a>
-    <a href="#" onclick="showSection('sounds')">Sounds</a>
-    <a href="#" onclick="showSection('drawings')">Drawings</a>
-    <a href="#" onclick="showSection('graphic')">Graphic design</a>
-    <a href="#" onclick="showSection('cgi')">CGI</a>
-    <a href="#" onclick="showSection('photo')">Photography</a>
-  </nav>
-
-  <div class="intro" id="intro">
-    <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
-    <p>Hi, I'm Gosha — a designer exploring and creating images, texts and sounds</p>
+  <div class="collage-wrapper">
+    <img src="your-image1.jpg" class="collage-img img1" alt="Image 1">
+    <img src="your-image2.jpg" class="collage-img img2" alt="Image 2">
+    <img src="your-image3.jpg" class="collage-img img3" alt="Image 3">
+    <img src="your-image4.jpg" class="collage-img img4" alt="Image 4">
+    <img src="your-image5.jpg" class="collage-img img5" alt="Image 5">
+    <!-- Add more images as needed -->
   </div>
-
-  <div class="footer">
-    <p>@georgiisapozhkov</p>
-    <p>sapozhkov.george@gmail.com</p>
-  </div>
-
-  <!-- Sections -->
-  <div id="texts" class="section"></div>
-  <div id="sounds" class="section"></div>
-  <div id="drawings" class="section"></div>
-  <div id="graphic" class="section"></div>
-
-  <div id="cgi" class="section">
-    <div class="gallery" id="cgiGallery">
-      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="Render 1" />
-      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="Render 2" />
-      <img src="cgi/Frame 177.png" alt="Render 3" />
-      <img src="cgi/Frame 175.png" alt="Render 4" />
-      <img src="cgi/Frame 176.png" alt="Render 5" />
-    </div>
-  </div>
-
-  <div id="photo" class="section">
-    <div class="gallery" id="photoGallery">
-      <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
-      <img src="photography/001240250035.jpg" alt="Photo 2" />
-    </div>
-  </div>
-
-  <script>
-    // Section switching
-    function showSection(id) {
-      document.getElementById('intro').style.display = 'none';
-      document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active');
-      const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
-      if (link) link.classList.add('active');
-    }
-
-    // Shuffle images in gallery
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-    function randomizeGallery(galleryId) {
-      const gallery = document.getElementById(galleryId);
-      if (!gallery) return;
-      const images = Array.from(gallery.children);
-      const shuffled = shuffle(images);
-      gallery.innerHTML = '';
-      shuffled.forEach(img => gallery.appendChild(img));
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      randomizeGallery('cgiGallery');
-      randomizeGallery('photoGallery');
-    });
-  </script>
-
 </body>
 </html>
