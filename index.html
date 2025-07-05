@@ -194,23 +194,53 @@
     window.addEventListener('hashchange', showSectionFromHash);
 
     function randomizeGalleryGrid(sectionId) {
-      const images = document.querySelectorAll(`#${sectionId} .gallery img`);
-      // Shuffle images for randomness
-      const shuffled = Array.from(images);
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      const images = Array.from(document.querySelectorAll(`#${sectionId} .gallery img`)).filter(img => img.src.match(/\.jpe?g$/i));
+      const videos = Array.from(document.querySelectorAll(`#${sectionId} .gallery video`)).filter(vid => vid.src.match(/\.mp4$/i));
+
+      // Helper to shuffle an array
+      function shuffle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
       }
-      const twoColCount = Math.round(shuffled.length * 0.6);
-      shuffled.forEach((img, idx) => {
-        if (idx < twoColCount) {
-          // Randomly pick a start column: 1 or 2 (so span 2 columns)
+
+      // --- JPEG IMAGES ---
+      const imgCount = images.length;
+      const img3col = Math.round(imgCount * 0.10);
+      const img2col = Math.round(imgCount * 0.60);
+      const img1col = imgCount - img3col - img2col;
+      shuffle(images).forEach((img, idx) => {
+        if (idx < img3col) {
+          img.style.gridColumn = '1 / span 3';
+        } else if (idx < img3col + img2col) {
+          // Randomly pick a start column: 1 or 2
           const col = Math.floor(Math.random() * 2) + 1;
           img.style.gridColumn = `${col} / span 2`;
         } else {
           // Randomly pick a column: 1, 2, or 3
           const col = Math.floor(Math.random() * 3) + 1;
           img.style.gridColumn = `${col} / span 1`;
+        }
+      });
+
+      // --- MP4 VIDEOS ---
+      const vidCount = videos.length;
+      const vid3col = Math.round(vidCount * 0.70);
+      const vid2col = Math.round(vidCount * 0.10);
+      const vid1col = vidCount - vid3col - vid2col;
+      shuffle(videos).forEach((vid, idx) => {
+        if (idx < vid3col) {
+          vid.style.gridColumn = '1 / span 3';
+        } else if (idx < vid3col + vid2col) {
+          // Randomly pick a start column: 1 or 2
+          const col = Math.floor(Math.random() * 2) + 1;
+          vid.style.gridColumn = `${col} / span 2`;
+        } else {
+          // Randomly pick a column: 1, 2, or 3
+          const col = Math.floor(Math.random() * 3) + 1;
+          vid.style.gridColumn = `${col} / span 1`;
         }
       });
     }
