@@ -83,16 +83,13 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 360px;
       padding: 0 16px;
+      /* overflow: hidden;  // Optional, only if you see overflow issues */
     }
-
-    .gallery img {
+    .gallery img, .gallery video {
       width: 100%;
-      height: auto;
+      max-width: 100%;
+      box-sizing: border-box;
       display: block;
-      margin: 0;
-      grid-column: span 1;
-      transform: none;
-      transition: none;
     }
     .draggable-text {
       box-shadow: none;
