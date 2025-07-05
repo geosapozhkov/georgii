@@ -72,26 +72,23 @@
       display: block;
     }
 
-    .collage-area {
-      position: relative;
-      width: 100%;
-      min-height: 1200px; /* Make it tall for scrolling, adjust as needed */
-      height: 1800px;
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-auto-rows: 180px;
+      gap: 18px;
+      grid-auto-flow: dense;
       margin: 0 auto;
-      background: #fff;
-      overflow: visible;
+      max-width: 1200px;
     }
-    .collage-area img {
-      position: absolute;
-      max-width: 400px;
-      max-height: 350px;
-      width: auto;
-      height: auto;
-      object-fit: contain;
+    .gallery img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
       /* No border-radius, no box-shadow */
-      transition: transform 0.3s, top 0.3s, left 0.3s;
-      will-change: transform, top, left;
-      background: #f6f6f6;
+      /* Will be sized/positioned by JS */
+      transition: box-shadow 0.2s;
     }
     @media (max-width: 700px) {
       .section {
@@ -106,13 +103,9 @@
         position: static;
         margin: 10px;
       }
-      .collage-area {
-        min-height: 900px;
-        height: 1200px;
-      }
-      .collage-area img {
-        max-width: 90vw;
-        max-height: 40vw;
+      .gallery {
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: 120px;
       }
     }
   </style>
@@ -144,7 +137,7 @@
   <div id="drawings" class="section"></div>
   <div id="graphic" class="section"></div>
   <div id="cgi" class="section">
-    <div class="collage-area" id="cgiCollage">
+    <div class="gallery" id="cgiGallery">
       <img src="cgi/Frame 175.png" alt="Frame 175" />
       <img src="cgi/Frame 176.png" alt="Frame 176" />
       <img src="cgi/Frame 177.png" alt="Frame 177" />
@@ -154,7 +147,7 @@
   </div>
 
   <div id="photo" class="section">
-    <div class="collage-area" id="photoCollage">
+    <div class="gallery" id="photoGallery">
       <img src="photography/000030080032 copy.jpg" alt="Photo 1" />
       <img src="photography/001240250035.jpg" alt="Photo 2" />
     </div>
@@ -172,45 +165,30 @@
       if (link) link.classList.add('active');
     }
 
-    // Randomize scale and position, but keep aspect ratio
-    function randomizeCollage(containerId) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      const images = Array.from(container.getElementsByTagName('img'));
-      const containerWidth = container.offsetWidth || 1200;
-      const containerHeight = container.offsetHeight || 1800;
-
+    // Assign random grid spans to images for a dynamic, non-overlapping grid
+    function randomizeGalleryGrid(galleryId) {
+      const gallery = document.getElementById(galleryId);
+      if (!gallery) return;
+      const images = Array.from(gallery.children);
+      // Shuffle images
+      for (let i = images.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [images[i], images[j]] = [images[j], images[i]];
+      }
+      gallery.innerHTML = '';
+      images.forEach(img => gallery.appendChild(img));
+      // Assign random grid spans
       images.forEach(img => {
-        // Random scale between 0.7 and 1.3
-        const scale = Math.random() * 0.6 + 0.7;
-        img.style.transform = `scale(${scale})`;
-
-        // Get image natural size for positioning
-        img.onload = function() {
-          const imgW = img.naturalWidth * scale;
-          const imgH = img.naturalHeight * scale;
-          // Random position, but keep image inside container
-          const maxLeft = Math.max(0, containerWidth - imgW);
-          const maxTop = Math.max(0, containerHeight - imgH);
-          const left = Math.random() * maxLeft;
-          const top = Math.random() * maxTop;
-          img.style.left = `${left}px`;
-          img.style.top = `${top}px`;
-        };
-        // If already loaded
-        if (img.complete) img.onload();
+        const colSpan = Math.random() < 0.5 ? 1 : 2; // 1 or 2
+        const rowSpan = Math.random() < 0.5 ? 1 : 2; // 1 or 2
+        img.style.gridColumn = `span ${colSpan}`;
+        img.style.gridRow = `span ${rowSpan}`;
       });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      randomizeCollage('cgiCollage');
-      randomizeCollage('photoCollage');
-    });
-
-    // Optional: re-randomize on window resize for better responsiveness
-    window.addEventListener('resize', () => {
-      randomizeCollage('cgiCollage');
-      randomizeCollage('photoCollage');
+      randomizeGalleryGrid('photoGallery');
+      randomizeGalleryGrid('cgiGallery');
     });
   </script>
 
