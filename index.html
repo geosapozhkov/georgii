@@ -213,31 +213,38 @@
       }
     })();
 
-    // Drag and drop for .draggable-text images
+    // Drag and drop for .draggable-text images (toggle pick up and drop on click)
     (function() {
       let dragImg = null;
       let offsetX = 0;
       let offsetY = 0;
+      let zCounter = 10;
       document.addEventListener('mousedown', function(e) {
-        if (e.button === 0 && e.target.classList.contains('draggable-text')) {
-          dragImg = e.target;
-          offsetX = e.clientX - dragImg.offsetLeft;
-          offsetY = e.clientY - dragImg.offsetTop;
-          dragImg.classList.add('dragging');
+        if (e.target.classList.contains('draggable-text')) {
+          if (!dragImg) {
+            dragImg = e.target;
+            offsetX = e.clientX - dragImg.offsetLeft;
+            offsetY = e.clientY - dragImg.offsetTop;
+            dragImg.classList.add('dragging');
+            // Bring to front
+            zCounter++;
+            dragImg.style.zIndex = zCounter;
+            // Listen for mousemove
+            document.addEventListener('mousemove', moveHandler);
+          } else if (dragImg === e.target) {
+            // Drop the image
+            dragImg.classList.remove('dragging');
+            dragImg = null;
+            document.removeEventListener('mousemove', moveHandler);
+          }
         }
       });
-      document.addEventListener('mousemove', function(e) {
-        if (dragImg && e.buttons === 1) {
+      function moveHandler(e) {
+        if (dragImg) {
           dragImg.style.left = (e.clientX - offsetX) + 'px';
           dragImg.style.top = (e.clientY - offsetY) + 'px';
         }
-      });
-      document.addEventListener('mouseup', function() {
-        if (dragImg) {
-          dragImg.classList.remove('dragging');
-          dragImg = null;
-        }
-      });
+      }
     })();
   </script>
 
