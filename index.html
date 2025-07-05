@@ -112,12 +112,12 @@
 <body>
 
   <nav>
-    <a href="#" onclick="showSection('texts')">Texts</a>
-    <a href="#" onclick="showSection('sounds')">Sounds</a>
-    <a href="#" onclick="showSection('drawings')">Drawings</a>
-    <a href="#" onclick="showSection('graphic')">Graphic design</a>
-    <a href="#" onclick="showSection('cgi')">CGI</a>
-    <a href="#" onclick="showSection('photo')">Photography</a>
+    <a href="#" onclick="showSection('texts'); return false;">Texts</a>
+    <a href="#" onclick="showSection('sounds'); return false;">Sounds</a>
+    <a href="#" onclick="showSection('drawings'); return false;">Drawings</a>
+    <a href="#" onclick="showSection('graphic'); return false;">Graphic design</a>
+    <a href="#" onclick="showSection('cgi'); return false;">CGI</a>
+    <a href="#" onclick="showSection('photo'); return false;">Photography</a>
   </nav>
 
   <div class="intro" id="intro">
@@ -163,30 +163,33 @@
   </div>
 
   <script>
-    function showSection(id) {
+    function showSection(id, updateHash = true) {
       document.getElementById('intro').style.display = 'none';
-      const sections = document.querySelectorAll('.section');
-      sections.forEach(section => section.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) target.classList.add('active');
       const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
       if (link) link.classList.add('active');
-      // Update the URL hash
-      window.location.hash = id;
-      // Apply randomization to galleries when shown
+      if (updateHash) window.location.hash = id;
       if (id === 'photo' || id === 'cgi') {
         randomizeGalleryGrid(id);
       }
     }
 
-    // On page load, show the section from the hash if present
-    window.addEventListener('DOMContentLoaded', function() {
+    function showSectionFromHash() {
       const hash = window.location.hash.replace('#', '');
       if (hash && document.getElementById(hash)) {
-        showSection(hash);
+        showSection(hash, false);
+      } else {
+        document.getElementById('intro').style.display = '';
+        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       }
-    });
+    }
+
+    window.addEventListener('DOMContentLoaded', showSectionFromHash);
+    window.addEventListener('hashchange', showSectionFromHash);
 
     function randomizeGalleryGrid(sectionId) {
       const images = document.querySelectorAll(`#${sectionId} .gallery img`);
