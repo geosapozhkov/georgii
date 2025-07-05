@@ -176,6 +176,7 @@
       if (updateHash) window.location.hash = id;
       if (id === 'photo' || id === 'cgi') {
         randomizeGalleryGrid(id);
+        randomizeVerticalOffsets(id);
       }
     }
 
@@ -241,6 +242,28 @@
           // Randomly pick a column: 1, 2, or 3
           const col = Math.floor(Math.random() * 3) + 1;
           vid.style.gridColumn = `${col} / span 1`;
+        }
+      });
+    }
+
+    function randomizeVerticalOffsets(sectionId) {
+      const gallery = document.querySelector(`#${sectionId} .gallery`);
+      if (!gallery) return;
+      const items = Array.from(gallery.children);
+      // Group items by their grid row
+      const rows = {};
+      items.forEach(item => {
+        const row = window.getComputedStyle(item).gridRowStart;
+        if (!rows[row]) rows[row] = [];
+        rows[row].push(item);
+        // Reset any previous transform
+        item.style.transform = '';
+      });
+      Object.values(rows).forEach(rowItems => {
+        if (rowItems.length === 3) {
+          const maxHeight = Math.max(...rowItems.map(i => i.offsetHeight));
+          const idx = Math.floor(Math.random() * 3);
+          rowItems[idx].style.transform = `translateY(${maxHeight}px)`;
         }
       });
     }
