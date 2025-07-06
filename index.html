@@ -164,15 +164,12 @@
   </div>
   <div id="commercial" class="section"></div>
   <div id="aboutme" class="section">
-    <div style="width:100vw; max-width:100vw; min-height:60vh; position:relative; margin-top:0;">
-      <img src="about me/IMG_0406 4.jpg" alt="About me left" style="max-width:320px; height:auto; display:block; position:absolute; left:40px; top:55vh; transform:translateY(-50%);" />
-      <img src="about me/image 538.jpg" alt="About me right" style="max-width:320px; height:auto; display:block; position:absolute; right:40px; top:55vh; transform:translateY(-50%);" />
-      <div style="position:absolute; left:20px; top:calc(55vh + 340px); max-width:420px;">
+    <div style="max-width:520px; margin:80px auto 0 auto; padding:0 20px; display:flex; flex-direction:column; align-items:center;">
+      <img src="about me/IMG_0406 4.jpg" alt="About me" style="max-width:100%; height:auto; margin-bottom:32px; display:block;" />
+      <div style="width:100%; text-align:left;">
         <p>Life and design explorer, pictures with meaning and quality creator.</p>
-        <p>I'm interested in contributing to the visual image<br>
-of modernity, while exploring and reflecting on the visual culture<br>
-of our world. I'm open to working with studios, designers,<br>
-and anyone passionate about creating images that tell their own story.</p>
+        <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+        <p style="margin-top:32px; margin-bottom:0;">@georgiisapozhkov<br>sapozhkov.george@gmail.com</p>
       </div>
     </div>
   </div>
@@ -184,9 +181,14 @@ and anyone passionate about creating images that tell their own story.</p>
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) target.classList.add('active');
-      // Find the nav link whose text matches the section id, ignoring spaces and case
+      // Map section IDs to nav link text for special cases
+      const sectionToNavText = {
+        photo: 'Photography',
+        graphic: 'Graphic design',
+      };
+      const navMatch = sectionToNavText[id] || id;
       const link = [...document.querySelectorAll('nav a')].find(a =>
-        a.textContent.replace(/\s+/g, '').toLowerCase() === id.replace(/\s+/g, '').toLowerCase()
+        a.textContent.replace(/\s+/g, '').toLowerCase() === navMatch.replace(/\s+/g, '').toLowerCase()
       );
       if (link) link.classList.add('active');
       if (updateHash) window.location.hash = id;
