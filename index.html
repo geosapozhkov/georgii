@@ -172,7 +172,10 @@
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) target.classList.add('active');
-      const link = [...document.querySelectorAll('nav a')].find(a => a.textContent.toLowerCase().includes(id));
+      // Find the nav link whose text matches the section id, ignoring spaces and case
+      const link = [...document.querySelectorAll('nav a')].find(a =>
+        a.textContent.replace(/\s+/g, '').toLowerCase() === id.replace(/\s+/g, '').toLowerCase()
+      );
       if (link) link.classList.add('active');
       if (updateHash) window.location.hash = id;
       if (id === 'photo' || id === 'cgi') {
