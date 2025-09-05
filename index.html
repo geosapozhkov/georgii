@@ -3,251 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Mind</title>
-    <style>
-        @font-face {
-            font-family: 'Booklet Sans';
-            src: url('path/to/BookletSans-Regular.woff2') format('woff2'),
-                 url('path/to/BookletSans-Regular.woff') format('woff'),
-                 url('path/to/BookletSans-Regular.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Booklet Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: white;
-            color: #000;
-            line-height: 1.4;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 60px;
-        }
-
-        /* Header */
-        header {
-            padding: 40px 0 60px;
-        }
-
-        nav {
-            display: flex;
-            gap: 50px;
-        }
-
-        .nav-item {
-            font-size: 16px;
-            color: #000;
-            text-decoration: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .nav-item.active {
-            opacity: 0.6;
-        }
-
-        .nav-item:hover {
-            opacity: 0.6;
-        }
-
-        /* Main Content */
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 80px;
-            padding-bottom: 100px;
-        }
-
-        /* Left Column - Time Labels */
-        .time-section {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
-
-        .time-item {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .time-label {
-            font-size: 14px;
-            font-weight: normal;
-            color: #000;
-            position: relative;
-        }
-
-        .time-label::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 20px;
-            height: 1px;
-            background: #000;
-        }
-
-        .time-content {
-            font-size: 32px;
-            font-weight: normal;
-            color: #000;
-            line-height: 1.2;
-        }
-
-        /* Right Column - Description */
-        .description {
-            grid-column: span 2;
-            padding-top: 20px;
-        }
-
-        .description p {
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 24px;
-            color: #000;
-        }
-
-        .description p:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Footer */
-        footer {
-            padding: 60px 0 40px;
-        }
-
-        .contact-info {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .contact-item {
-            font-size: 16px;
-            color: #000;
-            text-decoration: none;
-        }
-
-        .contact-item:hover {
-            opacity: 0.6;
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .container {
-                padding: 0 40px;
-            }
-            
-            .main-content {
-                gap: 60px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 30px;
-            }
-            
-            nav {
-                gap: 30px;
-            }
-            
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-            
-            .description {
-                grid-column: span 1;
-            }
-            
-            .time-content {
-                font-size: 28px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 0 20px;
-            }
-            
-            header {
-                padding: 30px 0 40px;
-            }
-            
-            nav {
-                flex-wrap: wrap;
-                gap: 20px;
-            }
-            
-            .time-content {
-                font-size: 24px;
-            }
-            
-            .description p {
-                font-size: 15px;
-            }
-        }
-    </style>
+    <title>Ваш Сайт</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <a href="#" class="nav-item">Lots of Letters</a>
-            <a href="#" class="nav-item active">Project Mind</a>
-            <a href="#" class="nav-item">Commerce</a>
-            <a href="#" class="nav-item">About me</a>
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="nav-link">Lots of Letters</a>
+            <a href="#" class="nav-link">Commerce</a>
+            <a href="#" class="nav-link">About me</a>
         </nav>
     </header>
 
-    <main>
-        <div class="container">
-            <div class="main-content">
-                <div class="time-section">
-                    <div class="time-item">
-                        <div class="time-label">Than</div>
-                        <div class="time-content">Area 117</div>
-                    </div>
-                    <div class="time-item">
-                        <div class="time-label">Now</div>
-                        <div class="time-content">Yoki Red Building</div>
-                    </div>
-                    <div class="time-item">
-                        <div class="time-label">Then</div>
-                        <div class="time-content">Ruins</div>
-                    </div>
+    <main class="main-content">
+        <div class="content-wrapper">
+            <!-- Левая часть с проектами -->
+            <div class="projects-section">
+                <div class="project-category">
+                    <h3 class="category-title">Than</h3>
+                    <h2 class="project-title">Area 117</h2>
                 </div>
+                
+                <div class="project-category">
+                    <h3 class="category-title">Now</h3>
+                    <h2 class="project-title">Yoki</h2>
+                    <h2 class="project-title">Red Building</h2>
+                </div>
+                
+                <div class="project-category">
+                    <h3 class="category-title">Then</h3>
+                    <h2 class="project-title">Ruins</h2>
+                </div>
+            </div>
 
-                <div class="description">
-                    <p>This project is a lifelong concept. It consists of three parts: "Than", "Now", and "Then". The project "MIND" explores the human conflict between the irrational and the rational.</p>
-                    
-                    <p>The collapse of the RCII serves as the event giving birth to "Then", "Now", and "Then". RCII was a huge, colossal laboratory representing humanity's rational designing and classification of our own life.</p>
-                    
-                    <p>This project challenges the notion of totalitarianism and aims to find a balance between the rational and irrational aspects of human existence. Through this exploration, we seek to understand the complex nature of human consciousness and the structures that define our reality.</p>
-                    
-                    <p>The three temporal states represent different phases of human development and understanding, each offering unique perspectives on the relationship between order and chaos, structure and freedom.</p>
-                </div>
+            <!-- Правая часть с описанием -->
+            <div class="description-section">
+                <p class="description-text">
+                    Here you see projects which is one lifelong concept that I am discovering throughout my life.
+                </p>
+                <p class="description-text">
+                    I named it "Mind" and for better orientation in the space and time of that world, I have added periods. But you can watch and read each of its parts in any sequence.
+                </p>
+                <p class="description-text">
+                    In short, the major concept of this world is an an exploration of the human conflict between the irrational and the rational.
+                </p>
+                <p class="description-text">
+                    The major event that gave birth to the "Then", "Now" and "Then" is the collapse of the RCII.
+                </p>
+                <p class="description-text">
+                    The RCII, in simple words, is a huge, colossal laboratory that could contain entire cities and the smallest objects at the same time, on different floors. It is a representation of humanity's rational designing and classification of our own life. But at the same time, it is impossible to exclude totalitarianism in this pursuit, because timetrackers and rules are things that help us to survive—we should not forget that. However, too much pressure from totalitarianism can destroy a person itself. Therefore, the major goal of this project is to show a world balancing between the rational and the irrational.
+                </p>
             </div>
         </div>
     </main>
 
-    <footer>
-        <div class="container">
-            <div class="contact-info">
-                <a href="mailto:sapozhkov.george@gmail.com" class="contact-item">sapozhkov.george@gmail.com</a>
-                <a href="#" class="contact-item">@georgiisapozhkov</a>
-            </div>
+    <footer class="footer">
+        <div class="contact-info">
+            <p>sapozhkov.george@gmail.com</p>
+            <p>@georgiisapozhkov</p>
         </div>
     </footer>
 </body>
