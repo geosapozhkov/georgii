@@ -1,50 +1,85 @@
-@font-face {
-    font-family: 'BookletSans';
-    src: url('BookletSans-regular-trial.otf') format('opentype');
-    font-weight: normal;
-    font-style: normal;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <style>
+        @font-face {
+            font-family: 'BookletSans';
+            src: url('BookletSans-regular-trial.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: 'BookletSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #ffffff;
-    color: #333333;
-    line-height: 1.6;
-    font-size: 23.84px;
-}
+        body {
+            font-family: 'BookletSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+            line-height: 1.6;
+            min-height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+        }
 
-.navigation {
-    padding: 20px 0 0 20px;
-    display: flex;
-    gap: 40px;
-}
+        /* Navigation */
+        .navigation {
+            padding: 20px 0 0 20px;
+            display: flex;
+            gap: 40px;
+        }
 
-.nav-link {
-    text-decoration: none;
-    color: #333333;
-    font-size: 23.84px;
-    font-weight: normal;
-    transition: color 0.2s ease;
-}
+        .nav-link {
+            text-decoration: none;
+            color: #333333;
+            font-size: 23.84px;
+            font-weight: normal;
+            transition: color 0.2s ease;
+        }
 
-.nav-link:hover {
-    color: #666666;
-}
+        .nav-link:hover {
+            color: #666666;
+        }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .navigation {
-        padding: 15px 0 0 15px;
-        gap: 30px;
-    }
-    
-    .nav-link {
-        font-size: 23.84px;
-    }
-}
+        /* Responsive design for different screen sizes */
+        @media (max-width: 1920px) {
+            .navigation {
+                padding: 20px 0 0 20px;
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navigation {
+                padding: 15px 0 0 15px;
+                gap: 30px;
+            }
+            
+            .nav-link {
+                font-size: 23.84px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navigation {
+                flex-direction: column;
+                gap: 20px;
+                padding: 15px 0 0 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navigation">
+        <a href="#" class="nav-link">Lots of Letters</a>
+        <a href="#" class="nav-link">Commerce</a>
+        <a href="#" class="nav-link">About me</a>
+    </nav>
+</body>
+</html>
