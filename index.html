@@ -44,7 +44,7 @@
       top: 20px;
       right: 20px;
       max-width: 420px;
-      line-height: 1.6;
+      line-height: 1.4;
     }
 
     .footer {
@@ -252,22 +252,9 @@
       });
 
       // --- MP4 VIDEOS ---
-      const vidCount = videos.length;
-      const vid3col = Math.round(vidCount * 0.70);
-      const vid2col = Math.round(vidCount * 0.10);
-      const vid1col = vidCount - vid3col - vid2col;
-      shuffle(videos).forEach((vid, idx) => {
-        if (idx < vid3col) {
-          vid.style.gridColumn = '1 / span 3';
-        } else if (idx < vid3col + vid2col) {
-          // Randomly pick a start column: 1 or 2
-          const col = Math.floor(Math.random() * 2) + 1;
-          vid.style.gridColumn = `${col} / span 2`;
-        } else {
-          // Randomly pick a column: 1, 2, or 3
-          const col = Math.floor(Math.random() * 3) + 1;
-          vid.style.gridColumn = `${col} / span 1`;
-        }
+      // Always make videos span the full gallery width (3 columns)
+      videos.forEach(vid => {
+        vid.style.gridColumn = '1 / span 3';
       });
     }
 
