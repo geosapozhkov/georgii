@@ -26,6 +26,8 @@
             min-height: 100vh;
             width: 100vw;
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Navigation */
@@ -45,6 +47,35 @@
 
         .nav-link:hover {
             color: #666666;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            padding: 0 30px;
+            gap: 60px;
+        }
+
+        /* Right Content - Text */
+        .content-right {
+            flex: 1;
+            max-width: 500px;
+            margin-left: auto;
+        }
+
+        .text-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333333;
+        }
+
+        .text-content p {
+            margin-bottom: 20px;
+        }
+
+        .text-content p:last-child {
+            margin-bottom: 0;
         }
 
         /* Responsive design for different screen sizes */
@@ -81,5 +112,19 @@
         <a href="#" class="nav-link">Commerce</a>
         <a href="#" class="nav-link">About me</a>
     </nav>
+
+    <main class="main-content">
+        <div class="content-right">
+            <div class="text-content">
+                <p>The project "MIND" and its parts.</p>
+                <p>The "human conflict between the irrational and the rational."</p>
+                <p>The "collapse of the RCII" as the event giving birth to "Then", "Now", and "Then".</p>
+                <p>A description of "RCII" as a "huge, colossal laboratory" representing "humanity's rational designing and classification of our own life."</p>
+                <p>The challenge of totalitarianism and the goal of balancing the rational and irrational.</p>
+                <p>This is a lifelong concept, and its structure.</p>
+                <p>The project explores the fundamental tensions in human nature and society.</p>
+            </div>
+        </div>
+    </main>
 </body>
 </html>
