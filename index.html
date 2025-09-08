@@ -81,10 +81,9 @@
 
         .col-header { font-size: 15px; }
         .cell { height: 64px; display: flex; align-items: flex-start; }
-        .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; }
+        .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; transition: opacity 200ms ease; }
         .catalog-empty { font-size: 48px; color: #3C3C3C; }
-
-        .text-content.dimmed { opacity: 0.25; }
+        .catalog-link.dimmed { opacity: 0.25; }
 
         /* Right Content - Text */
         .content-right {
@@ -318,7 +317,8 @@
 
         // swap right description on catalog click
         const rightText = document.querySelector('.text-content');
-        document.querySelectorAll('.catalog-link').forEach(a=>{
+        const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+        allLinks.forEach(a=>{
             a.addEventListener('click', (e)=>{
                 e.preventDefault();
                 const desc = a.getAttribute('data-description');
@@ -326,8 +326,9 @@
                     rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
-                // dim right text to 25% opacity
-                rightText.classList.add('dimmed');
+                // dim only clicked catalog name to 25% opacity; reset others to 100%
+                allLinks.forEach(l=>l.classList.remove('dimmed'));
+                a.classList.add('dimmed');
                 // Replace moving preview with static rectangles placed randomly (stay within bounds)
                 stop();
                 const count = 6;
