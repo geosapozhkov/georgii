@@ -68,12 +68,12 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 1; padding-left: 30px; margin-top: 40px; }
+        .content-left { flex: 1; padding-left: 30px; margin-top: 80px; }
 
         .catalog-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(180px, 1fr));
-            column-gap: 60px;
+            column-gap: 48px;
             row-gap: 28px;
             align-content: start;
             padding-top: 10px;
@@ -313,9 +313,12 @@
             cancelAnimationFrame(animationId);
         }
 
-        document.querySelectorAll('.cell').forEach(el=>{
-            el.addEventListener('mouseenter', ()=>start(el.dataset.preview));
-            el.addEventListener('mouseleave', stop);
+        // trigger preview only on catalog links, not empty cells
+        document.querySelectorAll('.catalog-link').forEach(link=>{
+            const cell = link.closest('.cell');
+            if (!cell) return;
+            link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+            link.addEventListener('mouseleave', stop);
         });
 
         // swap right description on catalog click
