@@ -214,13 +214,44 @@
             }));
         }
 
+        function resolveRectCollision(a, b){
+            const ax2 = a.x + a.w, ay2 = a.y + a.h;
+            const bx2 = b.x + b.w, by2 = b.y + b.h;
+            const overlapX = Math.min(ax2 - b.x, bx2 - a.x);
+            const overlapY = Math.min(ay2 - b.y, by2 - a.y);
+            if (overlapX < overlapY){
+                // separate on X
+                const push = overlapX / 2;
+                if (a.x < b.x){ a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+                a.vx *= -1; b.vx *= -1;
+            } else {
+                // separate on Y
+                const push = overlapY / 2;
+                if (a.y < b.y){ a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
+                a.vy *= -1; b.vy *= -1;
+            }
+        }
+
         function step(){
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#D9D9D9';
+            // integrate
             for(const r of rects){
                 r.x += r.vx; r.y += r.vy;
                 if (r.x <= 0 || r.x + r.w >= canvas.width) { r.vx *= -1; r.x = Math.max(0, Math.min(canvas.width - r.w, r.x)); }
                 if (r.y <= 0 || r.y + r.h >= canvas.height) { r.vy *= -1; r.y = Math.max(0, Math.min(canvas.height - r.h, r.y)); }
+            }
+            // pairwise collisions
+            for(let i=0;i<rects.length;i++){
+                for(let j=i+1;j<rects.length;j++){
+                    const a = rects[i], b = rects[j];
+                    if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y){
+                        resolveRectCollision(a,b);
+                    }
+                }
+            }
+            // draw
+            ctx.fillStyle = '#D9D9D9';
+            for(const r of rects){
                 ctx.fillRect(r.x, r.y, r.w, r.h);
             }
             animationId = requestAnimationFrame(step);
