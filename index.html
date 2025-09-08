@@ -31,13 +31,20 @@
             display: flex;
             flex-direction: column;
             padding-right: 10px; /* Right gutter */
+            padding-top: 60px; /* offset for fixed nav */
         }
 
         /* Navigation */
         .navigation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             padding: 20px 0 0 30px;
             display: flex;
             gap: 40px;
+            z-index: 20;
+            background: transparent;
         }
 
         .nav-link {
@@ -59,6 +66,23 @@
             padding: 0 0 0 20px;
             gap: 60px;
         }
+
+        /* Left Content - Catalog grid */
+        .content-left { flex: 1; }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(180px, 1fr));
+            column-gap: 120px;
+            row-gap: 28px;
+            align-content: start;
+            padding-top: 10px;
+        }
+
+        .col-header { font-size: 15px; }
+        .cell { min-height: 40px; }
+        .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; }
+        .catalog-empty { font-size: 48px; color: #3C3C3C; }
 
         /* Right Content - Text */
         .content-right {
@@ -157,18 +181,27 @@
         <a href="#" class="nav-link">Commerce</a>
         <a href="#" class="nav-link">About me</a>
     </nav>
-    <section class="catalogs">
-        <div class="catalog-item" data-preview="1">
-            <div class="catalog-label">Than</div>
-            <div class="catalog-title">Area 117</div>
-        </div>
-        <div class="catalog-item" data-preview="2">
-            <div class="catalog-label">Now</div>
-            <div class="catalog-title">Yoki<br>Red Building</div>
-        </div>
-        <div class="catalog-item" data-preview="3">
-            <div class="catalog-label">Then</div>
-            <div class="catalog-title">Ruins</div>
+    <section class="content-left">
+        <div class="catalog-grid">
+            <div class="col-header">Than</div>
+            <div class="col-header">Now</div>
+            <div class="col-header">Then</div>
+
+            <div class="cell" data-preview="1">
+                <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
+            </div>
+            <div class="cell" data-preview="2">
+                <a href="#yoki" class="catalog-link" data-description="Yoki Red Building description here...">Yoki<br>Red Building</a>
+            </div>
+            <div class="cell" data-preview="3">
+                <span class="catalog-empty">-</span>
+            </div>
+
+            <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
+            <div class="cell" data-preview="2"><span class="catalog-empty">-</span></div>
+            <div class="cell" data-preview="3">
+                <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
+            </div>
         </div>
     </section>
 
@@ -273,9 +306,22 @@
             cancelAnimationFrame(animationId);
         }
 
-        document.querySelectorAll('.catalog-item').forEach(el=>{
+        document.querySelectorAll('.cell').forEach(el=>{
             el.addEventListener('mouseenter', start);
             el.addEventListener('mouseleave', stop);
+        });
+
+        // swap right description on catalog click
+        const rightText = document.querySelector('.text-content');
+        document.querySelectorAll('.catalog-link').forEach(a=>{
+            a.addEventListener('click', (e)=>{
+                e.preventDefault();
+                const desc = a.getAttribute('data-description');
+                if (desc) {
+                    rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
         });
     })();
 </script>
