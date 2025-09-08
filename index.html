@@ -68,12 +68,12 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 1; padding-left: 30px; }
+        .content-left { flex: 1; padding-left: 30px; margin-top: 40px; }
 
         .catalog-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(180px, 1fr));
-            column-gap: 120px;
+            column-gap: 60px;
             row-gap: 28px;
             align-content: start;
             padding-top: 10px;
@@ -233,6 +233,7 @@
         let animationId = null;
         let rects = [];
         let active = false;
+        let activePreviewId = null; // disable hover preview for active catalog
 
         function resize(){
             canvas.width = window.innerWidth;
@@ -296,7 +297,9 @@
             animationId = requestAnimationFrame(step);
         }
 
-        function start(){
+        function start(previewId){
+            // do not show animated preview for the active catalog
+            if (activePreviewId && String(previewId) === String(activePreviewId)) return;
             if (active) return;
             active = true;
             canvas.style.display = 'block';
@@ -311,7 +314,7 @@
         }
 
         document.querySelectorAll('.cell').forEach(el=>{
-            el.addEventListener('mouseenter', start);
+            el.addEventListener('mouseenter', ()=>start(el.dataset.preview));
             el.addEventListener('mouseleave', stop);
         });
 
@@ -329,6 +332,9 @@
                 // dim only clicked catalog name to 25% opacity; reset others to 100%
                 allLinks.forEach(l=>l.classList.remove('dimmed'));
                 a.classList.add('dimmed');
+                // mark this preview as active to disable its animated hover
+                const parentCell = a.closest('.cell');
+                if (parentCell) activePreviewId = parentCell.dataset.preview || null;
                 // Replace moving preview with static rectangles placed randomly (stay within bounds)
                 stop();
                 const count = 6;
