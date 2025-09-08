@@ -68,7 +68,7 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 1; }
+        .content-left { flex: 1; padding-left: 30px; }
 
         .catalog-grid {
             display: grid;
@@ -80,7 +80,7 @@
         }
 
         .col-header { font-size: 15px; }
-        .cell { min-height: 40px; }
+        .cell { height: 64px; display: flex; align-items: flex-start; }
         .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; }
         .catalog-empty { font-size: 48px; color: #3C3C3C; }
 
@@ -191,14 +191,16 @@
                 <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
             </div>
             <div class="cell" data-preview="2">
-                <a href="#yoki" class="catalog-link" data-description="Yoki Red Building description here...">Yoki<br>Red Building</a>
+                <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
             </div>
             <div class="cell" data-preview="3">
                 <span class="catalog-empty">-</span>
             </div>
 
             <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
-            <div class="cell" data-preview="2"><span class="catalog-empty">-</span></div>
+            <div class="cell" data-preview="2">
+                <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
+            </div>
             <div class="cell" data-preview="3">
                 <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
             </div>
@@ -321,6 +323,31 @@
                     rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
+                // Replace moving preview with static rectangles placed randomly (stay within bounds)
+                stop();
+                const count = 6;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight;
+                tempCanvas.style.position = 'fixed';
+                tempCanvas.style.inset = '0';
+                tempCanvas.style.zIndex = '9';
+                tempCanvas.style.pointerEvents = 'none';
+                document.body.appendChild(tempCanvas);
+                const tctx = tempCanvas.getContext('2d');
+                const rnd = (min,max)=>Math.random()*(max-min)+min;
+                tctx.fillStyle = '#D9D9D9';
+                for(let i=0;i<count;i++){
+                    const w = rnd(120,200), h = rnd(80,140);
+                    const x = rnd(20, tempCanvas.width - w - 10);
+                    const y = rnd(80, tempCanvas.height - h - 20);
+                    tctx.fillRect(x,y,w,h);
+                }
+                // auto-remove static overlay on next hover
+                document.querySelectorAll('.cell').forEach(el=>{
+                    el.addEventListener('mouseenter', ()=>{
+                        if (tempCanvas.parentNode) tempCanvas.parentNode.removeChild(tempCanvas);
+                    }, { once: true });
+                });
             });
         });
     })();
