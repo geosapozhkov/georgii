@@ -510,10 +510,12 @@
                 img.style.position = 'absolute';
                 img.style.width = '360px';
                 img.style.height = 'auto';
-                img.style.zIndex = '1';
-                img.style.left = '200px';
-                img.style.top = '200px';
-                img.style.border = '2px solid blue'; // Add border to make it visible
+                img.style.zIndex = '1000';
+                img.style.left = '300px';
+                img.style.top = '300px';
+                img.style.border = '5px solid red'; // Thick red border
+                img.style.backgroundColor = 'yellow'; // Background color
+                img.style.opacity = '1'; // Ensure it's visible
                 
                 // Add error handling
                 img.onerror = function() {
