@@ -107,14 +107,16 @@
         }
 
         .gallery-grid {
-            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
             width: 100%;
             height: 100%;
-            padding: 20px;
         }
 
         .gallery-item {
-            position: absolute;
+            position: relative;
             cursor: pointer;
             transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease;
             border-radius: 4px;
@@ -149,6 +151,28 @@
             z-index: 1001;
             transform: translateY(-10px) rotate(0deg);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Draggable text styles */
+        .draggable-text {
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .draggable-text:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .draggable-text.lifted {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            cursor: grab;
+        }
+
+        .draggable-text.lifted:active {
+            cursor: grabbing;
         }
 
         /* Modal for full-size image viewing */
@@ -496,122 +520,92 @@
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
 
-        // Load gallery images with chaotic positioning
+        // Utility function to shuffle array
+        function shuffle(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Dynamically generate draggable text images for all .png files in the texts folder
         function loadGalleryImages() {
-            const imageCount = 44; // 0.png to 43.png
-            
-            // Use window dimensions for positioning
-            const containerWidth = window.innerWidth - 60; // account for margins
-            const containerHeight = window.innerHeight - 200; // account for nav and footer
-            
-            for (let i = 0; i < imageCount; i++) {
-                const galleryItem = document.createElement('div');
-                galleryItem.className = 'gallery-item';
-                galleryItem.dataset.index = i;
-                
-                const img = document.createElement('img');
-                img.src = `texts/${i}.png`;
-                img.alt = `Text ${i}`;
-                img.loading = 'lazy';
-                
-                galleryItem.appendChild(img);
-                galleryGrid.appendChild(galleryItem);
-                
-                // Random positioning and rotation - spread across entire screen
-                const randomX = Math.random() * (containerWidth - 250);
-                const randomY = Math.random() * (containerHeight - 300);
-                const randomRotation = (Math.random() - 0.5) * 20; // -10 to +10 degrees
-                const randomWidth = 150 + Math.random() * 100; // 150-250px width
-                
-                galleryItem.style.left = randomX + 'px';
-                galleryItem.style.top = randomY + 'px';
-                galleryItem.style.width = randomWidth + 'px';
-                galleryItem.style.transform = `rotate(${randomRotation}deg)`;
-                
-                // Add interaction handlers
-                setupPaperInteractions(galleryItem);
+            const canvas = galleryGrid; // Use galleryGrid as canvas
+            if (canvas) {
+                // List of all .png files in the texts folder
+                const imageNames = [
+                    '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
+                    '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
+                    '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
+                    '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
+                    '40.png','41.png','42.png','43.png'
+                ];
+                const canvasW = canvas.offsetWidth || window.innerWidth;
+                const canvasH = canvas.offsetHeight || 800;
+                imageNames.forEach((name, i) => {
+                    const img = document.createElement('img');
+                    img.src = `texts/${name}`;
+                    img.className = 'draggable-text';
+                    img.alt = `Text ${name}`;
+                    img.style.position = 'absolute';
+                    img.style.width = '360px';
+                    // Random position within the canvas
+                    const left = Math.floor(Math.random() * (canvasW - 200));
+                    const top = Math.floor(Math.random() * (canvasH - 200));
+                    img.style.left = left + 'px';
+                    img.style.top = top + 'px';
+                    canvas.appendChild(img);
+                });
             }
         }
 
-        function setupPaperInteractions(item) {
-            let isLifted = false;
+        // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
+        let dragImg = null;
+        let offsetX = 0;
+        let offsetY = 0;
+        let zCounter = 10;
+        let isDragging = false;
+
+        document.addEventListener('click', function(e) {
+            // Only allow interactions when Lots of Letters tab is active
+            if (lettersGallery.style.display === 'none') return;
             
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                
-                // Only allow interactions when Lots of Letters tab is active
-                if (lettersGallery.style.display === 'none') return;
-                
-                if (!isLifted) {
-                    // Lift the paper
-                    item.classList.add('lifted');
-                    isLifted = true;
-                } else {
-                    // Drop the paper
-                    item.classList.remove('lifted', 'dragging');
-                    isLifted = false;
+            if (e.target.classList.contains('draggable-text')) {
+                if (!dragImg) {
+                    dragImg = e.target;
+                    offsetX = e.clientX - dragImg.offsetLeft;
+                    offsetY = e.clientY - dragImg.offsetTop;
+                    dragImg.classList.add('lifted');
+                    zCounter++;
+                    dragImg.style.zIndex = zCounter;
+                    isDragging = true;
+                    document.addEventListener('mousemove', moveHandler);
+                } else if (dragImg === e.target) {
+                    dragImg.classList.remove('lifted');
+                    dragImg = null;
                     isDragging = false;
-                    draggedItem = null;
+                    document.removeEventListener('mousemove', moveHandler);
                 }
-            });
-            
-            // Drag functionality
-            item.addEventListener('mousedown', (e) => {
-                // Only allow dragging when Lots of Letters tab is active and item is lifted
-                if (lettersGallery.style.display === 'none' || !item.classList.contains('lifted')) return;
-                
-                e.preventDefault();
-                isDragging = true;
-                draggedItem = item;
-                item.classList.add('dragging');
-                
-                const rect = item.getBoundingClientRect();
-                const containerRect = galleryGrid.getBoundingClientRect();
-                
-                dragOffset.x = e.clientX - rect.left;
-                dragOffset.y = e.clientY - rect.top;
-                
-                // Convert to container coordinates
-                const currentLeft = parseFloat(item.style.left) || 0;
-                const currentTop = parseFloat(item.style.top) || 0;
-                
-                dragOffset.x = e.clientX - containerRect.left - currentLeft;
-                dragOffset.y = e.clientY - containerRect.top - currentTop;
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                // Only allow dragging when Lots of Letters tab is active
-                if (!isDragging || !draggedItem || lettersGallery.style.display === 'none') return;
-                
-                const containerRect = galleryGrid.getBoundingClientRect();
-                const newX = e.clientX - containerRect.left - dragOffset.x;
-                const newY = e.clientY - containerRect.top - dragOffset.y;
-                
-                // Keep within bounds
-                const maxX = containerRect.width - draggedItem.offsetWidth;
-                const maxY = containerRect.height - draggedItem.offsetHeight;
-                
-                draggedItem.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
-                draggedItem.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if (draggedItem) {
-                    draggedItem.classList.remove('dragging');
-                    isDragging = false;
-                    draggedItem = null;
-                }
-            });
+            }
+        });
+
+        function moveHandler(e) {
+            if (dragImg && isDragging) {
+                dragImg.style.left = (e.clientX - offsetX) + 'px';
+                dragImg.style.top = (e.clientY - offsetY) + 'px';
+            }
         }
 
         // Function to reset all paper states
         function resetAllPapers() {
-            const items = document.querySelectorAll('.gallery-item');
+            const items = document.querySelectorAll('.draggable-text');
             items.forEach(item => {
-                item.classList.remove('lifted', 'dragging');
+                item.classList.remove('lifted');
             });
             isDragging = false;
-            draggedItem = null;
+            dragImg = null;
         }
 
         // Navigation handlers
