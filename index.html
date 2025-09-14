@@ -73,10 +73,11 @@
         .catalog-grid {
             display: grid;
             grid-template-columns: auto auto auto;
-            column-gap: 16px;
+            column-gap: 4px;
             row-gap: 28px;
             align-content: start;
             padding-top: 10px;
+            width: fit-content;
         }
 
         .col-header { font-size: 15px; }
@@ -152,11 +153,12 @@
         }
 
         .footer div {
-            margin-bottom: 0.3em;
+            margin: 0;
+            line-height: 1.2;
         }
 
-        .footer div:last-child {
-            margin-bottom: 0;
+        .footer div:first-child {
+            margin-bottom: 0.2em;
         }
 
         /* Responsive design for different screen sizes */
