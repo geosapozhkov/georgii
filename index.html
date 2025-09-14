@@ -530,26 +530,26 @@
             return shuffled;
         }
 
-        // Optimized gallery loading with batch processing
+        // Optimized gallery loading with fixed width, natural height
         function loadGalleryImages() {
             const imageCount = 44;
             const containerWidth = window.innerWidth;
             const containerHeight = window.innerHeight;
+            const imageWidth = 200; // Fixed width for all images
             
             // Create DocumentFragment for better performance
             const fragment = document.createDocumentFragment();
             const items = [];
             
-            // Pre-calculate all positions
+            // Pre-calculate all positions (use estimated height for positioning)
+            const estimatedHeight = 280; // Estimated height for positioning
             for (let i = 0; i < imageCount; i++) {
-                const randomX = Math.random() * (containerWidth - 250);
-                const randomY = Math.random() * (containerHeight - 300);
-                const randomWidth = 150 + Math.random() * 100;
+                const randomX = Math.random() * (containerWidth - imageWidth);
+                const randomY = Math.random() * (containerHeight - estimatedHeight);
                 
                 items.push({
                     x: randomX,
                     y: randomY,
-                    width: randomWidth,
                     index: i
                 });
             }
@@ -566,11 +566,11 @@
                 img.loading = 'lazy';
                 img.decoding = 'async';
                 
-                // Set styles in one go
+                // Set fixed width only, height will be auto (preserves proportions)
                 Object.assign(galleryItem.style, {
                     left: item.x + 'px',
                     top: item.y + 'px',
-                    width: item.width + 'px',
+                    width: imageWidth + 'px',
                     transform: 'rotate(0deg)'
                 });
                 
@@ -586,7 +586,8 @@
         }
 
         function setupPaperInteractions(item) {
-            let isLifted = false;
+            let isDragging = false;
+            let dragOffset = { x: 0, y: 0 };
             
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -594,66 +595,47 @@
                 // Only allow interactions when Lots of Letters tab is active
                 if (lettersGallery.style.display === 'none') return;
                 
-                if (!isLifted) {
-                    // Lift the paper
+                if (!isDragging) {
+                    // Start dragging - lift the image
+                    isDragging = true;
                     item.classList.add('lifted');
-                    isLifted = true;
+                    item.style.zIndex = '1000';
+                    
+                    // Calculate offset from mouse to image corner
+                    const rect = item.getBoundingClientRect();
+                    dragOffset.x = e.clientX - rect.left;
+                    dragOffset.y = e.clientY - rect.top;
+                    
+                    // Add global mouse move listener
+                    document.addEventListener('mousemove', handleMouseMove);
                 } else {
-                    // Drop the paper
-                    item.classList.remove('lifted', 'dragging');
-                    isLifted = false;
+                    // Stop dragging - drop the image
                     isDragging = false;
-                    draggedItem = null;
+                    item.classList.remove('lifted');
+                    item.style.zIndex = 'auto';
+                    
+                    // Remove global mouse move listener
+                    document.removeEventListener('mousemove', handleMouseMove);
                 }
             });
             
-            // Drag functionality
-            item.addEventListener('mousedown', (e) => {
-                // Only allow dragging when Lots of Letters tab is active and item is lifted
-                if (lettersGallery.style.display === 'none' || !item.classList.contains('lifted')) return;
+            function handleMouseMove(e) {
+                if (!isDragging) return;
                 
-                e.preventDefault();
-                isDragging = true;
-                draggedItem = item;
-                item.classList.add('dragging');
+                // Calculate new position
+                const newX = e.clientX - dragOffset.x;
+                const newY = e.clientY - dragOffset.y;
                 
-                const rect = item.getBoundingClientRect();
-                const containerRect = galleryGrid.getBoundingClientRect();
+                // Keep within screen bounds
+                const maxX = window.innerWidth - item.offsetWidth;
+                const maxY = window.innerHeight - item.offsetHeight;
                 
-                dragOffset.x = e.clientX - rect.left;
-                dragOffset.y = e.clientY - rect.top;
+                const clampedX = Math.max(0, Math.min(newX, maxX));
+                const clampedY = Math.max(0, Math.min(newY, maxY));
                 
-                // Convert to container coordinates
-                const currentLeft = parseFloat(item.style.left) || 0;
-                const currentTop = parseFloat(item.style.top) || 0;
-                
-                dragOffset.x = e.clientX - containerRect.left - currentLeft;
-                dragOffset.y = e.clientY - containerRect.top - currentTop;
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                // Only allow dragging when Lots of Letters tab is active
-                if (!isDragging || !draggedItem || lettersGallery.style.display === 'none') return;
-                
-                const containerRect = galleryGrid.getBoundingClientRect();
-                const newX = e.clientX - containerRect.left - dragOffset.x;
-                const newY = e.clientY - containerRect.top - dragOffset.y;
-                
-                // Keep within bounds
-                const maxX = containerRect.width - draggedItem.offsetWidth;
-                const maxY = containerRect.height - draggedItem.offsetHeight;
-                
-                draggedItem.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
-                draggedItem.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
-            });
-            
-            document.addEventListener('mouseup', () => {
-                if (draggedItem) {
-                    draggedItem.classList.remove('dragging');
-                    isDragging = false;
-                    draggedItem = null;
-                }
-            });
+                item.style.left = clampedX + 'px';
+                item.style.top = clampedY + 'px';
+            }
         }
 
         // Function to reset all paper states
