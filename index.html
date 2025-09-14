@@ -492,7 +492,7 @@
                 img.style.position = 'fixed';
                 img.style.width = 'auto';
                 img.style.height = 'auto';
-                img.style.maxWidth = '500px';
+                img.style.maxWidth = '294px'; // 500px / 1.7 ≈ 294px
                 img.style.zIndex = '100';
                 
                 // Random position within the screen
@@ -564,12 +564,18 @@
             const activeLink = Array.from(navLinks).find(l => l.textContent.trim() === tabName);
             if (activeLink) activeLink.classList.add('active');
             
+            // Hide all draggable images first
+            const allImages = document.querySelectorAll('.draggable-text');
+            allImages.forEach(img => img.style.display = 'none');
+            
             // Update text content based on active tab
             updateTextContent(tabName);
             
             if (tabName === 'Lots of Letters') {
                 mainContent.style.display = 'none';
                 lettersGallery.style.display = 'block';
+                // Show images only for Lots of Letters
+                allImages.forEach(img => img.style.display = 'block');
                 loadDraggableTextImages();
             } else if (tabName === 'Commerce' || tabName === 'About me') {
                 mainContent.style.display = 'none';
