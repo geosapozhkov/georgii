@@ -115,13 +115,8 @@
         /* Draggable text styles */
         .draggable-text {
             cursor: pointer;
+            border-radius: 0;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-radius: 4px;
-        }
-
-        .draggable-text:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .draggable-text.lifted {
@@ -497,6 +492,7 @@
                 img.style.width = '360px';
                 img.style.height = 'auto';
                 img.style.zIndex = '100';
+                img.style.objectFit = 'none';
                 
                 // Random position within the screen
                 const left = Math.floor(Math.random() * (screenW - 400));
@@ -515,20 +511,24 @@
             let dragImg = null;
             let offsetX = 0;
             let offsetY = 0;
-            let zCounter = 10;
+            let zCounter = 100;
             let isDragging = false;
+            
             document.addEventListener('click', function(e) {
                 if (e.target.classList.contains('draggable-text')) {
                     if (!dragImg) {
+                        // Start dragging - lift the image
                         dragImg = e.target;
-                        offsetX = e.clientX - dragImg.offsetLeft;
-                        offsetY = e.clientY - dragImg.offsetTop;
+                        const rect = dragImg.getBoundingClientRect();
+                        offsetX = e.clientX - rect.left;
+                        offsetY = e.clientY - rect.top;
                         dragImg.classList.add('lifted');
                         zCounter++;
                         dragImg.style.zIndex = zCounter;
                         isDragging = true;
                         document.addEventListener('mousemove', moveHandler);
                     } else if (dragImg === e.target) {
+                        // Stop dragging - drop the image
                         dragImg.classList.remove('lifted');
                         dragImg = null;
                         isDragging = false;
@@ -536,6 +536,7 @@
                     }
                 }
             });
+            
             function moveHandler(e) {
                 if (dragImg && isDragging) {
                     dragImg.style.left = (e.clientX - offsetX) + 'px';
