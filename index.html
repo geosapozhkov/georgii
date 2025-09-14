@@ -489,10 +489,10 @@
                 img.className = 'draggable-text';
                 img.alt = `Text ${name}`;
                 img.style.position = 'fixed';
-                img.style.width = '360px';
+                img.style.width = 'auto';
                 img.style.height = 'auto';
+                img.style.maxWidth = '500px';
                 img.style.zIndex = '100';
-                img.style.objectFit = 'none';
                 
                 // Random position within the screen
                 const left = Math.floor(Math.random() * (screenW - 400));
@@ -633,4 +633,5 @@
     })();
 </script>
 </html>
+
 
