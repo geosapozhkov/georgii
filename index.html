@@ -297,9 +297,6 @@
     <!-- Lots of Letters Gallery -->
     <section class="letters-gallery" id="letters-gallery" style="display: none;">
         <canvas id="texts-canvas"></canvas>
-        <div style="position: absolute; top: 50px; left: 50px; background: yellow; padding: 10px; z-index: 1000;">
-            CANVAS TEST - This should be visible when Lots of Letters is active
-        </div>
     </section>
 
     <main class="main-content">
@@ -484,62 +481,39 @@
                 // Clear existing images first
                 canvas.innerHTML = '';
                 
-                // Add a test div first to see if anything appears
-                const testDiv = document.createElement('div');
-                testDiv.style.position = 'absolute';
-                testDiv.style.left = '100px';
-                testDiv.style.top = '100px';
-                testDiv.style.width = '200px';
-                testDiv.style.height = '100px';
-                testDiv.style.backgroundColor = 'red';
-                testDiv.style.zIndex = '999';
-                testDiv.textContent = 'TEST - Can you see this?';
-                canvas.appendChild(testDiv);
-                console.log('Added test div');
                 
-                // Test with just one image first
-                const testImage = '0.png';
+                // List of all .png files in the texts folder
+                const imageNames = [
+                    '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
+                    '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
+                    '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
+                    '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
+                    '40.png','41.png','42.png','43.png'
+                ];
+                
                 const canvasW = window.innerWidth;
                 const canvasH = window.innerHeight;
-                console.log('Canvas dimensions:', canvasW, canvasH);
                 
-                const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${testImage}`;
-                img.className = 'draggable-text';
-                img.alt = `Text ${testImage}`;
-                img.style.position = 'absolute';
-                img.style.width = '360px';
-                img.style.height = 'auto';
-                img.style.zIndex = '1000';
-                img.style.left = '300px';
-                img.style.top = '300px';
-                img.style.border = '5px solid red'; // Thick red border
-                img.style.backgroundColor = 'yellow'; // Background color
-                img.style.opacity = '1'; // Ensure it's visible
+                imageNames.forEach((name, i) => {
+                    const img = document.createElement('img');
+                    img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
+                    img.className = 'draggable-text';
+                    img.alt = `Text ${name}`;
+                    img.style.position = 'absolute';
+                    img.style.width = '360px';
+                    img.style.height = 'auto';
+                    img.style.zIndex = '1';
+                    
+                    // Random position within the canvas
+                    const left = Math.floor(Math.random() * (canvasW - 400));
+                    const top = Math.floor(Math.random() * (canvasH - 300));
+                    img.style.left = left + 'px';
+                    img.style.top = top + 'px';
+                    
+                    canvas.appendChild(img);
+                });
                 
-                // Add error handling
-                img.onerror = function() {
-                    console.error('Failed to load image:', img.src);
-                };
-                img.onload = function() {
-                    console.log('Loaded image:', testImage);
-                };
-                
-                canvas.appendChild(img);
-                console.log('Added test image to canvas');
-                
-                // Also add image directly to body as backup
-                const imgBackup = document.createElement('img');
-                imgBackup.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${testImage}`;
-                imgBackup.style.position = 'fixed';
-                imgBackup.style.left = '500px';
-                imgBackup.style.top = '500px';
-                imgBackup.style.width = '200px';
-                imgBackup.style.border = '10px solid green';
-                imgBackup.style.backgroundColor = 'orange';
-                imgBackup.style.zIndex = '9999';
-                document.body.appendChild(imgBackup);
-                console.log('Added backup image to body');
+                console.log('Loaded', imageNames.length, 'images');
             } else {
                 console.error('Canvas not found!');
             }
