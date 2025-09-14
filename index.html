@@ -530,17 +530,21 @@
                 img.style.position = 'fixed';
                 img.style.width = 'auto';
                 img.style.height = 'auto';
-                img.style.maxWidth = '300px';
+                
+                // Random size between 200px and 400px
+                const randomSize = Math.floor(Math.random() * 200) + 200; // 200-400px
+                img.style.maxWidth = randomSize + 'px';
                 img.style.zIndex = '100';
                 img.style.cursor = 'pointer';
                 
-                // Position images in the right content area
-                const rightContent = document.querySelector('.content-right');
-                const rect = rightContent.getBoundingClientRect();
+                // Random position in center area of screen
+                const centerX = screenW / 2;
+                const centerY = screenH / 2;
+                const offsetX = (Math.random() - 0.5) * (screenW * 0.6); // ±30% of screen width
+                const offsetY = (Math.random() - 0.5) * (screenH * 0.6); // ±30% of screen height
                 
-                // Position images below the text content
-                const left = rect.left + (i * 320); // Offset each image
-                const top = rect.bottom + 20 + (Math.floor(i / 2) * 320); // Stack vertically if needed
+                const left = Math.max(50, Math.min(centerX + offsetX - randomSize/2, screenW - randomSize - 50));
+                const top = Math.max(100, Math.min(centerY + offsetY - randomSize/2, screenH - randomSize - 100));
                 
                 img.style.left = left + 'px';
                 img.style.top = top + 'px';
@@ -623,7 +627,7 @@
             // Hide about me images
             const aboutMeImages = document.querySelectorAll('.about-me-image');
             aboutMeImages.forEach(img => img.style.display = 'none');
-            
+            ф
             // Update text content based on active tab
             updateTextContent(tabName);
             
