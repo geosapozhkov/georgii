@@ -337,10 +337,10 @@
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
             rects = new Array(3).fill(0).map(()=>({
-                x: rnd(100, canvas.width - 530), // 353 * 1.5 ≈ 530
-                y: rnd(100, canvas.height - 371), // 247 * 1.5 ≈ 371
-                w: rnd(318, 530), // 212 * 1.5 = 318, 353 * 1.5 ≈ 530
-                h: rnd(212, 371), // 141 * 1.5 ≈ 212, 247 * 1.5 ≈ 371
+                x: rnd(100, canvas.width - 353),
+                y: rnd(100, canvas.height - 247),
+                w: rnd(212, 353),
+                h: rnd(141, 247),
                 vx: rnd(-0.7, 0.7) || 0.5,
                 vy: rnd(-0.7, 0.7) || -0.4,
             }));
@@ -507,62 +507,6 @@
             console.log('Loaded', imageNames.length, 'images to body');
         }
 
-        // Load About me images
-        function loadAboutMeImages() {
-            // Clear existing about me images first
-            const existingImages = document.querySelectorAll('.about-me-image');
-            existingImages.forEach(img => img.remove());
-            
-            // List of images from the about me folder
-            const aboutMeImages = [
-                'IMG_0406 4.jpg',
-                'image 538.jpg'
-            ];
-            
-            const screenW = window.innerWidth;
-            const screenH = window.innerHeight;
-            
-            aboutMeImages.forEach((name, i) => {
-                const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/about me/${name}`;
-                img.className = 'about-me-image';
-                img.alt = `About me image ${name}`;
-                img.style.position = 'fixed';
-                img.style.width = 'auto';
-                img.style.height = 'auto';
-                
-                // Random size between 200px and 400px
-                const randomSize = Math.floor(Math.random() * 200) + 200; // 200-400px
-                img.style.maxWidth = randomSize + 'px';
-                img.style.zIndex = '100';
-                img.style.cursor = 'pointer';
-                
-                // Random position in center area of screen
-                const centerX = screenW / 2;
-                const centerY = screenH / 2;
-                const offsetX = (Math.random() - 0.5) * (screenW * 0.6); // ±30% of screen width
-                const offsetY = (Math.random() - 0.5) * (screenH * 0.6); // ±30% of screen height
-                
-                const left = Math.max(50, Math.min(centerX + offsetX - randomSize/2, screenW - randomSize - 50));
-                const top = Math.max(100, Math.min(centerY + offsetY - randomSize/2, screenH - randomSize - 100));
-                
-                img.style.left = left + 'px';
-                img.style.top = top + 'px';
-                
-                // Add click handler to open in modal
-                img.addEventListener('click', function() {
-                    const modal = document.getElementById('imageModal');
-                    const modalImg = document.getElementById('modalImage');
-                    modalImg.src = this.src;
-                    modal.classList.add('active');
-                });
-                
-                document.body.appendChild(img);
-            });
-            
-            console.log('Loaded', aboutMeImages.length, 'about me images');
-        }
-
         // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
         (function() {
             let dragImg = null;
@@ -624,10 +568,6 @@
             const allImages = document.querySelectorAll('.draggable-text');
             allImages.forEach(img => img.style.display = 'none');
             
-            // Hide about me images
-            const aboutMeImages = document.querySelectorAll('.about-me-image');
-            aboutMeImages.forEach(img => img.style.display = 'none');
-            ф
             // Update text content based on active tab
             updateTextContent(tabName);
             
@@ -637,12 +577,8 @@
                 // Show images only for Lots of Letters
                 allImages.forEach(img => img.style.display = 'block');
                 loadDraggableTextImages();
-            } else if (tabName === 'Commerce') {
+            } else if (tabName === 'Commerce' || tabName === 'About me') {
                 mainContent.style.display = 'none';
-                lettersGallery.style.display = 'none';
-                resetAllPapers();
-            } else if (tabName === 'About me') {
-                mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
             } else if (tabName === 'Mind') {
@@ -682,8 +618,7 @@
                     textContent.innerHTML = '<p>Commerce content will be here</p>';
                     break;
                 case 'About me':
-                    textContent.innerHTML = '<p>Life and design explorer, pictures with meaning and quality creator.<br>I\'m interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I\'m open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>';
-                    loadAboutMeImages();
+                    textContent.innerHTML = '<p>About me content will be here</p>';
                     break;
                 case 'Mind':
                     // Mind content (original description)
@@ -724,4 +659,3 @@
     })();
 </script>
 </html>
-
