@@ -507,6 +507,58 @@
             console.log('Loaded', imageNames.length, 'images to body');
         }
 
+        // Load About me images
+        function loadAboutMeImages() {
+            // Clear existing about me images first
+            const existingImages = document.querySelectorAll('.about-me-image');
+            existingImages.forEach(img => img.remove());
+            
+            // List of images from the about me folder
+            const aboutMeImages = [
+                'IMG_0406 4.jpg',
+                'image 538.jpg'
+            ];
+            
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+            
+            aboutMeImages.forEach((name, i) => {
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/about me/${name}`;
+                img.className = 'about-me-image';
+                img.alt = `About me image ${name}`;
+                img.style.position = 'fixed';
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+                img.style.maxWidth = '300px';
+                img.style.zIndex = '100';
+                img.style.cursor = 'pointer';
+                
+                // Position images in the right content area
+                const rightContent = document.querySelector('.content-right');
+                const rect = rightContent.getBoundingClientRect();
+                
+                // Position images below the text content
+                const left = rect.left + (i * 320); // Offset each image
+                const top = rect.bottom + 20 + (Math.floor(i / 2) * 320); // Stack vertically if needed
+                
+                img.style.left = left + 'px';
+                img.style.top = top + 'px';
+                
+                // Add click handler to open in modal
+                img.addEventListener('click', function() {
+                    const modal = document.getElementById('imageModal');
+                    const modalImg = document.getElementById('modalImage');
+                    modalImg.src = this.src;
+                    modal.classList.add('active');
+                });
+                
+                document.body.appendChild(img);
+            });
+            
+            console.log('Loaded', aboutMeImages.length, 'about me images');
+        }
+
         // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
         (function() {
             let dragImg = null;
@@ -568,6 +620,10 @@
             const allImages = document.querySelectorAll('.draggable-text');
             allImages.forEach(img => img.style.display = 'none');
             
+            // Hide about me images
+            const aboutMeImages = document.querySelectorAll('.about-me-image');
+            aboutMeImages.forEach(img => img.style.display = 'none');
+            
             // Update text content based on active tab
             updateTextContent(tabName);
             
@@ -577,8 +633,12 @@
                 // Show images only for Lots of Letters
                 allImages.forEach(img => img.style.display = 'block');
                 loadDraggableTextImages();
-            } else if (tabName === 'Commerce' || tabName === 'About me') {
+            } else if (tabName === 'Commerce') {
                 mainContent.style.display = 'none';
+                lettersGallery.style.display = 'none';
+                resetAllPapers();
+            } else if (tabName === 'About me') {
+                mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
             } else if (tabName === 'Mind') {
@@ -618,7 +678,8 @@
                     textContent.innerHTML = '<p>Commerce content will be here</p>';
                     break;
                 case 'About me':
-                    textContent.innerHTML = '<p>About me content will be here</p>';
+                    textContent.innerHTML = '<p>Life and design explorer, pictures with meaning and quality creator.<br>I\'m interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I\'m open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>';
+                    loadAboutMeImages();
                     break;
                 case 'Mind':
                     // Mind content (original description)
