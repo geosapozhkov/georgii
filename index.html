@@ -162,7 +162,7 @@
         /* Right Content - Text */
         .content-right {
             position: fixed;
-            top: 40px;
+            top: 35px;
             right: 30px;
             max-width: 500px;
             padding-top: 0;
@@ -473,7 +473,11 @@
         // Load draggable text images
         function loadDraggableTextImages() {
             const canvas = document.getElementById('texts-canvas');
-            if (canvas && canvas.children.length === 0) { // Only load if not already loaded
+            console.log('Loading images, canvas:', canvas);
+            if (canvas) {
+                // Clear existing images first
+                canvas.innerHTML = '';
+                
                 // List of all .png files in the texts folder
                 const imageNames = [
                     '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
@@ -484,6 +488,8 @@
                 ];
                 const canvasW = window.innerWidth;
                 const canvasH = window.innerHeight;
+                console.log('Canvas dimensions:', canvasW, canvasH);
+                
                 imageNames.forEach((name, i) => {
                     const img = document.createElement('img');
                     img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/489f44eac0729863d6be8a9029c96aa7abbc7f7e/texts/${name}`;
@@ -491,13 +497,26 @@
                     img.alt = `Text ${name}`;
                     img.style.position = 'absolute';
                     img.style.width = '360px';
+                    img.style.height = 'auto';
+                    img.style.zIndex = '1';
+                    
                     // Random position within the canvas
-                    const left = Math.floor(Math.random() * (canvasW - 200));
-                    const top = Math.floor(Math.random() * (canvasH - 200));
+                    const left = Math.floor(Math.random() * (canvasW - 400));
+                    const top = Math.floor(Math.random() * (canvasH - 300));
                     img.style.left = left + 'px';
                     img.style.top = top + 'px';
+                    
+                    // Add error handling
+                    img.onerror = function() {
+                        console.error('Failed to load image:', img.src);
+                    };
+                    img.onload = function() {
+                        console.log('Loaded image:', name);
+                    };
+                    
                     canvas.appendChild(img);
                 });
+                console.log('Added', imageNames.length, 'images to canvas');
             }
         }
 
