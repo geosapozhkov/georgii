@@ -260,6 +260,7 @@
 <body>
     <nav class="navigation">
         <a href="#" class="nav-link">Lots of Letters</a>
+        <a href="#" class="nav-link active">Mind</a>
         <a href="#" class="nav-link">Commerce</a>
         <a href="#" class="nav-link">About me</a>
     </nav>
@@ -555,39 +556,48 @@
             dragImg = null;
         }
 
+        // Function to switch tabs
+        function switchTab(tabName) {
+            // Remove active class from all links
+            navLinks.forEach(l => l.classList.remove('active'));
+            // Add active class to clicked link
+            const activeLink = Array.from(navLinks).find(l => l.textContent.trim() === tabName);
+            if (activeLink) activeLink.classList.add('active');
+            
+            // Update text content based on active tab
+            updateTextContent(tabName);
+            
+            if (tabName === 'Lots of Letters') {
+                mainContent.style.display = 'none';
+                lettersGallery.style.display = 'block';
+                loadDraggableTextImages();
+            } else if (tabName === 'Commerce' || tabName === 'About me') {
+                mainContent.style.display = 'none';
+                lettersGallery.style.display = 'none';
+                resetAllPapers();
+            } else if (tabName === 'Mind') {
+                mainContent.style.display = 'block';
+                lettersGallery.style.display = 'none';
+                resetAllPapers();
+            }
+            
+            // Save current tab to localStorage
+            localStorage.setItem('activeTab', tabName);
+        }
+
         // Navigation handlers
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const linkText = link.textContent.trim();
-                
-                // Remove active class from all links
-                navLinks.forEach(l => l.classList.remove('active'));
-                // Add active class to clicked link
-                link.classList.add('active');
-                
-                // Update text content based on active tab
-                updateTextContent(linkText);
-                
-                if (linkText === 'Lots of Letters') {
-                    mainContent.style.display = 'none';
-                    lettersGallery.style.display = 'block';
-                    console.log('Switching to Lots of Letters');
-                    console.log('lettersGallery display:', lettersGallery.style.display);
-                    loadDraggableTextImages(); // Load images when switching to Lots of Letters
-                } else if (linkText === 'Commerce' || linkText === 'About me') {
-                    mainContent.style.display = 'none';
-                    lettersGallery.style.display = 'none';
-                    // Reset all paper states when leaving Lots of Letters
-                    resetAllPapers();
-                } else {
-                    // Default/Mind content
-                    mainContent.style.display = 'block';
-                    lettersGallery.style.display = 'none';
-                    // Reset all paper states when leaving Lots of Letters
-                    resetAllPapers();
-                }
+                switchTab(linkText);
             });
+        });
+
+        // Restore saved tab on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTab = localStorage.getItem('activeTab') || 'Mind';
+            switchTab(savedTab);
         });
 
         // Function to update text content based on active tab
@@ -604,8 +614,18 @@
                 case 'About me':
                     textContent.innerHTML = '<p>About me content will be here</p>';
                     break;
+                case 'Mind':
+                    // Mind content (original description)
+                    textContent.innerHTML = `
+                        <p>Here you see projects which is one lifelong<br>concept that I am discovering throughout my life.</p>
+                        <p>I named it "Mind" and for better orientation in<br>the space and time of  that world, I have added<br>periods. But you can watch and read each of its<br>parts in any sequence.</p>
+                        <p>In short, the major concept of this world is an<br>exploration of the human conflict between the<br>irrational and the rational.</p>
+                        <p>The major event that gave birth to the "Then",<br>"Now" and "Then" is the collapse of the RCII.</p>
+                        <p>The RCII, in simple words, is a huge, colossal<br>laboratory that could contain entire cities and the<br>smallest objects at the same time, on different<br>floors. It is a representation of humanity's<br>rational designing and classification of our own<br>life. But at the same time, it is impossible to<br>exclude totalitarianism in this pursuit, because<br>timetrackers and rules are things that help us to<br>survive—we should not forget that. However, too<br>much pressure from totalitarianism can destroy a<br>person itself. Therefore, the major goal of this<br>project is to show a world balancing between the<br>rational and the irrational.</p>
+                    `;
+                    break;
                 default:
-                    // Default content (original Mind description)
+                    // Fallback to Mind content
                     textContent.innerHTML = `
                         <p>Here you see projects which is one lifelong<br>concept that I am discovering throughout my life.</p>
                         <p>I named it "Mind" and for better orientation in<br>the space and time of  that world, I have added<br>periods. But you can watch and read each of its<br>parts in any sequence.</p>
@@ -633,5 +653,4 @@
     })();
 </script>
 </html>
-
 
