@@ -526,7 +526,20 @@
                 };
                 
                 canvas.appendChild(img);
-                console.log('Added test image');
+                console.log('Added test image to canvas');
+                
+                // Also add image directly to body as backup
+                const imgBackup = document.createElement('img');
+                imgBackup.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${testImage}`;
+                imgBackup.style.position = 'fixed';
+                imgBackup.style.left = '500px';
+                imgBackup.style.top = '500px';
+                imgBackup.style.width = '200px';
+                imgBackup.style.border = '10px solid green';
+                imgBackup.style.backgroundColor = 'orange';
+                imgBackup.style.zIndex = '9999';
+                document.body.appendChild(imgBackup);
+                console.log('Added backup image to body');
             } else {
                 console.error('Canvas not found!');
             }
