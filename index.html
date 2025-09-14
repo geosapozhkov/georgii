@@ -72,7 +72,7 @@
 
         .catalog-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(100px, 1fr));
+            grid-template-columns: auto auto auto;
             column-gap: 16px;
             row-gap: 28px;
             align-content: start;
@@ -247,10 +247,10 @@
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
             rects = new Array(3).fill(0).map(()=>({
-                x: rnd(100, canvas.width - 200),
-                y: rnd(100, canvas.height - 200),
-                w: rnd(120, 200),
-                h: rnd(80, 140),
+                x: rnd(100, canvas.width - 600),
+                y: rnd(100, canvas.height - 420),
+                w: rnd(360, 600),
+                h: rnd(240, 420),
                 vx: rnd(-0.7, 0.7) || 0.5,
                 vy: rnd(-0.7, 0.7) || -0.4,
             }));
