@@ -341,10 +341,10 @@
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
             rects = new Array(3).fill(0).map(()=>({
-                x: rnd(100, canvas.width - 600),
-                y: rnd(100, canvas.height - 420),
-                w: rnd(360, 600),
-                h: rnd(240, 420),
+                x: rnd(100, canvas.width - 353),
+                y: rnd(100, canvas.height - 247),
+                w: rnd(212, 353),
+                h: rnd(141, 247),
                 vx: rnd(-0.7, 0.7) || 0.5,
                 vy: rnd(-0.7, 0.7) || -0.4,
             }));
@@ -471,9 +471,9 @@
 
 
         // Load draggable text images
-        (async function() {
+        function loadDraggableTextImages() {
             const canvas = document.getElementById('texts-canvas');
-            if (canvas) {
+            if (canvas && canvas.children.length === 0) { // Only load if not already loaded
                 // List of all .png files in the texts folder
                 const imageNames = [
                     '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
@@ -482,8 +482,8 @@
                     '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
                     '40.png','41.png','42.png','43.png'
                 ];
-                const canvasW = canvas.offsetWidth || window.innerWidth;
-                const canvasH = canvas.offsetHeight || 800;
+                const canvasW = window.innerWidth;
+                const canvasH = window.innerHeight;
                 imageNames.forEach((name, i) => {
                     const img = document.createElement('img');
                     img.src = `texts/${name}`;
@@ -499,7 +499,7 @@
                     canvas.appendChild(img);
                 });
             }
-        })();
+        }
 
         // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
         (function() {
@@ -562,6 +562,7 @@
                 if (linkText === 'Lots of Letters') {
                     mainContent.style.display = 'none';
                     lettersGallery.style.display = 'block';
+                    loadDraggableTextImages(); // Load images when switching to Lots of Letters
                 } else if (linkText === 'Commerce' || linkText === 'About me') {
                     mainContent.style.display = 'none';
                     lettersGallery.style.display = 'none';
