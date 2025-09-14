@@ -297,6 +297,9 @@
     <!-- Lots of Letters Gallery -->
     <section class="letters-gallery" id="letters-gallery" style="display: none;">
         <canvas id="texts-canvas"></canvas>
+        <div style="position: absolute; top: 50px; left: 50px; background: yellow; padding: 10px; z-index: 1000;">
+            CANVAS TEST - This should be visible when Lots of Letters is active
+        </div>
     </section>
 
     <main class="main-content">
@@ -588,6 +591,8 @@
                 if (linkText === 'Lots of Letters') {
                     mainContent.style.display = 'none';
                     lettersGallery.style.display = 'block';
+                    console.log('Switching to Lots of Letters');
+                    console.log('lettersGallery display:', lettersGallery.style.display);
                     loadDraggableTextImages(); // Load images when switching to Lots of Letters
                 } else if (linkText === 'Commerce' || linkText === 'About me') {
                     mainContent.style.display = 'none';
