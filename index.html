@@ -470,53 +470,44 @@
         const modalImage = document.getElementById('modalImage');
 
 
-        // Load draggable text images
+        // Load draggable text images directly to body
         function loadDraggableTextImages() {
-            const canvas = document.getElementById('texts-canvas');
-            console.log('Loading images, canvas:', canvas);
-            console.log('Canvas display style:', canvas ? canvas.style.display : 'no canvas');
-            console.log('Canvas parent display:', canvas ? canvas.parentElement.style.display : 'no parent');
+            // Clear existing draggable images first
+            const existingImages = document.querySelectorAll('.draggable-text');
+            existingImages.forEach(img => img.remove());
             
-            if (canvas) {
-                // Clear existing images first
-                canvas.innerHTML = '';
+            // List of all .png files in the texts folder
+            const imageNames = [
+                '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
+                '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
+                '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
+                '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
+                '40.png','41.png','42.png','43.png'
+            ];
+            
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+            
+            imageNames.forEach((name, i) => {
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
+                img.className = 'draggable-text';
+                img.alt = `Text ${name}`;
+                img.style.position = 'fixed';
+                img.style.width = '360px';
+                img.style.height = 'auto';
+                img.style.zIndex = '100';
                 
+                // Random position within the screen
+                const left = Math.floor(Math.random() * (screenW - 400));
+                const top = Math.floor(Math.random() * (screenH - 300));
+                img.style.left = left + 'px';
+                img.style.top = top + 'px';
                 
-                // List of all .png files in the texts folder
-                const imageNames = [
-                    '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
-                    '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
-                    '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
-                    '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
-                    '40.png','41.png','42.png','43.png'
-                ];
-                
-                const canvasW = window.innerWidth;
-                const canvasH = window.innerHeight;
-                
-                imageNames.forEach((name, i) => {
-                    const img = document.createElement('img');
-                    img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
-                    img.className = 'draggable-text';
-                    img.alt = `Text ${name}`;
-                    img.style.position = 'absolute';
-                    img.style.width = '360px';
-                    img.style.height = 'auto';
-                    img.style.zIndex = '1';
-                    
-                    // Random position within the canvas
-                    const left = Math.floor(Math.random() * (canvasW - 400));
-                    const top = Math.floor(Math.random() * (canvasH - 300));
-                    img.style.left = left + 'px';
-                    img.style.top = top + 'px';
-                    
-                    canvas.appendChild(img);
-                });
-                
-                console.log('Loaded', imageNames.length, 'images');
-            } else {
-                console.error('Canvas not found!');
-            }
+                document.body.appendChild(img);
+            });
+            
+            console.log('Loaded', imageNames.length, 'images to body');
         }
 
         // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
