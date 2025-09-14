@@ -100,19 +100,22 @@
             bottom: 0;
             overflow: hidden;
             padding: 0;
+            margin: 0;
         }
 
         .gallery-container {
             width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            padding: 20px;
+            position: relative;
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         .gallery-item {
@@ -530,46 +533,38 @@
             return shuffled;
         }
 
-        // Optimized gallery loading with fixed width, natural height
+        // Gallery loading with all images in center pile
         function loadGalleryImages() {
             const imageCount = 44;
-            const containerWidth = window.innerWidth;
-            const containerHeight = window.innerHeight;
-            const imageWidth = 200; // Fixed width for all images
+            const imageWidth = 600; // Fixed width for all images (3x larger)
             
             // Create DocumentFragment for better performance
             const fragment = document.createDocumentFragment();
-            const items = [];
             
-            // Pre-calculate all positions (use estimated height for positioning)
-            const estimatedHeight = 280; // Estimated height for positioning
+            // Center position for the pile
+            const centerX = window.innerWidth / 2 - imageWidth / 2;
+            const centerY = window.innerHeight / 2 - 200; // Slightly above center
+            
+            // Create all images in a pile at center
             for (let i = 0; i < imageCount; i++) {
-                const randomX = Math.random() * (containerWidth - imageWidth);
-                const randomY = Math.random() * (containerHeight - estimatedHeight);
-                
-                items.push({
-                    x: randomX,
-                    y: randomY,
-                    index: i
-                });
-            }
-            
-            // Batch create elements
-            items.forEach(item => {
                 const galleryItem = document.createElement('div');
                 galleryItem.className = 'gallery-item';
-                galleryItem.dataset.index = item.index;
+                galleryItem.dataset.index = i;
                 
                 const img = document.createElement('img');
-                img.src = `texts/${item.index}.png`;
-                img.alt = `Text ${item.index}`;
+                img.src = `texts/${i}.png`;
+                img.alt = `Text ${i}`;
                 img.loading = 'lazy';
                 img.decoding = 'async';
                 
+                // Small random offset to create pile effect
+                const offsetX = (Math.random() - 0.5) * 100; // ±50px
+                const offsetY = (Math.random() - 0.5) * 100; // ±50px
+                
                 // Set fixed width only, height will be auto (preserves proportions)
                 Object.assign(galleryItem.style, {
-                    left: item.x + 'px',
-                    top: item.y + 'px',
+                    left: (centerX + offsetX) + 'px',
+                    top: (centerY + offsetY) + 'px',
                     width: imageWidth + 'px',
                     transform: 'rotate(0deg)'
                 });
@@ -579,7 +574,7 @@
                 
                 // Add interaction handlers
                 setupPaperInteractions(galleryItem);
-            });
+            }
             
             // Single DOM insertion
             galleryGrid.appendChild(fragment);
@@ -622,19 +617,13 @@
             function handleMouseMove(e) {
                 if (!isDragging) return;
                 
-                // Calculate new position
+                // Calculate new position using viewport coordinates
                 const newX = e.clientX - dragOffset.x;
                 const newY = e.clientY - dragOffset.y;
                 
-                // Keep within screen bounds
-                const maxX = window.innerWidth - item.offsetWidth;
-                const maxY = window.innerHeight - item.offsetHeight;
-                
-                const clampedX = Math.max(0, Math.min(newX, maxX));
-                const clampedY = Math.max(0, Math.min(newY, maxY));
-                
-                item.style.left = clampedX + 'px';
-                item.style.top = clampedY + 'px';
+                // No boundaries - images can be dragged anywhere
+                item.style.left = newX + 'px';
+                item.style.top = newY + 'px';
             }
         }
 
