@@ -337,10 +337,10 @@
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
             rects = new Array(3).fill(0).map(()=>({
-                x: rnd(100, canvas.width - 353),
-                y: rnd(100, canvas.height - 247),
-                w: rnd(212, 353),
-                h: rnd(141, 247),
+                x: rnd(100, canvas.width - 530), // 353 * 1.5 ≈ 530
+                y: rnd(100, canvas.height - 371), // 247 * 1.5 ≈ 371
+                w: rnd(318, 530), // 212 * 1.5 = 318, 353 * 1.5 ≈ 530
+                h: rnd(212, 371), // 141 * 1.5 ≈ 212, 247 * 1.5 ≈ 371
                 vx: rnd(-0.7, 0.7) || 0.5,
                 vy: rnd(-0.7, 0.7) || -0.4,
             }));
