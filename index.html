@@ -94,12 +94,12 @@
         /* Lots of Letters Gallery */
         .letters-gallery {
             position: fixed;
-            top: 80px;
-            left: 30px;
-            right: 30px;
-            bottom: 100px;
-            overflow-y: auto;
-            padding-right: 10px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            padding: 0;
         }
 
         .gallery-container {
@@ -119,7 +119,7 @@
             position: relative;
             cursor: pointer;
             transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease;
-            border-radius: 4px;
+            border-radius: 0;
             overflow: hidden;
             transform-origin: center;
         }
@@ -203,7 +203,7 @@
         /* Right Content - Text */
         .content-right {
             position: fixed;
-            top: 80px;
+            top: 90px;
             right: 30px;
             max-width: 500px;
             padding-top: 0;
@@ -530,41 +530,59 @@
             return shuffled;
         }
 
-        // Load gallery images with chaotic positioning
+        // Optimized gallery loading with batch processing
         function loadGalleryImages() {
-            const imageCount = 44; // 0.png to 43.png
+            const imageCount = 44;
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight;
             
-            // Use window dimensions for positioning
-            const containerWidth = window.innerWidth - 60; // account for margins
-            const containerHeight = window.innerHeight - 200; // account for nav and footer
+            // Create DocumentFragment for better performance
+            const fragment = document.createDocumentFragment();
+            const items = [];
             
+            // Pre-calculate all positions
             for (let i = 0; i < imageCount; i++) {
-                const galleryItem = document.createElement('div');
-                galleryItem.className = 'gallery-item';
-                galleryItem.dataset.index = i;
-                
-                const img = document.createElement('img');
-                img.src = `texts/${i}.png`;
-                img.alt = `Text ${i}`;
-                img.loading = 'lazy';
-                
-                galleryItem.appendChild(img);
-                galleryGrid.appendChild(galleryItem);
-                
-                // Random positioning and rotation - spread across entire screen
                 const randomX = Math.random() * (containerWidth - 250);
                 const randomY = Math.random() * (containerHeight - 300);
-                const randomRotation = (Math.random() - 0.5) * 20; // -10 to +10 degrees
-                const randomWidth = 150 + Math.random() * 100; // 150-250px width
+                const randomWidth = 150 + Math.random() * 100;
                 
-                galleryItem.style.left = randomX + 'px';
-                galleryItem.style.top = randomY + 'px';
-                galleryItem.style.width = randomWidth + 'px';
-                galleryItem.style.transform = `rotate(${randomRotation}deg)`;
+                items.push({
+                    x: randomX,
+                    y: randomY,
+                    width: randomWidth,
+                    index: i
+                });
+            }
+            
+            // Batch create elements
+            items.forEach(item => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+                galleryItem.dataset.index = item.index;
+                
+                const img = document.createElement('img');
+                img.src = `texts/${item.index}.png`;
+                img.alt = `Text ${item.index}`;
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                
+                // Set styles in one go
+                Object.assign(galleryItem.style, {
+                    left: item.x + 'px',
+                    top: item.y + 'px',
+                    width: item.width + 'px',
+                    transform: 'rotate(0deg)'
+                });
+                
+                galleryItem.appendChild(img);
+                fragment.appendChild(galleryItem);
                 
                 // Add interaction handlers
                 setupPaperInteractions(galleryItem);
-            }
+            });
+            
+            // Single DOM insertion
+            galleryGrid.appendChild(fragment);
         }
 
         function setupPaperInteractions(item) {
@@ -712,8 +730,13 @@
             imageModal.classList.remove('active');
         });
 
-        // Load gallery on page load
-        loadGalleryImages();
+        // Load gallery on page load (deferred for better performance)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadGalleryImages);
+        } else {
+            // Use setTimeout to defer loading after initial render
+            setTimeout(loadGalleryImages, 0);
+        }
         
         // Recalculate positions on window resize
         window.addEventListener('resize', () => {
