@@ -59,6 +59,11 @@
             color: #666666;
         }
 
+        .nav-link.active {
+            color: #666666;
+            font-weight: bold;
+        }
+
         /* Main Content */
         .main-content {
             display: flex;
@@ -86,12 +91,97 @@
         .catalog-empty { font-size: 48px; color: #3C3C3C; }
         .catalog-link.dimmed { opacity: 0.25; }
 
+        /* Lots of Letters Gallery */
+        .letters-gallery {
+            position: fixed;
+            top: 80px;
+            left: 30px;
+            right: 30px;
+            bottom: 100px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .gallery-container {
+            width: 100%;
+        }
+
+        .gallery-grid {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .gallery-item {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease;
+            border-radius: 4px;
+            overflow: hidden;
+            transform-origin: center;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.2s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-2px) rotate(0deg);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-item.lifted {
+            z-index: 1000;
+            transform: translateY(-10px) rotate(0deg);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            cursor: grab;
+        }
+
+        .gallery-item.lifted:active {
+            cursor: grabbing;
+        }
+
+        .gallery-item.dragging {
+            z-index: 1001;
+            transform: translateY(-10px) rotate(0deg);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Modal for full-size image viewing */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .image-modal.active {
+            display: flex;
+        }
+
         /* Right Content - Text */
         .content-right {
-            flex: 1;
+            position: fixed;
+            top: 80px;
+            right: 30px;
             max-width: 500px;
-            margin-left: auto;
-            margin-top: 80px;
             padding-top: 0;
         }
 
@@ -221,6 +311,15 @@
         </div>
     </section>
 
+    <!-- Lots of Letters Gallery -->
+    <section class="letters-gallery" id="letters-gallery" style="display: none;">
+        <div class="gallery-container">
+            <div class="gallery-grid" id="gallery-grid">
+                <!-- Images will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
     <main class="main-content">
         <div class="content-right">
             <div class="text-content">
@@ -233,6 +332,12 @@
         </div>
     </main>
     <canvas id="previewCanvas"></canvas>
+    
+    <!-- Image Modal -->
+    <div class="image-modal" id="imageModal">
+        <img id="modalImage" src="" alt="">
+    </div>
+    
     <footer class="footer">
         <div>sapozhkov.george@gmail.com</div>
         <div>@georgiisapozhkov</div>
@@ -376,6 +481,187 @@
                     }, { once: true });
                 });
             });
+        });
+
+        // Navigation and Gallery functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const mainContent = document.querySelector('.content-left');
+        const lettersGallery = document.getElementById('letters-gallery');
+        const galleryGrid = document.getElementById('gallery-grid');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+
+        // Paper sheets functionality
+        let draggedItem = null;
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+
+        // Load gallery images with chaotic positioning
+        function loadGalleryImages() {
+            const imageCount = 44; // 0.png to 43.png
+            const containerWidth = galleryGrid.offsetWidth - 40; // account for padding
+            const containerHeight = galleryGrid.offsetHeight - 40;
+            
+            for (let i = 0; i < imageCount; i++) {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+                galleryItem.dataset.index = i;
+                
+                const img = document.createElement('img');
+                img.src = `texts/${i}.png`;
+                img.alt = `Text ${i}`;
+                img.loading = 'lazy';
+                
+                galleryItem.appendChild(img);
+                galleryGrid.appendChild(galleryItem);
+                
+                // Random positioning and rotation
+                const randomX = Math.random() * (containerWidth - 200);
+                const randomY = Math.random() * (containerHeight - 200);
+                const randomRotation = (Math.random() - 0.5) * 20; // -10 to +10 degrees
+                const randomWidth = 150 + Math.random() * 100; // 150-250px width
+                
+                galleryItem.style.left = randomX + 'px';
+                galleryItem.style.top = randomY + 'px';
+                galleryItem.style.width = randomWidth + 'px';
+                galleryItem.style.transform = `rotate(${randomRotation}deg)`;
+                
+                // Add interaction handlers
+                setupPaperInteractions(galleryItem);
+            }
+        }
+
+        function setupPaperInteractions(item) {
+            let isLifted = false;
+            
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Only allow interactions when Lots of Letters tab is active
+                if (lettersGallery.style.display === 'none') return;
+                
+                if (!isLifted) {
+                    // Lift the paper
+                    item.classList.add('lifted');
+                    isLifted = true;
+                } else {
+                    // Drop the paper
+                    item.classList.remove('lifted', 'dragging');
+                    isLifted = false;
+                    isDragging = false;
+                    draggedItem = null;
+                }
+            });
+            
+            // Drag functionality
+            item.addEventListener('mousedown', (e) => {
+                // Only allow dragging when Lots of Letters tab is active and item is lifted
+                if (lettersGallery.style.display === 'none' || !item.classList.contains('lifted')) return;
+                
+                e.preventDefault();
+                isDragging = true;
+                draggedItem = item;
+                item.classList.add('dragging');
+                
+                const rect = item.getBoundingClientRect();
+                const containerRect = galleryGrid.getBoundingClientRect();
+                
+                dragOffset.x = e.clientX - rect.left;
+                dragOffset.y = e.clientY - rect.top;
+                
+                // Convert to container coordinates
+                const currentLeft = parseFloat(item.style.left) || 0;
+                const currentTop = parseFloat(item.style.top) || 0;
+                
+                dragOffset.x = e.clientX - containerRect.left - currentLeft;
+                dragOffset.y = e.clientY - containerRect.top - currentTop;
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                // Only allow dragging when Lots of Letters tab is active
+                if (!isDragging || !draggedItem || lettersGallery.style.display === 'none') return;
+                
+                const containerRect = galleryGrid.getBoundingClientRect();
+                const newX = e.clientX - containerRect.left - dragOffset.x;
+                const newY = e.clientY - containerRect.top - dragOffset.y;
+                
+                // Keep within bounds
+                const maxX = containerRect.width - draggedItem.offsetWidth;
+                const maxY = containerRect.height - draggedItem.offsetHeight;
+                
+                draggedItem.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+                draggedItem.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                    isDragging = false;
+                    draggedItem = null;
+                }
+            });
+        }
+
+        // Function to reset all paper states
+        function resetAllPapers() {
+            const items = document.querySelectorAll('.gallery-item');
+            items.forEach(item => {
+                item.classList.remove('lifted', 'dragging');
+            });
+            isDragging = false;
+            draggedItem = null;
+        }
+
+        // Navigation handlers
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const linkText = link.textContent.trim();
+                
+                // Remove active class from all links
+                navLinks.forEach(l => l.classList.remove('active'));
+                // Add active class to clicked link
+                link.classList.add('active');
+                
+                if (linkText === 'Lots of Letters') {
+                    mainContent.style.display = 'none';
+                    lettersGallery.style.display = 'block';
+                } else {
+                    mainContent.style.display = 'block';
+                    lettersGallery.style.display = 'none';
+                    // Reset all paper states when leaving Lots of Letters
+                    resetAllPapers();
+                }
+            });
+        });
+
+        // Modal handlers
+        imageModal.addEventListener('click', () => {
+            imageModal.classList.remove('active');
+        });
+
+        // Load gallery on page load
+        loadGalleryImages();
+        
+        // Recalculate positions on window resize
+        window.addEventListener('resize', () => {
+            if (lettersGallery.style.display !== 'none') {
+                const items = document.querySelectorAll('.gallery-item');
+                const containerWidth = galleryGrid.offsetWidth - 40;
+                const containerHeight = galleryGrid.offsetHeight - 40;
+                
+                items.forEach(item => {
+                    if (!item.classList.contains('lifted')) {
+                        const randomX = Math.random() * (containerWidth - 200);
+                        const randomY = Math.random() * (containerHeight - 200);
+                        const randomRotation = (Math.random() - 0.5) * 20;
+                        
+                        item.style.left = randomX + 'px';
+                        item.style.top = randomY + 'px';
+                        item.style.transform = `rotate(${randomRotation}deg)`;
+                    }
+                });
+            }
         });
     })();
 </script>
