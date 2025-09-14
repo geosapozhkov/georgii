@@ -103,57 +103,13 @@
             margin: 0;
         }
 
-        .gallery-container {
+        #texts-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .gallery-grid {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .gallery-item {
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.3s ease;
-            border-radius: 0;
-            overflow: hidden;
-            transform-origin: center;
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: auto;
-            display: block;
-            transition: opacity 0.2s ease;
-        }
-
-        .gallery-item:hover {
-            transform: translateY(-2px) rotate(0deg);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .gallery-item.lifted {
-            z-index: 1000;
-            transform: translateY(-10px) rotate(0deg);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            cursor: grab;
-        }
-
-        .gallery-item.lifted:active {
-            cursor: grabbing;
-        }
-
-        .gallery-item.dragging {
-            z-index: 1001;
-            transform: translateY(-10px) rotate(0deg);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            background: transparent;
         }
 
         /* Draggable text styles */
@@ -340,11 +296,7 @@
 
     <!-- Lots of Letters Gallery -->
     <section class="letters-gallery" id="letters-gallery" style="display: none;">
-        <div class="gallery-container">
-            <div class="gallery-grid" id="gallery-grid">
-                <!-- Images will be loaded dynamically -->
-            </div>
-        </div>
+        <canvas id="texts-canvas"></canvas>
     </section>
 
     <main class="main-content">
@@ -514,118 +466,74 @@
         const navLinks = document.querySelectorAll('.nav-link');
         const mainContent = document.querySelector('.content-left');
         const lettersGallery = document.getElementById('letters-gallery');
-        const galleryGrid = document.getElementById('gallery-grid');
         const imageModal = document.getElementById('imageModal');
         const modalImage = document.getElementById('modalImage');
 
-        // Paper sheets functionality
-        let draggedItem = null;
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
 
-        // Utility function to shuffle array
-        function shuffle(array) {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        }
-
-        // Gallery loading with all images in center pile
-        function loadGalleryImages() {
-            const imageCount = 44;
-            const imageWidth = 600; // Fixed width for all images (3x larger)
-            
-            // Create DocumentFragment for better performance
-            const fragment = document.createDocumentFragment();
-            
-            // Center position for the pile
-            const centerX = window.innerWidth / 2 - imageWidth / 2;
-            const centerY = window.innerHeight / 2 - 200; // Slightly above center
-            
-            // Create all images in a pile at center
-            for (let i = 0; i < imageCount; i++) {
-                const galleryItem = document.createElement('div');
-                galleryItem.className = 'gallery-item';
-                galleryItem.dataset.index = i;
-                
-                const img = document.createElement('img');
-                img.src = `texts/${i}.png`;
-                img.alt = `Text ${i}`;
-                img.loading = 'lazy';
-                img.decoding = 'async';
-                
-                // Small random offset to create pile effect
-                const offsetX = (Math.random() - 0.5) * 100; // ±50px
-                const offsetY = (Math.random() - 0.5) * 100; // ±50px
-                
-                // Set fixed width only, height will be auto (preserves proportions)
-                Object.assign(galleryItem.style, {
-                    left: (centerX + offsetX) + 'px',
-                    top: (centerY + offsetY) + 'px',
-                    width: imageWidth + 'px',
-                    transform: 'rotate(0deg)'
+        // Load draggable text images
+        (async function() {
+            const canvas = document.getElementById('texts-canvas');
+            if (canvas) {
+                // List of all .png files in the texts folder
+                const imageNames = [
+                    '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
+                    '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
+                    '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
+                    '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
+                    '40.png','41.png','42.png','43.png'
+                ];
+                const canvasW = canvas.offsetWidth || window.innerWidth;
+                const canvasH = canvas.offsetHeight || 800;
+                imageNames.forEach((name, i) => {
+                    const img = document.createElement('img');
+                    img.src = `texts/${name}`;
+                    img.className = 'draggable-text';
+                    img.alt = `Text ${name}`;
+                    img.style.position = 'absolute';
+                    img.style.width = '360px';
+                    // Random position within the canvas
+                    const left = Math.floor(Math.random() * (canvasW - 200));
+                    const top = Math.floor(Math.random() * (canvasH - 200));
+                    img.style.left = left + 'px';
+                    img.style.top = top + 'px';
+                    canvas.appendChild(img);
                 });
-                
-                galleryItem.appendChild(img);
-                fragment.appendChild(galleryItem);
-                
-                // Add interaction handlers
-                setupPaperInteractions(galleryItem);
             }
-            
-            // Single DOM insertion
-            galleryGrid.appendChild(fragment);
-        }
+        })();
 
-        function setupPaperInteractions(item) {
+        // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
+        (function() {
+            let dragImg = null;
+            let offsetX = 0;
+            let offsetY = 0;
+            let zCounter = 10;
             let isDragging = false;
-            let dragOffset = { x: 0, y: 0 };
-            
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                
-                // Only allow interactions when Lots of Letters tab is active
-                if (lettersGallery.style.display === 'none') return;
-                
-                if (!isDragging) {
-                    // Start dragging - lift the image
-                    isDragging = true;
-                    item.classList.add('lifted');
-                    item.style.zIndex = '1000';
-                    
-                    // Calculate offset from mouse to image corner
-                    const rect = item.getBoundingClientRect();
-                    dragOffset.x = e.clientX - rect.left;
-                    dragOffset.y = e.clientY - rect.top;
-                    
-                    // Add global mouse move listener
-                    document.addEventListener('mousemove', handleMouseMove);
-                } else {
-                    // Stop dragging - drop the image
-                    isDragging = false;
-                    item.classList.remove('lifted');
-                    item.style.zIndex = 'auto';
-                    
-                    // Remove global mouse move listener
-                    document.removeEventListener('mousemove', handleMouseMove);
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('draggable-text')) {
+                    if (!dragImg) {
+                        dragImg = e.target;
+                        offsetX = e.clientX - dragImg.offsetLeft;
+                        offsetY = e.clientY - dragImg.offsetTop;
+                        dragImg.classList.add('lifted');
+                        zCounter++;
+                        dragImg.style.zIndex = zCounter;
+                        isDragging = true;
+                        document.addEventListener('mousemove', moveHandler);
+                    } else if (dragImg === e.target) {
+                        dragImg.classList.remove('lifted');
+                        dragImg = null;
+                        isDragging = false;
+                        document.removeEventListener('mousemove', moveHandler);
+                    }
                 }
             });
-            
-            function handleMouseMove(e) {
-                if (!isDragging) return;
-                
-                // Calculate new position using viewport coordinates
-                const newX = e.clientX - dragOffset.x;
-                const newY = e.clientY - dragOffset.y;
-                
-                // No boundaries - images can be dragged anywhere
-                item.style.left = newX + 'px';
-                item.style.top = newY + 'px';
+            function moveHandler(e) {
+                if (dragImg && isDragging) {
+                    dragImg.style.left = (e.clientX - offsetX) + 'px';
+                    dragImg.style.top = (e.clientY - offsetY) + 'px';
+                }
             }
-        }
+        })();
 
         // Function to reset all paper states
         function resetAllPapers() {
@@ -701,33 +609,13 @@
             imageModal.classList.remove('active');
         });
 
-        // Load gallery on page load (deferred for better performance)
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadGalleryImages);
-        } else {
-            // Use setTimeout to defer loading after initial render
-            setTimeout(loadGalleryImages, 0);
-        }
-        
-        // Recalculate positions on window resize
-        window.addEventListener('resize', () => {
-            if (lettersGallery.style.display !== 'none') {
-                const items = document.querySelectorAll('.gallery-item');
-                const containerWidth = window.innerWidth - 60;
-                const containerHeight = window.innerHeight - 200;
-                
-                items.forEach(item => {
-                    if (!item.classList.contains('lifted')) {
-                        const randomX = Math.random() * (containerWidth - 250);
-                        const randomY = Math.random() * (containerHeight - 300);
-                        const randomRotation = (Math.random() - 0.5) * 20;
-                        
-                        item.style.left = randomX + 'px';
-                        item.style.top = randomY + 'px';
-                        item.style.transform = `rotate(${randomRotation}deg)`;
-                    }
+        // Toggle mute on video click (sound on/off)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('video').forEach(video => {
+                video.addEventListener('click', function() {
+                    video.muted = !video.muted;
                 });
-            }
+            });
         });
     })();
 </script>
