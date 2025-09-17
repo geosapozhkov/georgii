@@ -458,9 +458,10 @@
             
             // Only resolve collision if there's actual overlap
             if (overlapX > 0 && overlapY > 0) {
+                // Force separation to prevent any overlap
                 if (overlapX < overlapY){
                     // separate on X axis
-                    const push = overlapX / 2;
+                    const push = overlapX / 2 + 1; // Add 1px to ensure complete separation
                     if (a.x < b.x){ 
                         a.x -= push; 
                         b.x += push; 
@@ -472,7 +473,7 @@
                     b.vx *= -1;
                 } else {
                     // separate on Y axis
-                    const push = overlapY / 2;
+                    const push = overlapY / 2 + 1; // Add 1px to ensure complete separation
                     if (a.y < b.y){ 
                         a.y -= push; 
                         b.y += push; 
