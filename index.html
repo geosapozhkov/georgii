@@ -479,8 +479,9 @@
         }
 
         function start(previewId){
-            // do not show animated preview for the active catalog
-            if (activePreviewId && String(previewId) === String(activePreviewId)) return;
+            // do not show animated preview for the active catalog (only for Mind tab)
+            const currentTab = localStorage.getItem('activeTab') || 'Mind';
+            if (currentTab !== 'Commerce' && activePreviewId && String(previewId) === String(activePreviewId)) return;
             if (active) return;
             active = true;
             canvas.style.display = 'block';
@@ -743,11 +744,7 @@
         function attachCommerceEventListeners() {
             // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>{
-                    // Set activePreviewId to prevent restarting same preview
-                    activePreviewId = cell.dataset.preview;
-                    start(cell.dataset.preview);
-                });
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
                 cell.addEventListener('mouseleave', stop);
             });
 
