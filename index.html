@@ -456,16 +456,44 @@
             const bx2 = b.x + b.w, by2 = b.y + b.h;
             const overlapX = Math.min(ax2 - b.x, bx2 - a.x);
             const overlapY = Math.min(ay2 - b.y, by2 - a.y);
-            if (overlapX < overlapY){
-                // separate on X
-                const push = overlapX / 2;
-                if (a.x < b.x){ a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
-                a.vx *= -1; b.vx *= -1;
-            } else {
-                // separate on Y
-                const push = overlapY / 2;
-                if (a.y < b.y){ a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
-                a.vy *= -1; b.vy *= -1;
+            
+            // Only resolve collision if there's actual overlap
+            if (overlapX > 0 && overlapY > 0) {
+                if (overlapX < overlapY){
+                    // separate on X axis
+                    const push = overlapX / 2;
+                    if (a.x < b.x){ 
+                        a.x -= push; 
+                        b.x += push; 
+                    } else { 
+                        a.x += push; 
+                        b.x -= push; 
+                    }
+                    a.vx *= -1; 
+                    b.vx *= -1;
+                } else {
+                    // separate on Y axis
+                    const push = overlapY / 2;
+                    if (a.y < b.y){ 
+                        a.y -= push; 
+                        b.y += push; 
+                    } else { 
+                        a.y += push; 
+                        b.y -= push; 
+                    }
+                    a.vy *= -1; 
+                    b.vy *= -1;
+                }
+                
+                // Update video element positions if they exist
+                if (a.type === 'video' && a.videoElement) {
+                    a.videoElement.style.left = a.x + 'px';
+                    a.videoElement.style.top = a.y + 'px';
+                }
+                if (b.type === 'video' && b.videoElement) {
+                    b.videoElement.style.left = b.x + 'px';
+                    b.videoElement.style.top = b.y + 'px';
+                }
             }
         }
 
