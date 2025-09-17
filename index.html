@@ -396,8 +396,8 @@
                     video.style.borderRadius = '0';
                     video.style.objectFit = 'contain';
                     
-                    const w = rnd(200, 300);
-                    const h = rnd(150, 200);
+                    const w = rnd(300, 450);
+                    const h = rnd(225, 300);
                     const x = rnd(100, canvas.width - w);
                     const y = rnd(100, canvas.height - h);
                     
@@ -492,6 +492,16 @@
             active = false;
             canvas.style.display = 'none';
             cancelAnimationFrame(animationId);
+            
+            // Remove all preview video elements
+            const previewVideos = document.querySelectorAll('.preview-video');
+            previewVideos.forEach(video => video.remove());
+            
+            // Clear rects array
+            rects = [];
+            
+            // Reset activePreviewId when stopping
+            activePreviewId = null;
         }
 
         // Event listeners are now attached dynamically when switching tabs
@@ -628,6 +638,9 @@
 
         // Function to switch tabs
         function switchTab(tabName) {
+            // Stop any active preview animations
+            stop();
+            
             // Remove active class from all links
             navLinks.forEach(l => l.classList.remove('active'));
             // Add active class to clicked link
@@ -730,7 +743,11 @@
         function attachCommerceEventListeners() {
             // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseenter', ()=>{
+                    // Set activePreviewId to prevent restarting same preview
+                    activePreviewId = cell.dataset.preview;
+                    start(cell.dataset.preview);
+                });
                 cell.addEventListener('mouseleave', stop);
             });
 
@@ -797,6 +814,9 @@
 
         // Function to clear Commerce project elements
         function clearCommerceProject() {
+            // Stop any active preview animations
+            stop();
+            
             // Remove video containers
             const videoContainers = document.querySelectorAll('.video-container');
             videoContainers.forEach(container => container.remove());
@@ -808,6 +828,9 @@
 
         // Function to load Angry Masseur project images
         function loadAngryMasseurImages() {
+            // Stop any active preview animations
+            stop();
+            
             // Clear existing video containers first
             const existingContainers = document.querySelectorAll('.video-container');
             existingContainers.forEach(container => container.remove());
