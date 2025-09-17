@@ -353,10 +353,10 @@
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
             rects = new Array(3).fill(0).map(()=>({
-                x: rnd(100, canvas.width - 353),
-                y: rnd(100, canvas.height - 247),
-                w: rnd(212, 353),
-                h: rnd(141, 247),
+                x: rnd(100, canvas.width - 706),
+                y: rnd(100, canvas.height - 494),
+                w: rnd(424, 706),
+                h: rnd(282, 494),
                 vx: rnd(-0.7, 0.7) || 0.5,
                 vy: rnd(-0.7, 0.7) || -0.4,
             }));
@@ -411,8 +411,8 @@
                         video.play().catch(e => console.log('Video autoplay prevented:', e));
                     }, 100);
                     
-                    const w = rnd(300, 450);
-                    const h = rnd(225, 300);
+                    const w = rnd(600, 900);
+                    const h = rnd(450, 600);
                     const x = rnd(100, canvas.width - w);
                     const y = rnd(100, canvas.height - h);
                     
@@ -791,31 +791,6 @@
                     // mark this preview as active to disable its animated hover
                     const parentCell = a.closest('.cell');
                     if (parentCell) activePreviewId = parentCell.dataset.preview || null;
-                    // Replace moving preview with static rectangles placed randomly (stay within bounds)
-                    stop();
-                    const count = 6;
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight;
-                    tempCanvas.style.position = 'fixed';
-                    tempCanvas.style.inset = '0';
-                    tempCanvas.style.zIndex = '9';
-                    tempCanvas.style.pointerEvents = 'none';
-                    document.body.appendChild(tempCanvas);
-                    const tctx = tempCanvas.getContext('2d');
-                    const rnd = (min,max)=>Math.random()*(max-min)+min;
-                    tctx.fillStyle = '#D9D9D9';
-                    for(let i=0;i<count;i++){
-                        const w = rnd(180, 300), h = rnd(120, 210); // Same size as Mind preview
-                        const x = rnd(20, tempCanvas.width - w - 10);
-                        const y = rnd(80, tempCanvas.height - h - 20);
-                        tctx.fillRect(x,y,w,h);
-                    }
-                    // auto-remove static overlay on next hover
-                    document.querySelectorAll('.cell').forEach(el=>{
-                        el.addEventListener('mouseenter', ()=>{
-                            if (tempCanvas.parentNode) tempCanvas.parentNode.removeChild(tempCanvas);
-                        }, { once: true });
-                    });
                 });
             });
         }
