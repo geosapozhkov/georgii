@@ -352,23 +352,39 @@
 
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
-            rects = new Array(3).fill(0).map(()=>{
-                // Random size with good aspect ratio
-                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
-                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+            rects = [];
+            
+            for(let i = 0; i < 3; i++) {
+                let attempts = 0;
+                let rect;
                 
-                const w = rnd(300, 600);
-                const h = Math.round(w / randomAspect);
+                do {
+                    // Random size with good aspect ratio
+                    const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                    const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                    
+                    const w = rnd(300, 600);
+                    const h = Math.round(w / randomAspect);
+                    
+                    rect = {
+                        x: rnd(100, canvas.width - w),
+                        y: rnd(100, canvas.height - h),
+                        w: w,
+                        h: h,
+                        vx: rnd(-0.7, 0.7) || 0.5,
+                        vy: rnd(-0.7, 0.7) || -0.4,
+                    };
+                    
+                    attempts++;
+                } while (attempts < 50 && rects.some(existing => 
+                    rect.x < existing.x + existing.w && 
+                    rect.x + rect.w > existing.x && 
+                    rect.y < existing.y + existing.h && 
+                    rect.y + rect.h > existing.y
+                ));
                 
-                return {
-                    x: rnd(100, canvas.width - w),
-                    y: rnd(100, canvas.height - h),
-                    w: w,
-                    h: h,
-                    vx: rnd(-0.7, 0.7) || 0.5,
-                    vy: rnd(-0.7, 0.7) || -0.4,
-                };
-            });
+                rects.push(rect);
+            }
         }
 
         // Function to create project preview images
@@ -532,6 +548,54 @@
             animationId = requestAnimationFrame(step);
         }
 
+        // Function to force separation of all overlapping elements
+        function forceSeparation() {
+            for(let i = 0; i < rects.length; i++) {
+                for(let j = i + 1; j < rects.length; j++) {
+                    const a = rects[i], b = rects[j];
+                    const ax2 = a.x + a.w, ay2 = a.y + a.h;
+                    const bx2 = b.x + b.w, by2 = b.y + b.h;
+                    const overlapX = Math.min(ax2 - b.x, bx2 - a.x);
+                    const overlapY = Math.min(ay2 - b.y, by2 - a.y);
+                    
+                    // Force separation if there's any overlap
+                    if (overlapX > 0 && overlapY > 0) {
+                        if (overlapX < overlapY) {
+                            // separate on X axis
+                            const push = overlapX / 2 + 5; // Extra separation
+                            if (a.x < b.x) {
+                                a.x -= push;
+                                b.x += push;
+                            } else {
+                                a.x += push;
+                                b.x -= push;
+                            }
+                        } else {
+                            // separate on Y axis
+                            const push = overlapY / 2 + 5; // Extra separation
+                            if (a.y < b.y) {
+                                a.y -= push;
+                                b.y += push;
+                            } else {
+                                a.y += push;
+                                b.y -= push;
+                            }
+                        }
+                        
+                        // Update video element positions if they exist
+                        if (a.type === 'video' && a.videoElement) {
+                            a.videoElement.style.left = a.x + 'px';
+                            a.videoElement.style.top = a.y + 'px';
+                        }
+                        if (b.type === 'video' && b.videoElement) {
+                            b.videoElement.style.left = b.x + 'px';
+                            b.videoElement.style.top = b.y + 'px';
+                        }
+                    }
+                }
+            }
+        }
+
         function start(previewId){
             // do not show animated preview for the active catalog (only for Mind tab)
             const currentTab = localStorage.getItem('activeTab') || 'Mind';
@@ -540,6 +604,10 @@
             active = true;
             canvas.style.display = 'block';
             createProjectRects(previewId);
+            
+            // Force separation immediately after creation to prevent initial overlaps
+            forceSeparation();
+            
             cancelAnimationFrame(animationId);
             animationId = requestAnimationFrame(step);
         }
