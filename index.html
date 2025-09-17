@@ -352,14 +352,23 @@
 
         function createRects(seed){
             const rnd = (min, max) => Math.random() * (max - min) + min;
-            rects = new Array(3).fill(0).map(()=>({
-                x: rnd(100, canvas.width - 706),
-                y: rnd(100, canvas.height - 494),
-                w: rnd(424, 706),
-                h: rnd(282, 494),
-                vx: rnd(-0.7, 0.7) || 0.5,
-                vy: rnd(-0.7, 0.7) || -0.4,
-            }));
+            rects = new Array(3).fill(0).map(()=>{
+                // Random size with good aspect ratio
+                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                
+                const w = rnd(300, 600);
+                const h = Math.round(w / randomAspect);
+                
+                return {
+                    x: rnd(100, canvas.width - w),
+                    y: rnd(100, canvas.height - h),
+                    w: w,
+                    h: h,
+                    vx: rnd(-0.7, 0.7) || 0.5,
+                    vy: rnd(-0.7, 0.7) || -0.4,
+                };
+            });
         }
 
         // Function to create project preview images
@@ -411,13 +420,15 @@
                         video.play().catch(e => console.log('Video autoplay prevented:', e));
                     }, 100);
                     
-                    const w = rnd(600, 900);
-                    const h = rnd(450, 600);
+                    // Random width, let video determine its own height based on original proportions
+                    const w = rnd(400, 800);
+                    const h = 'auto'; // Let video maintain its original aspect ratio
+                    
                     const x = rnd(100, canvas.width - w);
-                    const y = rnd(100, canvas.height - h);
+                    const y = rnd(100, canvas.height - 400); // Use max expected height
                     
                     video.style.width = w + 'px';
-                    video.style.height = h + 'px';
+                    video.style.height = h;
                     video.style.left = x + 'px';
                     video.style.top = y + 'px';
                     
@@ -427,7 +438,7 @@
                         x: x,
                         y: y,
                         w: w,
-                        h: h,
+                        h: 400, // Use estimated height for collision detection
                         vx: rnd(-0.5, 0.5) || 0.3,
                         vy: rnd(-0.5, 0.5) || -0.2,
                         videoElement: video,
@@ -853,10 +864,27 @@
                 video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${filename}`;
                 video.className = 'project-image';
                 video.muted = true; // Muted by default
-                video.preload = 'metadata';
+                video.loop = true; // Loop the video
+                video.autoplay = true; // Auto-play the video
+                video.preload = 'auto'; // Preload the entire video
+                video.playsInline = true; // For mobile compatibility
                 video.style.width = '100%';
                 video.style.height = '100%';
                 video.style.objectFit = 'contain';
+                
+                // Add event listeners to ensure video plays
+                video.addEventListener('loadeddata', () => {
+                    video.play().catch(e => console.log('Video autoplay prevented:', e));
+                });
+                
+                video.addEventListener('canplay', () => {
+                    video.play().catch(e => console.log('Video autoplay prevented:', e));
+                });
+                
+                // Try to play immediately
+                setTimeout(() => {
+                    video.play().catch(e => console.log('Video autoplay prevented:', e));
+                }, 100);
                 
                 // Create custom controls
                 const controls = document.createElement('div');
