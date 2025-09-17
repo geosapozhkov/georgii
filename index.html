@@ -367,23 +367,55 @@
             const rnd = (min, max) => Math.random() * (max - min) + min;
             
             if (previewId === 'angry-masseur') {
-                // Create rectangles with project images/videos
+                // Create animated video previews
+                const videoFiles = [
+                    'Hood_two_screens.mp4',
+                    'Icons.mp4', 
+                    'Igor.mp4',
+                    'Zloy 011 (1080p with 30fps).mp4'
+                ];
+                
+                // Clear existing preview videos
+                document.querySelectorAll('.preview-video').forEach(video => video.remove());
+                
                 rects = new Array(4).fill(0).map((_, i) => {
-                    const videoFiles = [
-                        'Hood_two_screens.mp4',
-                        'Icons.mp4', 
-                        'Igor.mp4',
-                        'Zloy 011 (1080p with 30fps).mp4'
-                    ];
+                    const videoFile = videoFiles[i];
+                    
+                    // Create actual video element for preview
+                    const video = document.createElement('video');
+                    video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${videoFile}`;
+                    video.className = 'preview-video';
+                    video.muted = true;
+                    video.loop = true;
+                    video.autoplay = true;
+                    video.preload = 'auto';
+                    video.style.position = 'fixed';
+                    video.style.zIndex = '15';
+                    video.style.pointerEvents = 'none';
+                    video.style.border = 'none';
+                    video.style.borderRadius = '0';
+                    video.style.objectFit = 'contain';
+                    
+                    const w = rnd(200, 300);
+                    const h = rnd(150, 200);
+                    const x = rnd(100, canvas.width - w);
+                    const y = rnd(100, canvas.height - h);
+                    
+                    video.style.width = w + 'px';
+                    video.style.height = h + 'px';
+                    video.style.left = x + 'px';
+                    video.style.top = y + 'px';
+                    
+                    document.body.appendChild(video);
                     
                     return {
-                        x: rnd(100, canvas.width - 300),
-                        y: rnd(100, canvas.height - 200),
-                        w: rnd(200, 300),
-                        h: rnd(150, 200),
+                        x: x,
+                        y: y,
+                        w: w,
+                        h: h,
                         vx: rnd(-0.5, 0.5) || 0.3,
                         vy: rnd(-0.5, 0.5) || -0.2,
-                        videoFile: videoFiles[i],
+                        videoElement: video,
                         type: 'video'
                     };
                 });
@@ -418,6 +450,12 @@
                 r.x += r.vx; r.y += r.vy;
                 if (r.x <= 0 || r.x + r.w >= canvas.width) { r.vx *= -1; r.x = Math.max(0, Math.min(canvas.width - r.w, r.x)); }
                 if (r.y <= 0 || r.y + r.h >= canvas.height) { r.vy *= -1; r.y = Math.max(0, Math.min(canvas.height - r.h, r.y)); }
+                
+                // Update video element position if it exists
+                if (r.type === 'video' && r.videoElement) {
+                    r.videoElement.style.left = r.x + 'px';
+                    r.videoElement.style.top = r.y + 'px';
+                }
             }
             // pairwise collisions
             for(let i=0;i<rects.length;i++){
@@ -432,14 +470,7 @@
             ctx.fillStyle = '#D9D9D9';
             for(const r of rects){
                 if (r.type === 'video') {
-                    // Draw video placeholder with project name
-                    ctx.fillRect(r.x, r.y, r.w, r.h);
-                    ctx.fillStyle = '#3C3C3C';
-                    ctx.font = '14px BookletSans, sans-serif';
-                    ctx.textAlign = 'center';
-                    const videoName = r.videoFile.replace('.mp4', '').replace('_', ' ');
-                    ctx.fillText(videoName, r.x + r.w/2, r.y + r.h/2);
-                    ctx.fillStyle = '#D9D9D9';
+                    // Don't draw anything on canvas for videos - they are real video elements
                 } else {
                     ctx.fillRect(r.x, r.y, r.w, r.h);
                 }
@@ -697,12 +728,10 @@
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Trigger preview only on catalog links, not empty cells
-            document.querySelectorAll('.catalog-link').forEach(link=>{
-                const cell = link.closest('.cell');
-                if (!cell) return;
-                link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                link.addEventListener('mouseleave', stop);
+            // Trigger preview on all cells with data-preview attribute
+            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseleave', stop);
             });
 
             // Handle Commerce catalog clicks - show project gallery
@@ -798,7 +827,7 @@
             const cols = 2; // 2 columns
             const rows = Math.ceil(videoFiles.length / cols);
             const videoWidth = Math.min(600, (screenW - 100) / cols - 20); // Larger videos
-            const videoHeight = Math.min(400, videoWidth * 0.75); // 4:3 aspect ratio
+            const videoHeight = videoWidth * 0.75; // Keep 4:3 aspect ratio without min constraint
             
             videoFiles.forEach((filename, i) => {
                 // Create video container
@@ -821,7 +850,7 @@
                 video.preload = 'metadata';
                 video.style.width = '100%';
                 video.style.height = '100%';
-                video.style.objectFit = 'cover';
+                video.style.objectFit = 'contain';
                 
                 // Create custom controls
                 const controls = document.createElement('div');
@@ -831,7 +860,7 @@
                 controls.style.left = '0';
                 controls.style.right = '0';
                 controls.style.height = '40px';
-                controls.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                controls.style.backgroundColor = 'transparent';
                 controls.style.display = 'none';
                 controls.style.alignItems = 'center';
                 controls.style.padding = '0 10px';
@@ -860,15 +889,6 @@
                 
                 progressBar.appendChild(progressFill);
                 controls.appendChild(progressBar);
-                
-                // Create time display
-                const timeDisplay = document.createElement('div');
-                timeDisplay.className = 'time-display';
-                timeDisplay.style.color = '#ffffff';
-                timeDisplay.style.fontSize = '12px';
-                timeDisplay.style.fontFamily = 'BookletSans, sans-serif';
-                timeDisplay.textContent = '0:00 / 0:00';
-                controls.appendChild(timeDisplay);
                 
                 container.appendChild(video);
                 container.appendChild(controls);
@@ -920,19 +940,9 @@
                         const percentage = (video.currentTime / video.duration) * 100;
                         progressFill.style.width = percentage + '%';
                         
-                        // Update time display
-                        const current = formatTime(video.currentTime);
-                        const total = formatTime(video.duration);
-                        timeDisplay.textContent = `${current} / ${total}`;
                     }
                 });
                 
-                // Format time helper
-                function formatTime(seconds) {
-                    const mins = Math.floor(seconds / 60);
-                    const secs = Math.floor(seconds % 60);
-                    return `${mins}:${secs.toString().padStart(2, '0')}`;
-                }
                 
                 document.body.appendChild(container);
             });
