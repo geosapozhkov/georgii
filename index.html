@@ -576,15 +576,19 @@
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
+                // Clear any project images and back button
+                clearCommerceProject();
                 updateCommerceContent();
             } else if (tabName === 'About me') {
                 mainContent.style.display = 'none';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
+                clearCommerceProject();
             } else if (tabName === 'Mind') {
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
+                clearCommerceProject();
                 updateMindContent();
             }
             
@@ -623,25 +627,23 @@
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
                 <div class="catalog-grid">
-                    <div class="col-header">Angry Masseur</div>
-                    <div class="col-header">Poool</div>
-                    <div class="col-header">2023</div>
+                    <div class="col-header">Project</div>
+                    <div class="col-header">Client</div>
+                    <div class="col-header">Year</div>
 
-                    <div class="cell" data-preview="1">
-                        <a href="#hood-two-screens" class="catalog-link" data-description="Hood Two Screens - Main project video showcasing the dual-screen experience...">Hood Two Screens</a>
+                    <div class="cell" data-preview="angry-masseur">
+                        <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
                     </div>
-                    <div class="cell" data-preview="2">
-                        <a href="#icons" class="catalog-link" data-description="Icons - Visual identity and iconography for the project...">Icons</a>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-empty">-</span>
                     </div>
-                    <div class="cell" data-preview="3">
-                        <a href="#igor" class="catalog-link" data-description="Igor - Character development and animation showcase...">Igor</a>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-empty">-</span>
                     </div>
 
-                    <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
-                    <div class="cell" data-preview="2"><span class="catalog-empty">-</span></div>
-                    <div class="cell" data-preview="3">
-                        <a href="#zloy" class="catalog-link" data-description="Zloy - Final presentation video with 1080p quality at 30fps...">Zloy</a>
-                    </div>
+                    <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
                 </div>
             `;
             
@@ -659,41 +661,33 @@
                 link.addEventListener('mouseleave', stop);
             });
 
-            // Handle Commerce catalog clicks - open videos in modal
+            // Handle Commerce catalog clicks - show project gallery
             const rightText = document.querySelector('.text-content');
             const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
-            const imageModal = document.getElementById('imageModal');
-            const modalImage = document.getElementById('modalImage');
-            const modalVideo = document.getElementById('modalVideo');
             
             allLinks.forEach(a=>{
                 a.addEventListener('click', (e)=>{
                     e.preventDefault();
                     
-                    // Map Commerce project names to video files
-                    const videoMap = {
-                        'Hood Two Screens': 'Hood_two_screens.mp4',
-                        'Icons': 'Icons.mp4',
-                        'Igor': 'Igor.mp4',
-                        'Zloy': 'Zloy 011 (1080p with 30fps).mp4'
-                    };
-                    
                     const projectName = a.textContent.trim();
-                    const videoFile = videoMap[projectName];
                     
-                    if (videoFile) {
-                        // Show video in modal
-                        modalImage.style.display = 'none';
-                        modalVideo.style.display = 'block';
-                        modalVideo.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${videoFile}`;
-                        imageModal.classList.add('active');
-                    } else {
-                        // Show description in right panel
+                    if (projectName === 'Angry Masseur') {
+                        // Hide catalog and show project gallery
+                        const contentLeft = document.querySelector('.content-left');
+                        contentLeft.style.display = 'none';
+                        
+                        // Show project description
                         const desc = a.getAttribute('data-description');
                         if (desc) {
                             rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
+                        
+                        // Load project images
+                        loadAngryMasseurImages();
+                        
+                        // Add back button functionality
+                        addBackToCommerceButton();
                     }
                     
                     // dim only clicked catalog name to 25% opacity; reset others to 100%
@@ -729,6 +723,116 @@
                     });
                 });
             });
+        }
+
+        // Function to clear Commerce project elements
+        function clearCommerceProject() {
+            // Remove project images
+            const projectImages = document.querySelectorAll('.project-image');
+            projectImages.forEach(img => img.remove());
+            
+            // Remove back button
+            const backButton = document.getElementById('backToCommerce');
+            if (backButton) backButton.remove();
+            
+            // Show catalog again
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.style.display = 'block';
+        }
+
+        // Function to load Angry Masseur project images
+        function loadAngryMasseurImages() {
+            // Clear existing project images first
+            const existingImages = document.querySelectorAll('.project-image');
+            existingImages.forEach(img => img.remove());
+            
+            // List of video files from the AngryM folder
+            const videoFiles = [
+                'Hood_two_screens.mp4',
+                'Icons.mp4', 
+                'Igor.mp4',
+                'Zloy 011 (1080p with 30fps).mp4'
+            ];
+            
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+            
+            videoFiles.forEach((filename, i) => {
+                const video = document.createElement('video');
+                video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${filename}`;
+                video.className = 'project-image';
+                video.controls = true;
+                video.muted = true; // Muted by default
+                video.preload = 'metadata';
+                video.style.position = 'fixed';
+                video.style.width = 'auto';
+                video.style.height = 'auto';
+                video.style.maxWidth = '400px';
+                video.style.maxHeight = '300px';
+                video.style.zIndex = '100';
+                video.style.cursor = 'pointer';
+                
+                // Random position within the screen
+                const left = Math.floor(Math.random() * (screenW - 400));
+                const top = Math.floor(Math.random() * (screenH - 300));
+                video.style.left = left + 'px';
+                video.style.top = top + 'px';
+                
+                // Click handler to toggle mute
+                video.addEventListener('click', function() {
+                    video.muted = !video.muted;
+                });
+                
+                document.body.appendChild(video);
+            });
+            
+            console.log('Loaded', videoFiles.length, 'Angry Masseur project videos');
+        }
+
+        // Function to add back button to return to Commerce catalog
+        function addBackToCommerceButton() {
+            // Remove existing back button if any
+            const existingButton = document.getElementById('backToCommerce');
+            if (existingButton) existingButton.remove();
+            
+            const backButton = document.createElement('button');
+            backButton.id = 'backToCommerce';
+            backButton.textContent = '← Back to Commerce';
+            backButton.style.position = 'fixed';
+            backButton.style.top = '80px';
+            backButton.style.left = '30px';
+            backButton.style.zIndex = '200';
+            backButton.style.padding = '10px 20px';
+            backButton.style.backgroundColor = '#3C3C3C';
+            backButton.style.color = '#ffffff';
+            backButton.style.border = 'none';
+            backButton.style.fontFamily = 'BookletSans, sans-serif';
+            backButton.style.fontSize = '15px';
+            backButton.style.cursor = 'pointer';
+            backButton.style.borderRadius = '0';
+            
+            backButton.addEventListener('click', function() {
+                // Remove project images
+                const projectImages = document.querySelectorAll('.project-image');
+                projectImages.forEach(img => img.remove());
+                
+                // Remove back button
+                backButton.remove();
+                
+                // Show catalog again
+                const contentLeft = document.querySelector('.content-left');
+                contentLeft.style.display = 'block';
+                
+                // Reset text content
+                const textContent = document.querySelector('.text-content');
+                textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
+                
+                // Reset dimmed links
+                const allLinks = document.querySelectorAll('.catalog-link');
+                allLinks.forEach(l => l.classList.remove('dimmed'));
+            });
+            
+            document.body.appendChild(backButton);
         }
 
         // Function to restore Mind content
