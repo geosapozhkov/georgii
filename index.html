@@ -93,6 +93,8 @@
         .cell { height: 64px; display: flex; align-items: flex-start; }
         .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; transition: opacity 200ms ease; }
         .catalog-empty { font-size: 48px; color: #3C3C3C; }
+        .catalog-client { font-size: 48px; color: #3C3C3C; }
+        .catalog-year { font-size: 48px; color: #3C3C3C; }
         .catalog-link.dimmed { opacity: 0.25; }
 
         /* Lots of Letters Gallery */
@@ -360,6 +362,37 @@
             }));
         }
 
+        // Function to create project preview images
+        function createProjectRects(previewId){
+            const rnd = (min, max) => Math.random() * (max - min) + min;
+            
+            if (previewId === 'angry-masseur') {
+                // Create rectangles with project images/videos
+                rects = new Array(4).fill(0).map((_, i) => {
+                    const videoFiles = [
+                        'Hood_two_screens.mp4',
+                        'Icons.mp4', 
+                        'Igor.mp4',
+                        'Zloy 011 (1080p with 30fps).mp4'
+                    ];
+                    
+                    return {
+                        x: rnd(100, canvas.width - 300),
+                        y: rnd(100, canvas.height - 200),
+                        w: rnd(200, 300),
+                        h: rnd(150, 200),
+                        vx: rnd(-0.5, 0.5) || 0.3,
+                        vy: rnd(-0.5, 0.5) || -0.2,
+                        videoFile: videoFiles[i],
+                        type: 'video'
+                    };
+                });
+            } else {
+                // Default rectangles for other previews
+                createRects();
+            }
+        }
+
         function resolveRectCollision(a, b){
             const ax2 = a.x + a.w, ay2 = a.y + a.h;
             const bx2 = b.x + b.w, by2 = b.y + b.h;
@@ -398,7 +431,18 @@
             // draw
             ctx.fillStyle = '#D9D9D9';
             for(const r of rects){
-                ctx.fillRect(r.x, r.y, r.w, r.h);
+                if (r.type === 'video') {
+                    // Draw video placeholder with project name
+                    ctx.fillRect(r.x, r.y, r.w, r.h);
+                    ctx.fillStyle = '#3C3C3C';
+                    ctx.font = '14px BookletSans, sans-serif';
+                    ctx.textAlign = 'center';
+                    const videoName = r.videoFile.replace('.mp4', '').replace('_', ' ');
+                    ctx.fillText(videoName, r.x + r.w/2, r.y + r.h/2);
+                    ctx.fillStyle = '#D9D9D9';
+                } else {
+                    ctx.fillRect(r.x, r.y, r.w, r.h);
+                }
             }
             animationId = requestAnimationFrame(step);
         }
@@ -409,7 +453,7 @@
             if (active) return;
             active = true;
             canvas.style.display = 'block';
-            createRects();
+            createProjectRects(previewId);
             cancelAnimationFrame(animationId);
             animationId = requestAnimationFrame(step);
         }
@@ -635,10 +679,10 @@
                         <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
                     </div>
                     <div class="cell" data-preview="angry-masseur">
-                        <span class="catalog-empty">-</span>
+                        <span class="catalog-client">Poool</span>
                     </div>
                     <div class="cell" data-preview="angry-masseur">
-                        <span class="catalog-empty">-</span>
+                        <span class="catalog-year">2023</span>
                     </div>
 
                     <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
@@ -685,9 +729,6 @@
                         
                         // Load project images
                         loadAngryMasseurImages();
-                        
-                        // Add back button functionality
-                        addBackToCommerceButton();
                     }
                     
                     // dim only clicked catalog name to 25% opacity; reset others to 100%
@@ -727,13 +768,9 @@
 
         // Function to clear Commerce project elements
         function clearCommerceProject() {
-            // Remove project images
-            const projectImages = document.querySelectorAll('.project-image');
-            projectImages.forEach(img => img.remove());
-            
-            // Remove back button
-            const backButton = document.getElementById('backToCommerce');
-            if (backButton) backButton.remove();
+            // Remove video containers
+            const videoContainers = document.querySelectorAll('.video-container');
+            videoContainers.forEach(container => container.remove());
             
             // Show catalog again
             const contentLeft = document.querySelector('.content-left');
@@ -742,9 +779,9 @@
 
         // Function to load Angry Masseur project images
         function loadAngryMasseurImages() {
-            // Clear existing project images first
-            const existingImages = document.querySelectorAll('.project-image');
-            existingImages.forEach(img => img.remove());
+            // Clear existing video containers first
+            const existingContainers = document.querySelectorAll('.video-container');
+            existingContainers.forEach(container => container.remove());
             
             // List of video files from the AngryM folder
             const videoFiles = [
@@ -757,83 +794,152 @@
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
             
+            // Calculate grid layout for videos
+            const cols = 2; // 2 columns
+            const rows = Math.ceil(videoFiles.length / cols);
+            const videoWidth = Math.min(600, (screenW - 100) / cols - 20); // Larger videos
+            const videoHeight = Math.min(400, videoWidth * 0.75); // 4:3 aspect ratio
+            
             videoFiles.forEach((filename, i) => {
+                // Create video container
+                const container = document.createElement('div');
+                container.className = 'video-container';
+                container.style.position = 'fixed';
+                container.style.width = videoWidth + 'px';
+                container.style.height = videoHeight + 'px';
+                container.style.zIndex = '100';
+                container.style.cursor = 'pointer';
+                container.style.border = 'none';
+                container.style.borderRadius = '0';
+                container.style.overflow = 'hidden';
+                
+                // Create video element
                 const video = document.createElement('video');
                 video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${filename}`;
                 video.className = 'project-image';
-                video.controls = true;
                 video.muted = true; // Muted by default
                 video.preload = 'metadata';
-                video.style.position = 'fixed';
-                video.style.width = 'auto';
-                video.style.height = 'auto';
-                video.style.maxWidth = '400px';
-                video.style.maxHeight = '300px';
-                video.style.zIndex = '100';
-                video.style.cursor = 'pointer';
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
                 
-                // Random position within the screen
-                const left = Math.floor(Math.random() * (screenW - 400));
-                const top = Math.floor(Math.random() * (screenH - 300));
-                video.style.left = left + 'px';
-                video.style.top = top + 'px';
+                // Create custom controls
+                const controls = document.createElement('div');
+                controls.className = 'video-controls';
+                controls.style.position = 'absolute';
+                controls.style.bottom = '0';
+                controls.style.left = '0';
+                controls.style.right = '0';
+                controls.style.height = '40px';
+                controls.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                controls.style.display = 'none';
+                controls.style.alignItems = 'center';
+                controls.style.padding = '0 10px';
+                controls.style.boxSizing = 'border-box';
                 
-                // Click handler to toggle mute
-                video.addEventListener('click', function() {
-                    video.muted = !video.muted;
+                // Create progress bar
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                progressBar.style.flex = '1';
+                progressBar.style.height = '4px';
+                progressBar.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                progressBar.style.borderRadius = '2px';
+                progressBar.style.margin = '0 10px';
+                progressBar.style.position = 'relative';
+                progressBar.style.cursor = 'pointer';
+                
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-fill';
+                progressFill.style.position = 'absolute';
+                progressFill.style.top = '0';
+                progressFill.style.left = '0';
+                progressFill.style.height = '100%';
+                progressFill.style.backgroundColor = '#ffffff';
+                progressFill.style.borderRadius = '2px';
+                progressFill.style.width = '0%';
+                
+                progressBar.appendChild(progressFill);
+                controls.appendChild(progressBar);
+                
+                // Create time display
+                const timeDisplay = document.createElement('div');
+                timeDisplay.className = 'time-display';
+                timeDisplay.style.color = '#ffffff';
+                timeDisplay.style.fontSize = '12px';
+                timeDisplay.style.fontFamily = 'BookletSans, sans-serif';
+                timeDisplay.textContent = '0:00 / 0:00';
+                controls.appendChild(timeDisplay);
+                
+                container.appendChild(video);
+                container.appendChild(controls);
+                
+                // Calculate grid position (no overlapping)
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const left = 50 + col * (videoWidth + 20);
+                const top = 100 + row * (videoHeight + 20);
+                
+                container.style.left = left + 'px';
+                container.style.top = top + 'px';
+                
+                // Event handlers
+                let isPlaying = false;
+                
+                // Show/hide controls on hover
+                container.addEventListener('mouseenter', function() {
+                    controls.style.display = 'flex';
                 });
                 
-                document.body.appendChild(video);
+                container.addEventListener('mouseleave', function() {
+                    controls.style.display = 'none';
+                });
+                
+                // Click to play/pause
+                container.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (isPlaying) {
+                        video.pause();
+                        isPlaying = false;
+                    } else {
+                        video.play();
+                        isPlaying = true;
+                    }
+                });
+                
+                // Progress bar click to seek
+                progressBar.addEventListener('click', function(e) {
+                    const rect = progressBar.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const percentage = clickX / rect.width;
+                    video.currentTime = percentage * video.duration;
+                });
+                
+                // Update progress bar
+                video.addEventListener('timeupdate', function() {
+                    if (video.duration) {
+                        const percentage = (video.currentTime / video.duration) * 100;
+                        progressFill.style.width = percentage + '%';
+                        
+                        // Update time display
+                        const current = formatTime(video.currentTime);
+                        const total = formatTime(video.duration);
+                        timeDisplay.textContent = `${current} / ${total}`;
+                    }
+                });
+                
+                // Format time helper
+                function formatTime(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                }
+                
+                document.body.appendChild(container);
             });
             
-            console.log('Loaded', videoFiles.length, 'Angry Masseur project videos');
+            console.log('Loaded', videoFiles.length, 'Angry Masseur project videos in grid layout');
         }
 
-        // Function to add back button to return to Commerce catalog
-        function addBackToCommerceButton() {
-            // Remove existing back button if any
-            const existingButton = document.getElementById('backToCommerce');
-            if (existingButton) existingButton.remove();
-            
-            const backButton = document.createElement('button');
-            backButton.id = 'backToCommerce';
-            backButton.textContent = '← Back to Commerce';
-            backButton.style.position = 'fixed';
-            backButton.style.top = '80px';
-            backButton.style.left = '30px';
-            backButton.style.zIndex = '200';
-            backButton.style.padding = '10px 20px';
-            backButton.style.backgroundColor = '#3C3C3C';
-            backButton.style.color = '#ffffff';
-            backButton.style.border = 'none';
-            backButton.style.fontFamily = 'BookletSans, sans-serif';
-            backButton.style.fontSize = '15px';
-            backButton.style.cursor = 'pointer';
-            backButton.style.borderRadius = '0';
-            
-            backButton.addEventListener('click', function() {
-                // Remove project images
-                const projectImages = document.querySelectorAll('.project-image');
-                projectImages.forEach(img => img.remove());
-                
-                // Remove back button
-                backButton.remove();
-                
-                // Show catalog again
-                const contentLeft = document.querySelector('.content-left');
-                contentLeft.style.display = 'block';
-                
-                // Reset text content
-                const textContent = document.querySelector('.text-content');
-                textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
-                
-                // Reset dimmed links
-                const allLinks = document.querySelectorAll('.catalog-link');
-                allLinks.forEach(l => l.classList.remove('dimmed'));
-            });
-            
-            document.body.appendChild(backButton);
-        }
 
         // Function to restore Mind content
         function updateMindContent() {
