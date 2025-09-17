@@ -378,7 +378,7 @@
                 // Clear existing preview videos
                 document.querySelectorAll('.preview-video').forEach(video => video.remove());
                 
-                rects = new Array(4).fill(0).map((_, i) => {
+                rects = new Array(3).fill(0).map((_, i) => {
                     const videoFile = videoFiles[i];
                     
                     // Create actual video element for preview
@@ -389,12 +389,27 @@
                     video.loop = true;
                     video.autoplay = true;
                     video.preload = 'auto';
+                    video.playsInline = true;
                     video.style.position = 'fixed';
                     video.style.zIndex = '15';
                     video.style.pointerEvents = 'none';
                     video.style.border = 'none';
                     video.style.borderRadius = '0';
                     video.style.objectFit = 'contain';
+                    
+                    // Add event listeners to ensure video plays
+                    video.addEventListener('loadeddata', () => {
+                        video.play().catch(e => console.log('Video autoplay prevented:', e));
+                    });
+                    
+                    video.addEventListener('canplay', () => {
+                        video.play().catch(e => console.log('Video autoplay prevented:', e));
+                    });
+                    
+                    // Try to play immediately
+                    setTimeout(() => {
+                        video.play().catch(e => console.log('Video autoplay prevented:', e));
+                    }, 100);
                     
                     const w = rnd(300, 450);
                     const h = rnd(225, 300);
@@ -729,10 +744,6 @@
                     <div class="cell" data-preview="angry-masseur">
                         <span class="catalog-year">2023</span>
                     </div>
-
-                    <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
-                    <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
-                    <div class="cell" data-preview="angry-masseur"><span class="catalog-empty">-</span></div>
                 </div>
             `;
             
