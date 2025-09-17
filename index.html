@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>georgii</title>
     <link rel="preload" href="BookletSans-regular.woff" as="font" type="font/woff" crossorigin>
+    <!-- Preload critical images for faster loading -->
+    <link rel="preload" href="https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/0.png" as="image">
+    <link rel="preload" href="https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/1.png" as="image">
+    <link rel="preload" href="https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/2.png" as="image">
     <style>
         @font-face {
             font-family: 'BookletSans';
@@ -152,6 +156,13 @@
 
         .image-modal.active {
             display: flex;
+        }
+
+        /* Video modal styles */
+        .image-modal video {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
         }
 
         /* Right Content - Text */
@@ -308,9 +319,12 @@
     </main>
     <canvas id="previewCanvas"></canvas>
     
-    <!-- Image Modal -->
+    <!-- Image/Video Modal -->
     <div class="image-modal" id="imageModal">
-        <img id="modalImage" src="" alt="">
+        <img id="modalImage" src="" alt="" style="display: none;">
+        <video id="modalVideo" controls muted style="display: none;">
+            <source src="" type="video/mp4">
+        </video>
     </div>
     
     <footer class="footer">
@@ -405,58 +419,7 @@
             cancelAnimationFrame(animationId);
         }
 
-        // trigger preview only on catalog links, not empty cells
-        document.querySelectorAll('.catalog-link').forEach(link=>{
-            const cell = link.closest('.cell');
-            if (!cell) return;
-            link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-            link.addEventListener('mouseleave', stop);
-        });
-
-        // swap right description on catalog click
-        const rightText = document.querySelector('.text-content');
-        const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
-        allLinks.forEach(a=>{
-            a.addEventListener('click', (e)=>{
-                e.preventDefault();
-                const desc = a.getAttribute('data-description');
-                if (desc) {
-                    rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-                // dim only clicked catalog name to 25% opacity; reset others to 100%
-                allLinks.forEach(l=>l.classList.remove('dimmed'));
-                a.classList.add('dimmed');
-                // mark this preview as active to disable its animated hover
-                const parentCell = a.closest('.cell');
-                if (parentCell) activePreviewId = parentCell.dataset.preview || null;
-                // Replace moving preview with static rectangles placed randomly (stay within bounds)
-                stop();
-                const count = 6;
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight;
-                tempCanvas.style.position = 'fixed';
-                tempCanvas.style.inset = '0';
-                tempCanvas.style.zIndex = '9';
-                tempCanvas.style.pointerEvents = 'none';
-                document.body.appendChild(tempCanvas);
-                const tctx = tempCanvas.getContext('2d');
-                const rnd = (min,max)=>Math.random()*(max-min)+min;
-                tctx.fillStyle = '#D9D9D9';
-                for(let i=0;i<count;i++){
-                    const w = rnd(120,200), h = rnd(80,140);
-                    const x = rnd(20, tempCanvas.width - w - 10);
-                    const y = rnd(80, tempCanvas.height - h - 20);
-                    tctx.fillRect(x,y,w,h);
-                }
-                // auto-remove static overlay on next hover
-                document.querySelectorAll('.cell').forEach(el=>{
-                    el.addEventListener('mouseenter', ()=>{
-                        if (tempCanvas.parentNode) tempCanvas.parentNode.removeChild(tempCanvas);
-                    }, { once: true });
-                });
-            });
-        });
+        // Event listeners are now attached dynamically when switching tabs
 
         // Navigation and Gallery functionality
         const navLinks = document.querySelectorAll('.nav-link');
@@ -466,7 +429,10 @@
         const modalImage = document.getElementById('modalImage');
 
 
-        // Load draggable text images directly to body
+        // Image cache for better performance
+        const imageCache = new Map();
+        
+        // Load draggable text images with optimization
         function loadDraggableTextImages() {
             // Clear existing draggable images first
             const existingImages = document.querySelectorAll('.draggable-text');
@@ -484,27 +450,56 @@
             const screenW = window.innerWidth;
             const screenH = window.innerHeight;
             
-            imageNames.forEach((name, i) => {
-                const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
-                img.className = 'draggable-text';
-                img.alt = `Text ${name}`;
-                img.style.position = 'fixed';
-                img.style.width = 'auto';
-                img.style.height = 'auto';
-                img.style.maxWidth = '441px'; // 294px * 1.5 ≈ 441px
-                img.style.zIndex = '100';
-                
-                // Random position within the screen
-                const left = Math.floor(Math.random() * (screenW - 400));
-                const top = Math.floor(Math.random() * (screenH - 300));
-                img.style.left = left + 'px';
-                img.style.top = top + 'px';
-                
-                document.body.appendChild(img);
-            });
+            // Load images in batches for better performance
+            const batchSize = 5;
+            let currentBatch = 0;
             
-            console.log('Loaded', imageNames.length, 'images to body');
+            function loadBatch() {
+                const startIndex = currentBatch * batchSize;
+                const endIndex = Math.min(startIndex + batchSize, imageNames.length);
+                
+                for (let i = startIndex; i < endIndex; i++) {
+                    const name = imageNames[i];
+                    const img = document.createElement('img');
+                    
+                    // Check cache first
+                    if (imageCache.has(name)) {
+                        img.src = imageCache.get(name);
+                    } else {
+                        img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
+                        // Cache the image
+                        img.onload = () => imageCache.set(name, img.src);
+                    }
+                    
+                    img.className = 'draggable-text';
+                    img.alt = `Text ${name}`;
+                    img.loading = 'lazy'; // Lazy loading for better performance
+                    img.style.position = 'fixed';
+                    img.style.width = 'auto';
+                    img.style.height = 'auto';
+                    img.style.maxWidth = '441px'; // 294px * 1.5 ≈ 441px
+                    img.style.zIndex = '100';
+                    
+                    // Random position within the screen
+                    const left = Math.floor(Math.random() * (screenW - 400));
+                    const top = Math.floor(Math.random() * (screenH - 300));
+                    img.style.left = left + 'px';
+                    img.style.top = top + 'px';
+                    
+                    document.body.appendChild(img);
+                }
+                
+                currentBatch++;
+                
+                // Load next batch after a short delay
+                if (endIndex < imageNames.length) {
+                    setTimeout(loadBatch, 100);
+                } else {
+                    console.log('Loaded', imageNames.length, 'images to body');
+                }
+            }
+            
+            loadBatch();
         }
 
         // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
@@ -577,7 +572,12 @@
                 // Show images only for Lots of Letters
                 allImages.forEach(img => img.style.display = 'block');
                 loadDraggableTextImages();
-            } else if (tabName === 'Commerce' || tabName === 'About me') {
+            } else if (tabName === 'Commerce') {
+                mainContent.style.display = 'block';
+                lettersGallery.style.display = 'none';
+                resetAllPapers();
+                updateCommerceContent();
+            } else if (tabName === 'About me') {
                 mainContent.style.display = 'none';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
@@ -585,6 +585,7 @@
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
+                updateMindContent();
             }
             
             // Save current tab to localStorage
@@ -600,11 +601,224 @@
             });
         });
 
+        // Preload images for better performance
+        function preloadImages() {
+            const criticalImages = ['0.png', '1.png', '2.png', '3.png', '4.png'];
+            criticalImages.forEach(name => {
+                const img = new Image();
+                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
+                imageCache.set(name, img.src);
+            });
+        }
+
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
+            preloadImages(); // Start preloading critical images
             const savedTab = localStorage.getItem('activeTab') || 'Mind';
             switchTab(savedTab);
         });
+
+        // Function to update Commerce content with same layout as Mind
+        function updateCommerceContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
+                <div class="catalog-grid">
+                    <div class="col-header">Angry Masseur</div>
+                    <div class="col-header">Poool</div>
+                    <div class="col-header">2023</div>
+
+                    <div class="cell" data-preview="1">
+                        <a href="#hood-two-screens" class="catalog-link" data-description="Hood Two Screens - Main project video showcasing the dual-screen experience...">Hood Two Screens</a>
+                    </div>
+                    <div class="cell" data-preview="2">
+                        <a href="#icons" class="catalog-link" data-description="Icons - Visual identity and iconography for the project...">Icons</a>
+                    </div>
+                    <div class="cell" data-preview="3">
+                        <a href="#igor" class="catalog-link" data-description="Igor - Character development and animation showcase...">Igor</a>
+                    </div>
+
+                    <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="2"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="3">
+                        <a href="#zloy" class="catalog-link" data-description="Zloy - Final presentation video with 1080p quality at 30fps...">Zloy</a>
+                    </div>
+                </div>
+            `;
+            
+            // Re-attach event listeners for Commerce catalog links
+            attachCommerceEventListeners();
+        }
+
+        // Function to attach event listeners for Commerce catalog
+        function attachCommerceEventListeners() {
+            // Trigger preview only on catalog links, not empty cells
+            document.querySelectorAll('.catalog-link').forEach(link=>{
+                const cell = link.closest('.cell');
+                if (!cell) return;
+                link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                link.addEventListener('mouseleave', stop);
+            });
+
+            // Handle Commerce catalog clicks - open videos in modal
+            const rightText = document.querySelector('.text-content');
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+            const imageModal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalVideo = document.getElementById('modalVideo');
+            
+            allLinks.forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    
+                    // Map Commerce project names to video files
+                    const videoMap = {
+                        'Hood Two Screens': 'Hood_two_screens.mp4',
+                        'Icons': 'Icons.mp4',
+                        'Igor': 'Igor.mp4',
+                        'Zloy': 'Zloy 011 (1080p with 30fps).mp4'
+                    };
+                    
+                    const projectName = a.textContent.trim();
+                    const videoFile = videoMap[projectName];
+                    
+                    if (videoFile) {
+                        // Show video in modal
+                        modalImage.style.display = 'none';
+                        modalVideo.style.display = 'block';
+                        modalVideo.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${videoFile}`;
+                        imageModal.classList.add('active');
+                    } else {
+                        // Show description in right panel
+                        const desc = a.getAttribute('data-description');
+                        if (desc) {
+                            rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }
+                    
+                    // dim only clicked catalog name to 25% opacity; reset others to 100%
+                    allLinks.forEach(l=>l.classList.remove('dimmed'));
+                    a.classList.add('dimmed');
+                    // mark this preview as active to disable its animated hover
+                    const parentCell = a.closest('.cell');
+                    if (parentCell) activePreviewId = parentCell.dataset.preview || null;
+                    // Replace moving preview with static rectangles placed randomly (stay within bounds)
+                    stop();
+                    const count = 6;
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight;
+                    tempCanvas.style.position = 'fixed';
+                    tempCanvas.style.inset = '0';
+                    tempCanvas.style.zIndex = '9';
+                    tempCanvas.style.pointerEvents = 'none';
+                    document.body.appendChild(tempCanvas);
+                    const tctx = tempCanvas.getContext('2d');
+                    const rnd = (min,max)=>Math.random()*(max-min)+min;
+                    tctx.fillStyle = '#D9D9D9';
+                    for(let i=0;i<count;i++){
+                        const w = rnd(180, 300), h = rnd(120, 210); // Same size as Mind preview
+                        const x = rnd(20, tempCanvas.width - w - 10);
+                        const y = rnd(80, tempCanvas.height - h - 20);
+                        tctx.fillRect(x,y,w,h);
+                    }
+                    // auto-remove static overlay on next hover
+                    document.querySelectorAll('.cell').forEach(el=>{
+                        el.addEventListener('mouseenter', ()=>{
+                            if (tempCanvas.parentNode) tempCanvas.parentNode.removeChild(tempCanvas);
+                        }, { once: true });
+                    });
+                });
+            });
+        }
+
+        // Function to restore Mind content
+        function updateMindContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
+                <div class="catalog-grid">
+                    <div class="col-header">Than</div>
+                    <div class="col-header">Now</div>
+                    <div class="col-header">Then</div>
+
+                    <div class="cell" data-preview="1">
+                        <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
+                    </div>
+                    <div class="cell" data-preview="2">
+                        <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
+                    </div>
+                    <div class="cell" data-preview="3">
+                        <span class="catalog-empty">-</span>
+                    </div>
+
+                    <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="2">
+                        <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
+                    </div>
+                    <div class="cell" data-preview="3">
+                        <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
+                    </div>
+                </div>
+            `;
+            
+            // Re-attach event listeners for Mind catalog links
+            attachMindEventListeners();
+        }
+
+        // Function to attach event listeners for Mind catalog
+        function attachMindEventListeners() {
+            // Trigger preview only on catalog links, not empty cells
+            document.querySelectorAll('.catalog-link').forEach(link=>{
+                const cell = link.closest('.cell');
+                if (!cell) return;
+                link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                link.addEventListener('mouseleave', stop);
+            });
+
+            // swap right description on catalog click
+            const rightText = document.querySelector('.text-content');
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+            allLinks.forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    const desc = a.getAttribute('data-description');
+                    if (desc) {
+                        rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    // dim only clicked catalog name to 25% opacity; reset others to 100%
+                    allLinks.forEach(l=>l.classList.remove('dimmed'));
+                    a.classList.add('dimmed');
+                    // mark this preview as active to disable its animated hover
+                    const parentCell = a.closest('.cell');
+                    if (parentCell) activePreviewId = parentCell.dataset.preview || null;
+                    // Replace moving preview with static rectangles placed randomly (stay within bounds)
+                    stop();
+                    const count = 6;
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight;
+                    tempCanvas.style.position = 'fixed';
+                    tempCanvas.style.inset = '0';
+                    tempCanvas.style.zIndex = '9';
+                    tempCanvas.style.pointerEvents = 'none';
+                    document.body.appendChild(tempCanvas);
+                    const tctx = tempCanvas.getContext('2d');
+                    const rnd = (min,max)=>Math.random()*(max-min)+min;
+                    tctx.fillStyle = '#D9D9D9';
+                    for(let i=0;i<count;i++){
+                        const w = rnd(180, 300), h = rnd(120, 210); // Same size as Commerce preview
+                        const x = rnd(20, tempCanvas.width - w - 10);
+                        const y = rnd(80, tempCanvas.height - h - 20);
+                        tctx.fillRect(x,y,w,h);
+                    }
+                    // auto-remove static overlay on next hover
+                    document.querySelectorAll('.cell').forEach(el=>{
+                        el.addEventListener('mouseenter', ()=>{
+                            if (tempCanvas.parentNode) tempCanvas.parentNode.removeChild(tempCanvas);
+                        }, { once: true });
+                    });
+                });
+            });
+        }
 
         // Function to update text content based on active tab
         function updateTextContent(tabName) {
@@ -615,7 +829,7 @@
                     textContent.innerHTML = '<p>Here my thoughts</p>';
                     break;
                 case 'Commerce':
-                    textContent.innerHTML = '<p>Commerce content will be here</p>';
+                    textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
                     break;
                 case 'About me':
                     textContent.innerHTML = '<p>About me content will be here</p>';
@@ -646,14 +860,35 @@
         // Modal handlers
         imageModal.addEventListener('click', () => {
             imageModal.classList.remove('active');
+            // Stop video when modal closes
+            const modalVideo = document.getElementById('modalVideo');
+            if (modalVideo) {
+                modalVideo.pause();
+                modalVideo.currentTime = 0;
+            }
         });
 
-        // Toggle mute on video click (sound on/off)
+        // Video optimization and mute toggle
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('video').forEach(video => {
+                // Optimize video loading
+                video.preload = 'metadata'; // Only load metadata initially
+                video.muted = true; // Muted by default for better UX
+                
                 video.addEventListener('click', function() {
                     video.muted = !video.muted;
                 });
+                
+                // Load video only when it comes into view
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            video.preload = 'auto';
+                            observer.unobserve(video);
+                        }
+                    });
+                });
+                observer.observe(video);
             });
         });
     })();
