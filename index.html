@@ -380,29 +380,7 @@
         <a href="#" class="nav-link">About me</a>
     </nav>
     <section class="content-left" style="display: none;">
-        <div class="catalog-grid">
-            <div class="col-header">Than</div>
-            <div class="col-header">Now</div>
-            <div class="col-header">Then</div>
-
-            <div class="cell" data-preview="1">
-                <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
-            </div>
-            <div class="cell" data-preview="2">
-                <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
-            </div>
-            <div class="cell" data-preview="3">
-                <span class="catalog-empty">-</span>
-            </div>
-
-            <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
-            <div class="cell" data-preview="2">
-                <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
-            </div>
-            <div class="cell" data-preview="3">
-                <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
-            </div>
-        </div>
+        <!-- Content will be dynamically loaded here -->
     </section>
 
     <!-- Lots of Letters Gallery -->
@@ -860,7 +838,6 @@
 
         // Function to show home page (logo + about me only)
         function showHomePage() {
-            console.log('showHomePage called');
             // Stop any active preview animations
             stop();
             
@@ -872,7 +849,6 @@
             
             // Hide main content
             const mainContent = document.querySelector('.content-left');
-            console.log('Hiding main content:', mainContent);
             mainContent.style.display = 'none';
             
             // Hide letters gallery
@@ -977,7 +953,6 @@
             // Clear localStorage to ensure clean start
             localStorage.clear();
             // Always show home page on load
-            console.log('Loading home page...');
             showHomePage();
         });
 
