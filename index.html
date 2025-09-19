@@ -403,7 +403,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            pointer-events: auto;
+            pointer-events: none;
             z-index: 1001;
             cursor: crosshair;
         }
@@ -1954,26 +1954,36 @@
         // Prevent right-click context menu
         drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        // Ensure cursor is visible when mouse enters canvas
-        drawingCanvas.addEventListener('mouseenter', (e) => {
-            const cursor = document.getElementById('customCursor');
-            if (cursor) {
-                cursor.style.visibility = 'visible';
-                cursor.style.opacity = '1';
+        // Handle clicks to activate canvas or pass through to elements
+        document.addEventListener('click', (e) => {
+            // Check if clicking on interactive elements
+            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+            
+            if (elementBelow && (
+                elementBelow.classList.contains('catalog-item') ||
+                elementBelow.classList.contains('logo') ||
+                elementBelow.classList.contains('nav-link') ||
+                elementBelow.closest('.catalog-item') ||
+                elementBelow.closest('.logo') ||
+                elementBelow.closest('.nav-link') ||
+                elementBelow.tagName === 'A' ||
+                elementBelow.tagName === 'BUTTON'
+            )) {
+                // If clicking on clickable element, deactivate canvas and trigger click
+                drawingCanvas.style.pointerEvents = 'none';
+                console.log('Canvas deactivated');
+                elementBelow.click();
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                // If clicking on empty space, activate canvas for drawing
+                drawingCanvas.style.pointerEvents = 'auto';
+                console.log('Canvas activated for drawing');
             }
         });
 
-        // Keep cursor visible when mouse leaves canvas
-        drawingCanvas.addEventListener('mouseleave', (e) => {
-            const cursor = document.getElementById('customCursor');
-            if (cursor) {
-                cursor.style.visibility = 'visible';
-                cursor.style.opacity = '1';
-            }
-        });
-
-        // Handle mouse events on canvas to allow hover effects and clicks
-        drawingCanvas.addEventListener('mousemove', (e) => {
+        // Handle mouse movement for hover effects
+        document.addEventListener('mousemove', (e) => {
             // Update custom cursor position
             const cursor = document.getElementById('customCursor');
             if (cursor) {
@@ -1981,7 +1991,7 @@
                 cursor.style.top = e.clientY + 'px';
             }
             
-            // Check if we're over clickable elements
+            // Check if we're over clickable elements for hover effects
             const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
             
             if (elementBelow && (
@@ -1997,32 +2007,6 @@
                     bubbles: true
                 }));
             }
-        });
-
-        // Handle clicks through canvas
-        drawingCanvas.addEventListener('click', (e) => {
-            // Check if we're clicking on clickable elements
-            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
-            
-            if (elementBelow && (
-                elementBelow.classList.contains('catalog-item') ||
-                elementBelow.classList.contains('logo') ||
-                elementBelow.classList.contains('nav-link') ||
-                elementBelow.closest('.catalog-item') ||
-                elementBelow.closest('.logo') ||
-                elementBelow.closest('.nav-link') ||
-                elementBelow.tagName === 'A' ||
-                elementBelow.tagName === 'BUTTON'
-            )) {
-                // If clicking on clickable element, trigger its click event
-                elementBelow.click();
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-            }
-            
-            // If not clicking on interactive element, allow drawing
-            // The drawing will be handled by mousedown event
         });
 
         function startDrawing(e) {
