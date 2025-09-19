@@ -369,6 +369,8 @@
             pointer-events: none;
             cursor: default;
             font-size: 15px;
+            font-weight: normal;
+            line-height: 1.2;
         }
 
         /* Custom cursor */
@@ -1931,6 +1933,7 @@
         const drawingCanvas = document.getElementById('drawingCanvas');
         const drawingCtx = drawingCanvas.getContext('2d');
         let isDrawing = false;
+        let isDrawingMode = false; // New variable to track if drawing mode is active
         let currentColor = '#4D4D4D';
         let currentBrushSize = 3;
 
@@ -1955,6 +1958,28 @@
 
         // Prevent right-click context menu
         drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Activate drawing mode on page click (but not on interactive elements)
+        document.addEventListener('click', (e) => {
+            // Check if clicking on interactive elements
+            const isInteractiveElement = e.target.closest('.catalog-item') || 
+                                       e.target.closest('.logo') || 
+                                       e.target.closest('.nav-link') ||
+                                       e.target.closest('a') ||
+                                       e.target.closest('button');
+            
+            if (isInteractiveElement) {
+                // Deactivate drawing mode when clicking on interactive elements
+                isDrawingMode = false;
+                drawingCanvas.classList.remove('drawing-active');
+                console.log('Drawing mode deactivated');
+            } else {
+                // Activate drawing mode when clicking on empty space
+                isDrawingMode = true;
+                drawingCanvas.classList.add('drawing-active');
+                console.log('Drawing mode activated');
+            }
+        });
 
         // Handle mouse events on canvas to allow hover effects and clicks
         drawingCanvas.addEventListener('mousemove', (e) => {
@@ -1988,7 +2013,12 @@
                 elementBelow.closest('.logo') ||
                 elementBelow.classList.contains('nav-link')
             )) {
-                // If clicking on clickable element, trigger its click event
+                // If clicking on clickable element, deactivate drawing mode
+                isDrawingMode = false;
+                drawingCanvas.classList.remove('drawing-active');
+                console.log('Drawing mode deactivated');
+                
+                // Trigger its click event
                 elementBelow.click();
                 e.preventDefault();
                 e.stopPropagation();
@@ -1996,11 +2026,13 @@
         });
 
         function startDrawing(e) {
+            // Only allow drawing if drawing mode is active
+            if (!isDrawingMode) return;
+            
             // Check if right mouse button (erase mode) or left mouse button (draw mode)
             if (e.button === 2) {
                 // Right button - erase mode
                 isDrawing = true;
-                drawingCanvas.classList.add('drawing-active');
                 const rect = drawingCanvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -2014,7 +2046,6 @@
             } else if (e.button === 0) {
                 // Left button - draw mode
                 isDrawing = true;
-                drawingCanvas.classList.add('drawing-active');
                 const rect = drawingCanvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -2056,7 +2087,6 @@
 
         function stopDrawing() {
             isDrawing = false;
-            drawingCanvas.classList.remove('drawing-active');
             drawingCtx.beginPath();
             // Reset to normal drawing mode
             drawingCtx.globalCompositeOperation = 'source-over';
