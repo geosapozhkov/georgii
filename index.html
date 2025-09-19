@@ -387,11 +387,6 @@
             z-index: 9999;
             transition: transform 0.1s ease;
             transform: translate(-50%, -50%);
-            visibility: hidden;
-            opacity: 0;
-        }
-
-        .custom-cursor.visible {
             visibility: visible;
             opacity: 1;
         }
@@ -410,32 +405,6 @@
             pointer-events: auto;
             z-index: 10000;
             cursor: crosshair;
-        }
-
-        /* Drawing Controls */
-        .drawing-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 15px;
-            border-radius: 20px;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            font-size: 12px;
-            color: #666;
-            visibility: hidden;
-            opacity: 0;
-        }
-
-        .drawing-controls.show {
-            display: flex;
-            visibility: visible;
-            opacity: 1;
         }
 
         /* Custom cursor */
@@ -471,11 +440,6 @@
     
     <!-- Drawing Canvas -->
     <canvas id="drawingCanvas"></canvas>
-    
-        <!-- Drawing Controls -->
-        <div class="drawing-controls">
-            <!-- Brush size controlled by mouse wheel -->
-        </div>
     
     <!-- Image/Video Modal -->
     <div class="image-modal" id="imageModal">
@@ -942,11 +906,6 @@
             // Set home page state
             isHomePage = true;
             
-            // Update drawing controls visibility
-            if (typeof updateDrawingControls === 'function') {
-                updateDrawingControls();
-            }
-            
             // Clear any project galleries
             const existingGallery = document.querySelector('.project-gallery');
             if (existingGallery) {
@@ -1003,11 +962,6 @@
             
             // Update home page state
             isHomePage = (tabName === 'Home' || !tabName);
-            
-            // Update drawing controls visibility
-            if (typeof updateDrawingControls === 'function') {
-                updateDrawingControls();
-            }
             
             // Remove active class from all links
             navLinks.forEach(l => l.classList.remove('active'));
@@ -2074,30 +2028,7 @@
             drawingCanvas.dispatchEvent(mouseEvent);
         }
 
-        // Drawing controls
-        const drawingControls = document.querySelector('.drawing-controls');
-
-        // Show/hide drawing controls based on page
-        function updateDrawingControls() {
-            if (isHomePage) {
-                drawingControls.classList.add('show');
-            } else {
-                drawingControls.classList.remove('show');
-            }
-        }
-
-        // Update controls visibility when page changes
-        updateDrawingControls();
-
-        // Handle window resize to update max brush size
-        window.addEventListener('resize', () => {
-            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
-            if (currentBrushSize > maxBrushSize) {
-                currentBrushSize = maxBrushSize;
-            }
-        });
-
-        // Mouse wheel event for brush size - attach to document instead of canvas
+        // Mouse wheel event for brush size
         document.addEventListener('wheel', (e) => {
             e.preventDefault();
             
@@ -2112,33 +2043,33 @@
                 currentBrushSize = Math.max(0.5, currentBrushSize - 1);
             }
             
-            // Debug: log brush size changes
-            console.log('Brush size:', currentBrushSize);
+            console.log('Brush size (wheel):', currentBrushSize);
         });
 
-        // Custom cursor tracking - always visible when mouse moves
+        // Keyboard controls for brush size
+        document.addEventListener('keydown', (e) => {
+            // Calculate max brush size as the smaller dimension of the page
+            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
+            
+            if (e.key === '+' || e.key === '=') {
+                // Plus key - increase brush size
+                e.preventDefault();
+                currentBrushSize = Math.min(maxBrushSize, currentBrushSize + 1);
+                console.log('Brush size (+):', currentBrushSize);
+            } else if (e.key === '-') {
+                // Minus key - decrease brush size
+                e.preventDefault();
+                currentBrushSize = Math.max(0.5, currentBrushSize - 1);
+                console.log('Brush size (-):', currentBrushSize);
+            }
+        });
+
+        // Custom cursor tracking - always visible
         document.addEventListener('mousemove', (e) => {
             const cursor = document.getElementById('customCursor');
             if (cursor) {
                 cursor.style.left = e.clientX + 'px';
                 cursor.style.top = e.clientY + 'px';
-                cursor.classList.add('visible');
-            }
-        });
-
-        // Hide cursor when mouse leaves the page
-        document.addEventListener('mouseleave', () => {
-            const cursor = document.getElementById('customCursor');
-            if (cursor) {
-                cursor.classList.remove('visible');
-            }
-        });
-
-        // Show cursor when mouse enters the page
-        document.addEventListener('mouseenter', () => {
-            const cursor = document.getElementById('customCursor');
-            if (cursor) {
-                cursor.classList.add('visible');
             }
         });
 
