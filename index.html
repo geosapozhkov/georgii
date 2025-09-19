@@ -79,15 +79,57 @@
         /* Left Content - Catalog grid */
         .content-left { flex: 0 0 auto; padding-left: 30px; margin-top: 80px; }
 
+        /* 12-column grid system inspired by Kühl & Han */
         .catalog-grid {
             display: grid;
-            grid-template-columns: auto auto auto;
-            column-gap: 120px;
-            row-gap: 28px;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            max-width: 1200px;
             align-content: start;
             padding-top: 10px;
-            width: fit-content;
         }
+
+        /* Column span classes */
+        .col-1 { grid-column: span 1; }
+        .col-2 { grid-column: span 2; }
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; }
+        .col-5 { grid-column: span 5; }
+        .col-6 { grid-column: span 6; }
+        .col-7 { grid-column: span 7; }
+        .col-8 { grid-column: span 8; }
+        .col-9 { grid-column: span 9; }
+        .col-10 { grid-column: span 10; }
+        .col-11 { grid-column: span 11; }
+        .col-12 { grid-column: span 12; }
+
+        /* Column start classes */
+        .col-start-1 { grid-column-start: 1; }
+        .col-start-2 { grid-column-start: 2; }
+        .col-start-3 { grid-column-start: 3; }
+        .col-start-4 { grid-column-start: 4; }
+        .col-start-5 { grid-column-start: 5; }
+        .col-start-6 { grid-column-start: 6; }
+        .col-start-7 { grid-column-start: 7; }
+        .col-start-8 { grid-column-start: 8; }
+        .col-start-9 { grid-column-start: 9; }
+        .col-start-10 { grid-column-start: 10; }
+        .col-start-11 { grid-column-start: 11; }
+        .col-start-12 { grid-column-start: 12; }
+
+        /* Column end classes */
+        .col-end-1 { grid-column-end: 1; }
+        .col-end-2 { grid-column-end: 2; }
+        .col-end-3 { grid-column-end: 3; }
+        .col-end-4 { grid-column-end: 4; }
+        .col-end-5 { grid-column-end: 5; }
+        .col-end-6 { grid-column-end: 6; }
+        .col-end-7 { grid-column-end: 7; }
+        .col-end-8 { grid-column-end: 8; }
+        .col-end-9 { grid-column-end: 9; }
+        .col-end-10 { grid-column-end: 10; }
+        .col-end-11 { grid-column-end: 11; }
+        .col-end-12 { grid-column-end: 12; }
 
         .col-header { font-size: 15px; }
         .cell { height: 64px; display: flex; align-items: flex-start; }
@@ -259,6 +301,11 @@
             .nav-link {
                 font-size: 23.84px;
             }
+            
+            .catalog-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 15px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -266,6 +313,11 @@
                 flex-direction: column;
                 gap: 20px;
                 padding: 20px 0 0 30px;
+            }
+            
+            .catalog-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
             }
         }
     </style>
@@ -279,25 +331,27 @@
     </nav>
     <section class="content-left">
         <div class="catalog-grid">
-            <div class="col-header">Than</div>
-            <div class="col-header">Now</div>
-            <div class="col-header">Then</div>
+            <!-- Headers spanning full width -->
+            <div class="col-header col-12">Than</div>
+            <div class="col-header col-12">Now</div>
+            <div class="col-header col-12">Then</div>
 
-            <div class="cell" data-preview="1">
+            <!-- Project rows with proper column spans -->
+            <div class="cell col-4" data-preview="1">
                 <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
             </div>
-            <div class="cell" data-preview="2">
+            <div class="cell col-4" data-preview="2">
                 <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
             </div>
-            <div class="cell" data-preview="3">
+            <div class="cell col-4" data-preview="3">
                 <span class="catalog-empty">-</span>
             </div>
 
-            <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
-            <div class="cell" data-preview="2">
+            <div class="cell col-4" data-preview="1"><span class="catalog-empty">-</span></div>
+            <div class="cell col-4" data-preview="2">
                 <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
             </div>
-            <div class="cell" data-preview="3">
+            <div class="cell col-4" data-preview="3">
                 <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
             </div>
         </div>
@@ -833,22 +887,22 @@
             switchTab(savedTab);
         });
 
-        // Function to update Commerce content with same layout as Mind
+        // Function to update Commerce content with 12-column grid
         function updateCommerceContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
                 <div class="catalog-grid">
-                    <div class="col-header">Project</div>
-                    <div class="col-header">Client</div>
-                    <div class="col-header">Year</div>
+                    <div class="col-header col-12">Project</div>
+                    <div class="col-header col-12">Client</div>
+                    <div class="col-header col-12">Year</div>
 
-                    <div class="cell" data-preview="angry-masseur">
+                    <div class="cell col-4" data-preview="angry-masseur">
                         <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
                     </div>
-                    <div class="cell" data-preview="angry-masseur">
+                    <div class="cell col-4" data-preview="angry-masseur">
                         <span class="catalog-client">Poool</span>
                     </div>
-                    <div class="cell" data-preview="angry-masseur">
+                    <div class="cell col-4" data-preview="angry-masseur">
                         <span class="catalog-year">2023</span>
                     </div>
                 </div>
@@ -1081,30 +1135,30 @@
         }
 
 
-        // Function to restore Mind content
+        // Function to restore Mind content with 12-column grid
         function updateMindContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
                 <div class="catalog-grid">
-                    <div class="col-header">Than</div>
-                    <div class="col-header">Now</div>
-                    <div class="col-header">Then</div>
+                    <div class="col-header col-12">Than</div>
+                    <div class="col-header col-12">Now</div>
+                    <div class="col-header col-12">Then</div>
 
-                    <div class="cell" data-preview="1">
+                    <div class="cell col-4" data-preview="1">
                         <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
                     </div>
-                    <div class="cell" data-preview="2">
+                    <div class="cell col-4" data-preview="2">
                         <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
                     </div>
-                    <div class="cell" data-preview="3">
+                    <div class="cell col-4" data-preview="3">
                         <span class="catalog-empty">-</span>
                     </div>
 
-                    <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
-                    <div class="cell" data-preview="2">
+                    <div class="cell col-4" data-preview="1"><span class="catalog-empty">-</span></div>
+                    <div class="cell col-4" data-preview="2">
                         <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
                     </div>
-                    <div class="cell" data-preview="3">
+                    <div class="cell col-4" data-preview="3">
                         <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
                     </div>
                 </div>
