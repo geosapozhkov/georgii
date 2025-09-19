@@ -379,6 +379,10 @@
         }
 
         .custom-cursor {
+            cursor: auto !important;
+        }
+
+        .custom-cursor {
             position: fixed;
             width: 6px;
             height: 6px;
@@ -403,7 +407,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            pointer-events: none;
+            pointer-events: auto;
             z-index: 1001;
             cursor: crosshair;
         }
@@ -1954,8 +1958,8 @@
         // Prevent right-click context menu
         drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        // Handle clicks to activate canvas or pass through to elements
-        document.addEventListener('click', (e) => {
+        // Handle clicks on canvas to toggle drawing mode
+        drawingCanvas.addEventListener('click', (e) => {
             // Check if clicking on interactive elements
             const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
             
@@ -1969,21 +1973,51 @@
                 elementBelow.tagName === 'A' ||
                 elementBelow.tagName === 'BUTTON'
             )) {
-                // If clicking on clickable element, deactivate canvas and trigger click
-                drawingCanvas.style.pointerEvents = 'none';
-                console.log('Canvas deactivated');
+                // If clicking on clickable element, trigger its click event
                 elementBelow.click();
                 e.preventDefault();
                 e.stopPropagation();
             } else {
-                // If clicking on empty space, activate canvas for drawing
-                drawingCanvas.style.pointerEvents = 'auto';
-                console.log('Canvas activated for drawing');
+                // If clicking on empty space, toggle drawing mode
+                if (drawingCanvas.style.pointerEvents === 'auto') {
+                    drawingCanvas.style.pointerEvents = 'none';
+                    console.log('Drawing mode OFF');
+                } else {
+                    drawingCanvas.style.pointerEvents = 'auto';
+                    console.log('Drawing mode ON');
+                }
             }
         });
 
         // Handle mouse movement for hover effects
         document.addEventListener('mousemove', (e) => {
+            // Update custom cursor position
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            }
+            
+            // Check if we're over clickable elements for hover effects
+            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+            
+            if (elementBelow && (
+                elementBelow.classList.contains('catalog-item') ||
+                elementBelow.classList.contains('logo') ||
+                elementBelow.closest('.catalog-item') ||
+                elementBelow.closest('.logo')
+            )) {
+                // If over clickable element, trigger its hover event
+                elementBelow.dispatchEvent(new MouseEvent('mouseenter', {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    bubbles: true
+                }));
+            }
+        });
+
+        // Handle mouse movement on canvas for hover effects
+        drawingCanvas.addEventListener('mousemove', (e) => {
             // Update custom cursor position
             const cursor = document.getElementById('customCursor');
             if (cursor) {
@@ -2483,15 +2517,6 @@
             
             animate();
         }
-
-        // Custom cursor tracking - always visible
-        document.addEventListener('mousemove', (e) => {
-            const cursor = document.getElementById('customCursor');
-            if (cursor) {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
-            }
-        });
 
         // Navigation handlers
         navLinks.forEach(link => {
