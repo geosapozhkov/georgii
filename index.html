@@ -387,6 +387,13 @@
             z-index: 9999;
             transition: transform 0.1s ease;
             transform: translate(-50%, -50%);
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .custom-cursor.visible {
+            visibility: visible;
+            opacity: 1;
         }
 
         .custom-cursor:hover {
@@ -421,10 +428,14 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             font-size: 12px;
             color: #666;
+            visibility: hidden;
+            opacity: 0;
         }
 
         .drawing-controls.show {
             display: flex;
+            visibility: visible;
+            opacity: 1;
         }
 
         /* Custom cursor */
@@ -2105,12 +2116,29 @@
             console.log('Brush size:', currentBrushSize);
         });
 
-        // Custom cursor tracking
+        // Custom cursor tracking - always visible when mouse moves
         document.addEventListener('mousemove', (e) => {
             const cursor = document.getElementById('customCursor');
             if (cursor) {
                 cursor.style.left = e.clientX + 'px';
                 cursor.style.top = e.clientY + 'px';
+                cursor.classList.add('visible');
+            }
+        });
+
+        // Hide cursor when mouse leaves the page
+        document.addEventListener('mouseleave', () => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.classList.remove('visible');
+            }
+        });
+
+        // Show cursor when mouse enters the page
+        document.addEventListener('mouseenter', () => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.classList.add('visible');
             }
         });
 
