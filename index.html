@@ -880,8 +880,12 @@
             const lettersGallery = document.getElementById('letters-gallery');
             lettersGallery.style.display = 'none';
             
-            // Update text content to About me
-            updateTextContent('About me');
+            // Update text content to new home page description
+            const textContent = document.querySelector('.text-content');
+            textContent.innerHTML = `
+                <p>Life and design explorer, pictures with meaning and quality creator.</p>
+                <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+            `;
             
             // Remove active class from all nav links
             navLinks.forEach(l => l.classList.remove('active'));
@@ -900,6 +904,10 @@
         function switchTab(tabName) {
             // Stop any active preview animations
             stop();
+            
+            // Show navigation when switching to any tab
+            const navigation = document.querySelector('.navigation');
+            navigation.style.display = 'flex';
             
             // Remove active class from all links
             navLinks.forEach(l => l.classList.remove('active'));
@@ -967,8 +975,12 @@
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
-            const savedTab = localStorage.getItem('activeTab') || 'Mind';
-            switchTab(savedTab);
+            const savedTab = localStorage.getItem('activeTab') || 'Home';
+            if (savedTab === 'Home') {
+                showHomePage();
+            } else {
+                switchTab(savedTab);
+            }
         });
 
         // Function to update Commerce content with same layout as Mind
