@@ -68,6 +68,8 @@
             backdrop-filter: blur(10px);
             padding: 20px;
             border-radius: 8px;
+            max-width: 500px;
+            width: fit-content;
         }
 
         .nav-link {
@@ -324,6 +326,7 @@
             color: #3C3C3C;
             line-height: 1.6;
             max-width: 500px;
+            width: fit-content;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 20px;
@@ -535,7 +538,7 @@
                     }, 100);
                     
                     // Random width, let video determine its own height based on original proportions
-                    const w = rnd(400, 800);
+                    const w = rnd(300, 600);
                     const h = 'auto'; // Let video maintain its original aspect ratio
                     
                     const x = rnd(100, canvas.width - w);
