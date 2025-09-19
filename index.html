@@ -403,13 +403,9 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            pointer-events: none;
+            pointer-events: auto;
             z-index: 1001;
             cursor: crosshair;
-        }
-
-        #drawingCanvas:hover {
-            pointer-events: auto;
         }
 
         /* Custom cursor */
@@ -1958,8 +1954,33 @@
         // Prevent right-click context menu
         drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+        // Ensure cursor is visible when mouse enters canvas
+        drawingCanvas.addEventListener('mouseenter', (e) => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.visibility = 'visible';
+                cursor.style.opacity = '1';
+            }
+        });
+
+        // Keep cursor visible when mouse leaves canvas
+        drawingCanvas.addEventListener('mouseleave', (e) => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.visibility = 'visible';
+                cursor.style.opacity = '1';
+            }
+        });
+
         // Handle mouse events on canvas to allow hover effects and clicks
         drawingCanvas.addEventListener('mousemove', (e) => {
+            // Update custom cursor position
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            }
+            
             // Check if we're over clickable elements
             const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
             
@@ -1986,15 +2007,22 @@
             if (elementBelow && (
                 elementBelow.classList.contains('catalog-item') ||
                 elementBelow.classList.contains('logo') ||
+                elementBelow.classList.contains('nav-link') ||
                 elementBelow.closest('.catalog-item') ||
                 elementBelow.closest('.logo') ||
-                elementBelow.classList.contains('nav-link')
+                elementBelow.closest('.nav-link') ||
+                elementBelow.tagName === 'A' ||
+                elementBelow.tagName === 'BUTTON'
             )) {
                 // If clicking on clickable element, trigger its click event
                 elementBelow.click();
                 e.preventDefault();
                 e.stopPropagation();
+                return;
             }
+            
+            // If not clicking on interactive element, allow drawing
+            // The drawing will be handled by mousedown event
         });
 
         function startDrawing(e) {
