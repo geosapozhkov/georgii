@@ -195,7 +195,7 @@
             position: fixed;
             top: 100px;
             right: 20px;
-            max-width: 400px;
+            max-width: 425px;
             padding: 20px;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
@@ -845,9 +845,19 @@
             mainContent.innerHTML = '<!-- Content will be dynamically loaded here -->';
             mainContent.style.display = 'none';
             
-            // Hide letters gallery
+            // Hide letters gallery and clear its content
             const lettersGallery = document.getElementById('letters-gallery');
             lettersGallery.style.display = 'none';
+            
+            // Clear letters gallery content
+            const lettersCanvas = document.getElementById('texts-canvas');
+            if (lettersCanvas) {
+                lettersCanvas.style.display = 'none';
+            }
+            
+            // Hide all draggable images from Lots of Letters
+            const allImages = document.querySelectorAll('.draggable-text');
+            allImages.forEach(img => img.style.display = 'none');
             
             // Update text content to new home page description
             const textContent = document.querySelector('.text-content');
