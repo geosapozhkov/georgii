@@ -401,9 +401,13 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            pointer-events: auto;
+            pointer-events: none;
             z-index: 1001;
             cursor: crosshair;
+        }
+
+        #drawingCanvas.drawing-active {
+            pointer-events: auto;
         }
 
         /* Custom cursor */
@@ -1957,6 +1961,7 @@
             if (e.button === 2) {
                 // Right button - erase mode
                 isDrawing = true;
+                drawingCanvas.classList.add('drawing-active');
                 const rect = drawingCanvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -1970,6 +1975,7 @@
             } else if (e.button === 0) {
                 // Left button - draw mode
                 isDrawing = true;
+                drawingCanvas.classList.add('drawing-active');
                 const rect = drawingCanvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -2011,6 +2017,7 @@
 
         function stopDrawing() {
             isDrawing = false;
+            drawingCanvas.classList.remove('drawing-active');
             drawingCtx.beginPath();
             // Reset to normal drawing mode
             drawingCtx.globalCompositeOperation = 'source-over';
