@@ -38,25 +38,47 @@
             padding-top: 60px; /* offset for fixed nav */
         }
 
+        /* Logo */
+        .logo {
+            position: fixed;
+            top: 20px;
+            left: 30px;
+            font-size: 32px;
+            font-weight: bold;
+            color: #3C3C3C;
+            text-decoration: none;
+            z-index: 1003;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.7;
+        }
+
         /* Navigation */
         .navigation {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 20px 0 0 30px;
+            top: 30px;
+            right: 30px;
             display: flex;
-            gap: 40px;
-            z-index: 20;
-            background: transparent;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 1002;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
         }
 
         .nav-link {
             text-decoration: none;
             color: #3C3C3C;
-            font-size: 23.84px;
+            font-size: 15px;
             font-weight: normal;
             transition: color 0.2s ease;
+            line-height: 1.6;
         }
 
         .nav-link:hover {
@@ -96,6 +118,7 @@
         .catalog-client { font-size: 48px; color: #3C3C3C; }
         .catalog-year { font-size: 48px; color: #3C3C3C; }
         .catalog-link.dimmed { opacity: 0.25; }
+        .catalog-placeholder { opacity: 0.25; pointer-events: none; cursor: default; }
 
         /* Lots of Letters Gallery */
         .letters-gallery {
@@ -170,10 +193,14 @@
         /* Right Content - Text */
         .content-right {
             position: fixed;
-            top: 30px;
+            top: 200px;
             right: 30px;
             max-width: 500px;
-            padding-top: 0;
+            padding: 20px;
+            z-index: 1002;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
         }
 
         .text-content {
@@ -235,10 +262,10 @@
             max-width: none;
         }
 
-        /* Column span classes for project galleries */
-        .gallery-col-1 { grid-column: span 1; }
-        .gallery-col-2 { grid-column: span 2; }
-        .gallery-col-3 { grid-column: span 3; }
+        /* Column span classes for project galleries - minimum 4 columns */
+        .gallery-col-1 { grid-column: span 4; } /* Minimum size */
+        .gallery-col-2 { grid-column: span 4; } /* Minimum size */
+        .gallery-col-3 { grid-column: span 4; } /* Minimum size */
         .gallery-col-4 { grid-column: span 4; }
         .gallery-col-5 { grid-column: span 5; }
         .gallery-col-6 { grid-column: span 6; }
@@ -272,6 +299,9 @@
                 margin: 15px;
                 padding: 0;
             }
+            
+            /* Minimum 3 columns on tablets */
+            .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 3; }
         }
 
         @media (max-width: 480px) {
@@ -282,6 +312,9 @@
                 margin: 10px;
                 padding: 0;
             }
+            
+            /* Minimum 2 columns on mobile */
+            .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 2; }
         }
 
         /* Footer */
@@ -331,6 +364,7 @@
     </style>
 </head>
 <body>
+    <a href="#" class="logo" id="logo">GEORGII</a>
     <nav class="navigation">
         <a href="#" class="nav-link">Lots of Letters</a>
         <a href="#" class="nav-link active">Mind</a>
@@ -819,6 +853,41 @@
             dragImg = null;
         }
 
+        // Function to show home page (logo + about me only)
+        function showHomePage() {
+            // Stop any active preview animations
+            stop();
+            
+            // Clear any project galleries
+            const existingGallery = document.querySelector('.project-gallery');
+            if (existingGallery) {
+                existingGallery.remove();
+            }
+            
+            // Hide main content
+            const mainContent = document.querySelector('.content-left');
+            mainContent.style.display = 'none';
+            
+            // Hide letters gallery
+            const lettersGallery = document.getElementById('letters-gallery');
+            lettersGallery.style.display = 'none';
+            
+            // Update text content to About me
+            updateTextContent('About me');
+            
+            // Remove active class from all nav links
+            navLinks.forEach(l => l.classList.remove('active'));
+            
+            // Reset all papers
+            resetAllPapers();
+            
+            // Clear commerce project
+            clearCommerceProject();
+            
+            // Save current tab
+            localStorage.setItem('activeTab', 'Home');
+        }
+
         // Function to switch tabs
         function switchTab(tabName) {
             // Stop any active preview animations
@@ -911,6 +980,36 @@
                     </div>
                     <div class="cell" data-preview="angry-masseur">
                         <span class="catalog-year">2023</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
                 </div>
             `;
@@ -1177,9 +1276,9 @@
                 ],
                 layouts: [
                     { colSpan: 6, startCol: 1 }, // Large video - half width
-                    { colSpan: 3, startCol: 7 }, // Medium video - quarter width
-                    { colSpan: 3, startCol: 10 }, // Small video - quarter width
-                    { colSpan: 4, startCol: 5 } // Medium-large video
+                    { colSpan: 4, startCol: 7 }, // Medium video - minimum size
+                    { colSpan: 4, startCol: 1 }, // Medium video - minimum size
+                    { colSpan: 4, startCol: 5 } // Medium video - minimum size
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/'
             };
@@ -1198,7 +1297,7 @@
                 ],
                 layouts: [
                     { colSpan: 8, startCol: 1 }, // Large image
-                    { colSpan: 4, startCol: 9 }, // Medium image
+                    { colSpan: 4, startCol: 9 }, // Medium image - minimum size
                     { colSpan: 6, startCol: 1 }, // Medium-large image
                     { colSpan: 6, startCol: 7 } // Medium-large image
                 ],
@@ -1218,8 +1317,8 @@
                 ],
                 layouts: [
                     { colSpan: 6, startCol: 1 }, // Large video
-                    { colSpan: 3, startCol: 7 }, // Medium image
-                    { colSpan: 3, startCol: 10 } // Small video
+                    { colSpan: 4, startCol: 7 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 1 } // Medium video - minimum size
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/yoki/'
             };
@@ -1237,8 +1336,8 @@
                 ],
                 layouts: [
                     { colSpan: 5, startCol: 1 }, // Large image
-                    { colSpan: 4, startCol: 6 }, // Medium image
-                    { colSpan: 3, startCol: 10 } // Small image
+                    { colSpan: 4, startCol: 6 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 10 } // Medium image - minimum size
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/redbuilding/'
             };
@@ -1256,10 +1355,10 @@
                     'ruins_4.jpg'
                 ],
                 layouts: [
-                    { colSpan: 4, startCol: 1 }, // Medium video
-                    { colSpan: 4, startCol: 5 }, // Medium image
-                    { colSpan: 2, startCol: 9 }, // Small video
-                    { colSpan: 2, startCol: 11 } // Small image
+                    { colSpan: 4, startCol: 1 }, // Medium video - minimum size
+                    { colSpan: 4, startCol: 5 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 9 }, // Medium video - minimum size
+                    { colSpan: 4, startCol: 1 } // Medium image - minimum size
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/ruins/'
             };
@@ -1294,6 +1393,26 @@
                     </div>
                     <div class="cell" data-preview="process">
                         <span class="catalog-year">2023</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
                 </div>
             `;
@@ -1360,8 +1479,8 @@
                 ],
                 layouts: [
                     { colSpan: 5, startCol: 1 }, // Large video
-                    { colSpan: 4, startCol: 6 }, // Medium image
-                    { colSpan: 3, startCol: 10 }, // Small video
+                    { colSpan: 4, startCol: 6 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 10 }, // Medium video - minimum size
                     { colSpan: 6, startCol: 1 }, // Medium-large image
                     { colSpan: 6, startCol: 7 } // Medium-large video
                 ],
@@ -1383,7 +1502,7 @@
                 layouts: [
                     { colSpan: 6, startCol: 1 }, // Large image
                     { colSpan: 6, startCol: 7 }, // Large video
-                    { colSpan: 4, startCol: 1 }, // Medium image
+                    { colSpan: 4, startCol: 1 }, // Medium image - minimum size
                     { colSpan: 8, startCol: 5 } // Large video
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/about/process/'
@@ -1409,10 +1528,10 @@
                         <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
                     </div>
                     <div class="cell" data-preview="3">
-                        <span class="catalog-empty">-</span>
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
 
-                    <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="1"><span class="catalog-placeholder">No Data</span></div>
                     <div class="cell" data-preview="2">
                         <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
                     </div>
@@ -1546,6 +1665,22 @@
                     });
                 });
                 observer.observe(video);
+            });
+        });
+
+        // Logo handler
+        const logo = document.getElementById('logo');
+        logo.addEventListener('click', (e) => {
+            e.preventDefault();
+            showHomePage();
+        });
+
+        // Navigation handlers
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const linkText = link.textContent.trim();
+                switchTab(linkText);
             });
         });
     })();
