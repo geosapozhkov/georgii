@@ -60,7 +60,7 @@
         .navigation {
             position: fixed;
             top: 30px;
-            right: 30px;
+            left: 30px;
             display: flex;
             gap: 40px;
             z-index: 1002;
@@ -194,7 +194,7 @@
         .content-right {
             position: fixed;
             top: 200px;
-            right: 30px;
+            left: 30px;
             max-width: 500px;
             padding: 20px;
             z-index: 1002;
@@ -320,7 +320,7 @@
         /* Footer */
         .footer {
             position: fixed;
-            right: 30px;
+            left: 30px;
             bottom: 30px;
             font-size: 15px;
             color: #3C3C3C;
@@ -470,8 +470,8 @@
                         y: rnd(100, canvas.height - h),
                         w: w,
                         h: h,
-                        vx: rnd(-0.7, 0.7) || 0.5,
-                        vy: rnd(-0.7, 0.7) || -0.4,
+                vx: rnd(-0.7, 0.7) || 0.5,
+                vy: rnd(-0.7, 0.7) || -0.4,
                     };
                     
                     attempts++;
@@ -574,13 +574,13 @@
             // Only resolve collision if there's actual overlap
             if (overlapX > 0 && overlapY > 0) {
                 // Force separation to prevent any overlap
-                if (overlapX < overlapY){
+            if (overlapX < overlapY){
                     // separate on X axis
                     const push = overlapX / 2 + 1; // Add 1px to ensure complete separation
                     if (a.x < b.x){ 
                         a.x -= push; 
                         b.x += push; 
-                    } else { 
+            } else {
                         a.x += push; 
                         b.x -= push; 
                     }
@@ -641,7 +641,7 @@
                 if (r.type === 'video') {
                     // Don't draw anything on canvas for videos - they are real video elements
                 } else {
-                    ctx.fillRect(r.x, r.y, r.w, r.h);
+                ctx.fillRect(r.x, r.y, r.w, r.h);
                 }
             }
             animationId = requestAnimationFrame(step);
@@ -767,33 +767,33 @@
                 
                 for (let i = startIndex; i < endIndex; i++) {
                     const name = imageNames[i];
-                    const img = document.createElement('img');
+                const img = document.createElement('img');
                     
                     // Check cache first
                     if (imageCache.has(name)) {
                         img.src = imageCache.get(name);
                     } else {
-                        img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
+                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${name}`;
                         // Cache the image
                         img.onload = () => imageCache.set(name, img.src);
                     }
                     
-                    img.className = 'draggable-text';
-                    img.alt = `Text ${name}`;
+                img.className = 'draggable-text';
+                img.alt = `Text ${name}`;
                     img.loading = 'lazy'; // Lazy loading for better performance
-                    img.style.position = 'fixed';
-                    img.style.width = 'auto';
-                    img.style.height = 'auto';
-                    img.style.maxWidth = '441px'; // 294px * 1.5 ≈ 441px
-                    img.style.zIndex = '100';
-                    
-                    // Random position within the screen
-                    const left = Math.floor(Math.random() * (screenW - 400));
-                    const top = Math.floor(Math.random() * (screenH - 300));
-                    img.style.left = left + 'px';
-                    img.style.top = top + 'px';
-                    
-                    document.body.appendChild(img);
+                img.style.position = 'fixed';
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+                img.style.maxWidth = '441px'; // 294px * 1.5 ≈ 441px
+                img.style.zIndex = '100';
+                
+                // Random position within the screen
+                const left = Math.floor(Math.random() * (screenW - 400));
+                const top = Math.floor(Math.random() * (screenH - 300));
+                img.style.left = left + 'px';
+                img.style.top = top + 'px';
+                
+                document.body.appendChild(img);
                 }
                 
                 currentBatch++;
@@ -802,7 +802,7 @@
                 if (endIndex < imageNames.length) {
                     setTimeout(loadBatch, 100);
                 } else {
-                    console.log('Loaded', imageNames.length, 'images to body');
+            console.log('Loaded', imageNames.length, 'images to body');
                 }
             }
             
@@ -972,12 +972,8 @@
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
-            const savedTab = localStorage.getItem('activeTab') || 'Home';
-            if (savedTab === 'Home') {
-                showHomePage();
-            } else {
-                switchTab(savedTab);
-            }
+            // Always show home page on load
+            showHomePage();
         });
 
         // Function to update Commerce content with same layout as Mind
