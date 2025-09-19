@@ -194,7 +194,7 @@
         .content-right {
             position: fixed;
             top: 100px;
-            right: 10px;
+            right: 5px;
             max-width: 425px;
             padding: 20px;
             z-index: 1002;
@@ -369,9 +369,31 @@
             cursor: default;
             font-size: 15px;
         }
+
+        /* Custom cursor */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background-color: #4D4D4D;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .custom-cursor:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
     </style>
 </head>
 <body>
+    <div class="custom-cursor" id="customCursor"></div>
     <a href="#" class="logo" id="logo">Georgii</a>
     <nav class="navigation">
         <a href="#" class="nav-link">Lots of Letters</a>
@@ -631,7 +653,7 @@
                     ctx.fillRect(r.x, r.y, r.w, r.h);
                 } else {
                     // Draw default rectangle
-                    ctx.fillRect(r.x, r.y, r.w, r.h);
+                ctx.fillRect(r.x, r.y, r.w, r.h);
                 }
             }
             animationId = requestAnimationFrame(step);
@@ -1752,6 +1774,15 @@
         logo.addEventListener('mouseleave', () => {
             if (isHomePage) {
                 stop();
+            }
+        });
+
+        // Custom cursor tracking
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
             }
         });
 
