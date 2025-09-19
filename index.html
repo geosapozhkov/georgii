@@ -241,6 +241,54 @@
             color: #3C3C3C;
         }
 
+        /* Project catalog tables */
+        .catalog {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            padding: 0;
+            margin: 0;
+        }
+
+        .row {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .cell {
+            flex: 1;
+            padding: 20px;
+            border-right: 1px solid #E0E0E0;
+            display: flex;
+            align-items: center;
+            min-height: 60px;
+        }
+
+        .cell:last-child {
+            border-right: none;
+        }
+
+        .catalog-link {
+            font-size: 15px;
+            color: #3C3C3C;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+            cursor: pointer;
+        }
+
+        .catalog-link:hover {
+            opacity: 0.7;
+        }
+
+        .catalog-link.dimmed {
+            opacity: 0.25;
+        }
+
         /* Hover preview canvas */
         #previewCanvas {
             position: fixed;
@@ -2613,7 +2661,9 @@
                     }
                     
                     // Load appropriate project gallery based on project name
-                    if (projectName === 'Area 117') {
+                    if (projectName === 'Than Now Than') {
+                        loadThanNowThanImages();
+                    } else if (projectName === 'Area 117') {
                         loadArea117Images();
                     } else if (projectName === 'Yoki') {
                         loadYokiImages();
@@ -2757,6 +2807,30 @@
             };
             
             loadProjectGallery('Ruins', projectData);
+        }
+
+        function loadThanNowThanImages() {
+            const projectData = {
+                files: [
+                    'than_now_than_1.jpg',
+                    'than_now_than_2.jpg',
+                    'than_now_than_3.jpg',
+                    'than_now_than_4.jpg',
+                    'than_now_than_5.jpg',
+                    'than_now_than_6.jpg'
+                ],
+                layouts: [
+                    { colSpan: 4, startCol: 1 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 5 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 9 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 1 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 5 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 9 } // Medium image - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/thannowthan/'
+            };
+            
+            loadProjectGallery('Than Now Than', projectData);
         }
 
         // Navigation handlers
