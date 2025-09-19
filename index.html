@@ -1366,56 +1366,8 @@
         // Function to update About me content with projects
         function updateAboutMeContent() {
             const contentLeft = document.querySelector('.content-left');
-            contentLeft.innerHTML = `
-                <div class="catalog-grid">
-                    <div class="col-header">Project</div>
-                    <div class="col-header">Type</div>
-                    <div class="col-header">Year</div>
-
-                    <div class="cell" data-preview="personal-work">
-                        <a href="#personal-work" class="catalog-link" data-description="Personal Work - A collection of experimental projects and creative explorations that showcase my artistic vision and technical skills. These works represent my personal journey in visual storytelling and digital art.">Personal Work</a>
-                    </div>
-                    <div class="cell" data-preview="personal-work">
-                        <span class="catalog-client">Experimental</span>
-                    </div>
-                    <div class="cell" data-preview="personal-work">
-                        <span class="catalog-year">2022-2024</span>
-                    </div>
-
-                    <div class="cell" data-preview="process">
-                        <a href="#process" class="catalog-link" data-description="Process Documentation - Behind-the-scenes insights into my creative process, from initial concepts to final execution. This project reveals the methodology and thinking behind my visual work.">Process</a>
-                    </div>
-                    <div class="cell" data-preview="process">
-                        <span class="catalog-client">Documentation</span>
-                    </div>
-                    <div class="cell" data-preview="process">
-                        <span class="catalog-year">2023</span>
-                    </div>
-
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                </div>
-            `;
-            
-            // Re-attach event listeners for About me catalog links
-            attachAboutMeEventListeners();
+            contentLeft.innerHTML = '<!-- About me content - no catalog -->';
+            contentLeft.style.display = 'none';
         }
 
         // Function to attach event listeners for About me catalog
@@ -1605,7 +1557,7 @@
                     textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
                     break;
                 case 'About me':
-                    textContent.innerHTML = '<p>I am a creative professional specializing in visual storytelling<br>and digital media design.</p><p>My work spans across various disciplines including<br>graphic design, motion graphics, and interactive media.</p><p>I believe in the power of visual communication to<br>convey complex ideas and emotions in simple,<br>compelling ways.</p>';
+                    textContent.innerHTML = '<p>Life and design explorer, pictures with meaning and quality creator.</p><p>I\'m interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I\'m open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>';
                     break;
                 case 'Mind':
                     // Mind content (original description)
