@@ -379,8 +379,8 @@
 
         .custom-cursor {
             position: fixed;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background-color: #4D4D4D;
             border-radius: 50%;
             pointer-events: none;
@@ -2086,8 +2086,8 @@
             }
         });
 
-        // Mouse wheel event for brush size
-        drawingCanvas.addEventListener('wheel', (e) => {
+        // Mouse wheel event for brush size - attach to document instead of canvas
+        document.addEventListener('wheel', (e) => {
             e.preventDefault();
             
             // Calculate max brush size as the smaller dimension of the page
@@ -2100,6 +2100,9 @@
                 // Scroll down - decrease brush size
                 currentBrushSize = Math.max(0.5, currentBrushSize - 1);
             }
+            
+            // Debug: log brush size changes
+            console.log('Brush size:', currentBrushSize);
         });
 
         // Custom cursor tracking
