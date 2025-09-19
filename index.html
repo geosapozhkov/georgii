@@ -195,7 +195,7 @@
             position: fixed;
             top: 100px;
             right: 20px;
-            max-width: 450px;
+            max-width: calc(100vw - 20px - 20px);
             padding: 20px;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
@@ -320,21 +320,20 @@
         /* Footer */
         .footer {
             position: fixed;
-            left: calc(100vw - 450px - 20px);
+            left: 20px;
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
-            line-height: 1.6;
             z-index: 1002;
         }
 
         .footer div {
             margin: 0;
-            line-height: 1.6;
+            line-height: 1;
         }
 
         .footer div:first-child {
-            margin-bottom: 0px;
+            margin-bottom: 1px;
         }
 
         /* Responsive design for different screen sizes */
