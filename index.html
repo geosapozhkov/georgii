@@ -79,57 +79,15 @@
         /* Left Content - Catalog grid */
         .content-left { flex: 0 0 auto; padding-left: 30px; margin-top: 80px; }
 
-        /* 12-column grid system inspired by Kühl & Han */
         .catalog-grid {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-            max-width: 1200px;
+            grid-template-columns: auto auto auto;
+            column-gap: 120px;
+            row-gap: 28px;
             align-content: start;
             padding-top: 10px;
+            width: fit-content;
         }
-
-        /* Column span classes */
-        .col-1 { grid-column: span 1; }
-        .col-2 { grid-column: span 2; }
-        .col-3 { grid-column: span 3; }
-        .col-4 { grid-column: span 4; }
-        .col-5 { grid-column: span 5; }
-        .col-6 { grid-column: span 6; }
-        .col-7 { grid-column: span 7; }
-        .col-8 { grid-column: span 8; }
-        .col-9 { grid-column: span 9; }
-        .col-10 { grid-column: span 10; }
-        .col-11 { grid-column: span 11; }
-        .col-12 { grid-column: span 12; }
-
-        /* Column start classes */
-        .col-start-1 { grid-column-start: 1; }
-        .col-start-2 { grid-column-start: 2; }
-        .col-start-3 { grid-column-start: 3; }
-        .col-start-4 { grid-column-start: 4; }
-        .col-start-5 { grid-column-start: 5; }
-        .col-start-6 { grid-column-start: 6; }
-        .col-start-7 { grid-column-start: 7; }
-        .col-start-8 { grid-column-start: 8; }
-        .col-start-9 { grid-column-start: 9; }
-        .col-start-10 { grid-column-start: 10; }
-        .col-start-11 { grid-column-start: 11; }
-        .col-start-12 { grid-column-start: 12; }
-
-        /* Column end classes */
-        .col-end-1 { grid-column-end: 1; }
-        .col-end-2 { grid-column-end: 2; }
-        .col-end-3 { grid-column-end: 3; }
-        .col-end-4 { grid-column-end: 4; }
-        .col-end-5 { grid-column-end: 5; }
-        .col-end-6 { grid-column-end: 6; }
-        .col-end-7 { grid-column-end: 7; }
-        .col-end-8 { grid-column-end: 8; }
-        .col-end-9 { grid-column-end: 9; }
-        .col-end-10 { grid-column-end: 10; }
-        .col-end-11 { grid-column-end: 11; }
-        .col-end-12 { grid-column-end: 12; }
 
         .col-header { font-size: 15px; }
         .cell { height: 64px; display: flex; align-items: flex-start; }
@@ -266,6 +224,59 @@
             z-index: 1001;
         }
 
+        /* 12-column grid system for project galleries */
+        .project-gallery {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Column span classes for project galleries */
+        .gallery-col-1 { grid-column: span 1; }
+        .gallery-col-2 { grid-column: span 2; }
+        .gallery-col-3 { grid-column: span 3; }
+        .gallery-col-4 { grid-column: span 4; }
+        .gallery-col-5 { grid-column: span 5; }
+        .gallery-col-6 { grid-column: span 6; }
+        .gallery-col-7 { grid-column: span 7; }
+        .gallery-col-8 { grid-column: span 8; }
+        .gallery-col-9 { grid-column: span 9; }
+        .gallery-col-10 { grid-column: span 10; }
+        .gallery-col-11 { grid-column: span 11; }
+        .gallery-col-12 { grid-column: span 12; }
+
+        /* Column start classes for project galleries */
+        .gallery-start-1 { grid-column-start: 1; }
+        .gallery-start-2 { grid-column-start: 2; }
+        .gallery-start-3 { grid-column-start: 3; }
+        .gallery-start-4 { grid-column-start: 4; }
+        .gallery-start-5 { grid-column-start: 5; }
+        .gallery-start-6 { grid-column-start: 6; }
+        .gallery-start-7 { grid-column-start: 7; }
+        .gallery-start-8 { grid-column-start: 8; }
+        .gallery-start-9 { grid-column-start: 9; }
+        .gallery-start-10 { grid-column-start: 10; }
+        .gallery-start-11 { grid-column-start: 11; }
+        .gallery-start-12 { grid-column-start: 12; }
+
+        /* Responsive adjustments for project galleries */
+        @media (max-width: 768px) {
+            .project-gallery {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .project-gallery {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+        }
+
         /* Footer */
         .footer {
             position: fixed;
@@ -301,11 +312,6 @@
             .nav-link {
                 font-size: 23.84px;
             }
-            
-            .catalog-grid {
-                grid-template-columns: repeat(6, 1fr);
-                gap: 15px;
-            }
         }
 
         @media (max-width: 480px) {
@@ -313,11 +319,6 @@
                 flex-direction: column;
                 gap: 20px;
                 padding: 20px 0 0 30px;
-            }
-            
-            .catalog-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 10px;
             }
         }
     </style>
@@ -331,27 +332,25 @@
     </nav>
     <section class="content-left">
         <div class="catalog-grid">
-            <!-- Headers spanning full width -->
-            <div class="col-header col-12">Than</div>
-            <div class="col-header col-12">Now</div>
-            <div class="col-header col-12">Then</div>
+            <div class="col-header">Than</div>
+            <div class="col-header">Now</div>
+            <div class="col-header">Then</div>
 
-            <!-- Project rows with proper column spans -->
-            <div class="cell col-4" data-preview="1">
+            <div class="cell" data-preview="1">
                 <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
             </div>
-            <div class="cell col-4" data-preview="2">
+            <div class="cell" data-preview="2">
                 <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
             </div>
-            <div class="cell col-4" data-preview="3">
+            <div class="cell" data-preview="3">
                 <span class="catalog-empty">-</span>
             </div>
 
-            <div class="cell col-4" data-preview="1"><span class="catalog-empty">-</span></div>
-            <div class="cell col-4" data-preview="2">
+            <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
+            <div class="cell" data-preview="2">
                 <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
             </div>
-            <div class="cell col-4" data-preview="3">
+            <div class="cell" data-preview="3">
                 <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
             </div>
         </div>
@@ -845,10 +844,11 @@
                 clearCommerceProject();
                 updateCommerceContent();
             } else if (tabName === 'About me') {
-                mainContent.style.display = 'none';
+                mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
                 clearCommerceProject();
+                updateAboutMeContent();
             } else if (tabName === 'Mind') {
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
@@ -887,22 +887,22 @@
             switchTab(savedTab);
         });
 
-        // Function to update Commerce content with 12-column grid
+        // Function to update Commerce content with same layout as Mind
         function updateCommerceContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
                 <div class="catalog-grid">
-                    <div class="col-header col-12">Project</div>
-                    <div class="col-header col-12">Client</div>
-                    <div class="col-header col-12">Year</div>
+                    <div class="col-header">Project</div>
+                    <div class="col-header">Client</div>
+                    <div class="col-header">Year</div>
 
-                    <div class="cell col-4" data-preview="angry-masseur">
+                    <div class="cell" data-preview="angry-masseur">
                         <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
                     </div>
-                    <div class="cell col-4" data-preview="angry-masseur">
+                    <div class="cell" data-preview="angry-masseur">
                         <span class="catalog-client">Poool</span>
                     </div>
-                    <div class="cell col-4" data-preview="angry-masseur">
+                    <div class="cell" data-preview="angry-masseur">
                         <span class="catalog-year">2023</span>
                     </div>
                 </div>
@@ -942,7 +942,7 @@
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                         
-                        // Load project images
+                        // Load project gallery with 12-column grid
                         loadAngryMasseurImages();
                     }
                     
@@ -961,7 +961,13 @@
             // Stop any active preview animations
             stop();
             
-            // Remove video containers
+            // Remove project gallery
+            const projectGallery = document.querySelector('.project-gallery');
+            if (projectGallery) {
+                projectGallery.remove();
+            }
+            
+            // Remove old video containers (for backward compatibility)
             const videoContainers = document.querySelectorAll('.video-container');
             videoContainers.forEach(container => container.remove());
             
@@ -970,195 +976,440 @@
             contentLeft.style.display = 'block';
         }
 
-        // Function to load Angry Masseur project images
-        function loadAngryMasseurImages() {
+        // Universal function to load project gallery with 12-column grid
+        function loadProjectGallery(projectName, projectData) {
             // Stop any active preview animations
             stop();
             
-            // Clear existing video containers first
-            const existingContainers = document.querySelectorAll('.video-container');
-            existingContainers.forEach(container => container.remove());
+            // Clear existing project gallery first
+            const existingGallery = document.querySelector('.project-gallery');
+            if (existingGallery) {
+                existingGallery.remove();
+            }
             
-            // List of video files from the AngryM folder
-            const videoFiles = [
-                'Hood_two_screens.mp4',
-                'Icons.mp4', 
-                'Igor.mp4',
-                'Zloy 011 (1080p with 30fps).mp4'
-            ];
+            // Create project gallery container with 12-column grid
+            const gallery = document.createElement('div');
+            gallery.className = 'project-gallery';
+            gallery.style.position = 'fixed';
+            gallery.style.top = '0';
+            gallery.style.left = '0';
+            gallery.style.right = '0';
+            gallery.style.bottom = '0';
+            gallery.style.zIndex = '100';
+            gallery.style.backgroundColor = '#ffffff';
+            gallery.style.overflowY = 'auto';
             
-            const screenW = window.innerWidth;
-            const screenH = window.innerHeight;
+            // Project data structure: { files: [], layouts: [], basePath: '' }
+            const files = projectData.files || [];
+            const layouts = projectData.layouts || [];
+            const basePath = projectData.basePath || '';
             
-            // Calculate grid layout for videos
-            const cols = 2; // 2 columns
-            const rows = Math.ceil(videoFiles.length / cols);
-            const videoWidth = Math.min(600, (screenW - 100) / cols - 20); // Larger videos
-            const videoHeight = videoWidth * 0.75; // Keep 4:3 aspect ratio without min constraint
-            
-            videoFiles.forEach((filename, i) => {
-                // Create video container
+            files.forEach((filename, i) => {
+                const layout = layouts[i] || { colSpan: 4, startCol: 1 };
+                
+                // Create media container
                 const container = document.createElement('div');
-                container.className = 'video-container';
-                container.style.position = 'fixed';
-                container.style.width = videoWidth + 'px';
-                container.style.height = videoHeight + 'px';
-                container.style.zIndex = '100';
+                container.className = `media-container gallery-col-${layout.colSpan} gallery-start-${layout.startCol}`;
                 container.style.cursor = 'pointer';
                 container.style.border = 'none';
                 container.style.borderRadius = '0';
                 container.style.overflow = 'hidden';
+                container.style.position = 'relative';
+                container.style.minHeight = '300px';
                 
-                // Create video element
-                const video = document.createElement('video');
-                video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/${filename}`;
-                video.className = 'project-image';
-                video.muted = true; // Muted by default
-                video.loop = true; // Loop the video
-                video.autoplay = true; // Auto-play the video
-                video.preload = 'auto'; // Preload the entire video
-                video.playsInline = true; // For mobile compatibility
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.objectFit = 'contain';
+                // Determine if it's a video or image
+                const isVideo = filename.toLowerCase().endsWith('.mp4') || filename.toLowerCase().endsWith('.mov') || filename.toLowerCase().endsWith('.webm');
                 
-                // Add event listeners to ensure video plays
-                video.addEventListener('loadeddata', () => {
-                    video.play().catch(e => console.log('Video autoplay prevented:', e));
-                });
-                
-                video.addEventListener('canplay', () => {
-                    video.play().catch(e => console.log('Video autoplay prevented:', e));
-                });
-                
-                // Try to play immediately
-                setTimeout(() => {
-                    video.play().catch(e => console.log('Video autoplay prevented:', e));
-                }, 100);
-                
-                // Create custom controls
-                const controls = document.createElement('div');
-                controls.className = 'video-controls';
-                controls.style.position = 'absolute';
-                controls.style.bottom = '0';
-                controls.style.left = '0';
-                controls.style.right = '0';
-                controls.style.height = '40px';
-                controls.style.backgroundColor = 'transparent';
-                controls.style.display = 'none';
-                controls.style.alignItems = 'center';
-                controls.style.padding = '0 10px';
-                controls.style.boxSizing = 'border-box';
-                
-                // Create progress bar
-                const progressBar = document.createElement('div');
-                progressBar.className = 'progress-bar';
-                progressBar.style.flex = '1';
-                progressBar.style.height = '4px';
-                progressBar.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-                progressBar.style.borderRadius = '2px';
-                progressBar.style.margin = '0 10px';
-                progressBar.style.position = 'relative';
-                progressBar.style.cursor = 'pointer';
-                
-                const progressFill = document.createElement('div');
-                progressFill.className = 'progress-fill';
-                progressFill.style.position = 'absolute';
-                progressFill.style.top = '0';
-                progressFill.style.left = '0';
-                progressFill.style.height = '100%';
-                progressFill.style.backgroundColor = '#ffffff';
-                progressFill.style.borderRadius = '2px';
-                progressFill.style.width = '0%';
-                
-                progressBar.appendChild(progressFill);
-                controls.appendChild(progressBar);
-                
-                container.appendChild(video);
-                container.appendChild(controls);
-                
-                // Calculate grid position (no overlapping)
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-                const left = 50 + col * (videoWidth + 20);
-                const top = 100 + row * (videoHeight + 20);
-                
-                container.style.left = left + 'px';
-                container.style.top = top + 'px';
-                
-                // Event handlers
-                let isPlaying = false;
-                
-                // Show/hide controls on hover
-                container.addEventListener('mouseenter', function() {
-                    controls.style.display = 'flex';
-                });
-                
-                container.addEventListener('mouseleave', function() {
+                if (isVideo) {
+                    // Create video element
+                    const video = document.createElement('video');
+                    video.src = `${basePath}${filename}`;
+                    video.className = 'project-media';
+                    video.muted = true; // Muted by default
+                    video.loop = true; // Loop the video
+                    video.autoplay = true; // Auto-play the video
+                    video.preload = 'auto'; // Preload the entire video
+                    video.playsInline = true; // For mobile compatibility
+                    video.style.width = '100%';
+                    video.style.height = '100%';
+                    video.style.objectFit = 'contain';
+                    
+                    // Add event listeners to ensure video plays
+                    video.addEventListener('loadeddata', () => {
+                        video.play().catch(e => console.log('Video autoplay prevented:', e));
+                    });
+                    
+                    video.addEventListener('canplay', () => {
+                        video.play().catch(e => console.log('Video autoplay prevented:', e));
+                    });
+                    
+                    // Try to play immediately
+                    setTimeout(() => {
+                        video.play().catch(e => console.log('Video autoplay prevented:', e));
+                    }, 100);
+                    
+                    // Create custom controls for video
+                    const controls = document.createElement('div');
+                    controls.className = 'media-controls';
+                    controls.style.position = 'absolute';
+                    controls.style.bottom = '0';
+                    controls.style.left = '0';
+                    controls.style.right = '0';
+                    controls.style.height = '40px';
+                    controls.style.backgroundColor = 'transparent';
                     controls.style.display = 'none';
-                });
+                    controls.style.alignItems = 'center';
+                    controls.style.padding = '0 10px';
+                    controls.style.boxSizing = 'border-box';
+                    
+                    // Create progress bar
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'progress-bar';
+                    progressBar.style.flex = '1';
+                    progressBar.style.height = '4px';
+                    progressBar.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                    progressBar.style.borderRadius = '2px';
+                    progressBar.style.margin = '0 10px';
+                    progressBar.style.position = 'relative';
+                    progressBar.style.cursor = 'pointer';
+                    
+                    const progressFill = document.createElement('div');
+                    progressFill.className = 'progress-fill';
+                    progressFill.style.position = 'absolute';
+                    progressFill.style.top = '0';
+                    progressFill.style.left = '0';
+                    progressFill.style.height = '100%';
+                    progressFill.style.backgroundColor = '#ffffff';
+                    progressFill.style.borderRadius = '2px';
+                    progressFill.style.width = '0%';
+                    
+                    progressBar.appendChild(progressFill);
+                    controls.appendChild(progressBar);
+                    
+                    container.appendChild(video);
+                    container.appendChild(controls);
+                    
+                    // Event handlers for video
+                    let isPlaying = false;
+                    
+                    // Show/hide controls on hover
+                    container.addEventListener('mouseenter', function() {
+                        controls.style.display = 'flex';
+                    });
+                    
+                    container.addEventListener('mouseleave', function() {
+                        controls.style.display = 'none';
+                    });
+                    
+                    // Click to play/pause
+                    container.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (isPlaying) {
+                            video.pause();
+                            isPlaying = false;
+                        } else {
+                            video.play();
+                            isPlaying = true;
+                        }
+                    });
+                    
+                    // Progress bar click to seek
+                    progressBar.addEventListener('click', function(e) {
+                        const rect = progressBar.getBoundingClientRect();
+                        const clickX = e.clientX - rect.left;
+                        const percentage = clickX / rect.width;
+                        video.currentTime = percentage * video.duration;
+                    });
+                    
+                    // Update progress bar
+                    video.addEventListener('timeupdate', function() {
+                        if (video.duration) {
+                            const percentage = (video.currentTime / video.duration) * 100;
+                            progressFill.style.width = percentage + '%';
+                        }
+                    });
+                    
+                } else {
+                    // Create image element
+                    const img = document.createElement('img');
+                    img.src = `${basePath}${filename}`;
+                    img.className = 'project-media';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'contain';
+                    img.loading = 'lazy';
+                    
+                    container.appendChild(img);
+                    
+                    // Click to open in modal
+                    container.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const modal = document.getElementById('imageModal');
+                        const modalImg = document.getElementById('modalImage');
+                        modalImg.src = img.src;
+                        modalImg.style.display = 'block';
+                        modal.classList.add('active');
+                    });
+                }
                 
-                // Click to play/pause
-                container.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (isPlaying) {
-                        video.pause();
-                        isPlaying = false;
-                    } else {
-                        video.play();
-                        isPlaying = true;
-                    }
-                });
-                
-                // Progress bar click to seek
-                progressBar.addEventListener('click', function(e) {
-                    const rect = progressBar.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const percentage = clickX / rect.width;
-                    video.currentTime = percentage * video.duration;
-                });
-                
-                // Update progress bar
-                video.addEventListener('timeupdate', function() {
-                    if (video.duration) {
-                        const percentage = (video.currentTime / video.duration) * 100;
-                        progressFill.style.width = percentage + '%';
-                        
-                    }
-                });
-                
-                
-                document.body.appendChild(container);
+                gallery.appendChild(container);
             });
             
-            console.log('Loaded', videoFiles.length, 'Angry Masseur project videos in grid layout');
+            document.body.appendChild(gallery);
+            console.log('Loaded', files.length, `${projectName} project media in 12-column grid layout`);
+        }
+
+        // Function to load Angry Masseur project (Commerce)
+        function loadAngryMasseurImages() {
+            const projectData = {
+                files: [
+                    'Hood_two_screens.mp4',
+                    'Icons.mp4', 
+                    'Igor.mp4',
+                    'Zloy 011 (1080p with 30fps).mp4'
+                ],
+                layouts: [
+                    { colSpan: 6, startCol: 1 }, // Large video - half width
+                    { colSpan: 3, startCol: 7 }, // Medium video - quarter width
+                    { colSpan: 3, startCol: 10 }, // Small video - quarter width
+                    { colSpan: 4, startCol: 5 } // Medium-large video
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/'
+            };
+            
+            loadProjectGallery('Angry Masseur', projectData);
+        }
+
+        // Function to load Area 117 project (Mind)
+        function loadArea117Images() {
+            const projectData = {
+                files: [
+                    'area117_1.jpg',
+                    'area117_2.jpg',
+                    'area117_3.jpg',
+                    'area117_4.jpg'
+                ],
+                layouts: [
+                    { colSpan: 8, startCol: 1 }, // Large image
+                    { colSpan: 4, startCol: 9 }, // Medium image
+                    { colSpan: 6, startCol: 1 }, // Medium-large image
+                    { colSpan: 6, startCol: 7 } // Medium-large image
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/area117/'
+            };
+            
+            loadProjectGallery('Area 117', projectData);
+        }
+
+        // Function to load Yoki project (Mind)
+        function loadYokiImages() {
+            const projectData = {
+                files: [
+                    'yoki_1.mp4',
+                    'yoki_2.jpg',
+                    'yoki_3.mp4'
+                ],
+                layouts: [
+                    { colSpan: 6, startCol: 1 }, // Large video
+                    { colSpan: 3, startCol: 7 }, // Medium image
+                    { colSpan: 3, startCol: 10 } // Small video
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/yoki/'
+            };
+            
+            loadProjectGallery('Yoki', projectData);
+        }
+
+        // Function to load Red Building project (Mind)
+        function loadRedBuildingImages() {
+            const projectData = {
+                files: [
+                    'red_building_1.jpg',
+                    'red_building_2.jpg',
+                    'red_building_3.jpg'
+                ],
+                layouts: [
+                    { colSpan: 5, startCol: 1 }, // Large image
+                    { colSpan: 4, startCol: 6 }, // Medium image
+                    { colSpan: 3, startCol: 10 } // Small image
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/redbuilding/'
+            };
+            
+            loadProjectGallery('Red Building', projectData);
+        }
+
+        // Function to load Ruins project (Mind)
+        function loadRuinsImages() {
+            const projectData = {
+                files: [
+                    'ruins_1.mp4',
+                    'ruins_2.jpg',
+                    'ruins_3.mp4',
+                    'ruins_4.jpg'
+                ],
+                layouts: [
+                    { colSpan: 4, startCol: 1 }, // Medium video
+                    { colSpan: 4, startCol: 5 }, // Medium image
+                    { colSpan: 2, startCol: 9 }, // Small video
+                    { colSpan: 2, startCol: 11 } // Small image
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/ruins/'
+            };
+            
+            loadProjectGallery('Ruins', projectData);
+        }
+
+        // Function to update About me content with projects
+        function updateAboutMeContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
+                <div class="catalog-grid">
+                    <div class="col-header">Project</div>
+                    <div class="col-header">Type</div>
+                    <div class="col-header">Year</div>
+
+                    <div class="cell" data-preview="personal-work">
+                        <a href="#personal-work" class="catalog-link" data-description="Personal Work - A collection of experimental projects and creative explorations that showcase my artistic vision and technical skills. These works represent my personal journey in visual storytelling and digital art.">Personal Work</a>
+                    </div>
+                    <div class="cell" data-preview="personal-work">
+                        <span class="catalog-client">Experimental</span>
+                    </div>
+                    <div class="cell" data-preview="personal-work">
+                        <span class="catalog-year">2022-2024</span>
+                    </div>
+
+                    <div class="cell" data-preview="process">
+                        <a href="#process" class="catalog-link" data-description="Process Documentation - Behind-the-scenes insights into my creative process, from initial concepts to final execution. This project reveals the methodology and thinking behind my visual work.">Process</a>
+                    </div>
+                    <div class="cell" data-preview="process">
+                        <span class="catalog-client">Documentation</span>
+                    </div>
+                    <div class="cell" data-preview="process">
+                        <span class="catalog-year">2023</span>
+                    </div>
+                </div>
+            `;
+            
+            // Re-attach event listeners for About me catalog links
+            attachAboutMeEventListeners();
+        }
+
+        // Function to attach event listeners for About me catalog
+        function attachAboutMeEventListeners() {
+            // Trigger preview on all cells with data-preview attribute
+            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseleave', stop);
+            });
+
+            // Handle About me catalog clicks - show project galleries with 12-column grid
+            const rightText = document.querySelector('.text-content');
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+            
+            allLinks.forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    
+                    const projectName = a.textContent.trim();
+                    
+                    // Hide catalog and show project gallery
+                    const contentLeft = document.querySelector('.content-left');
+                    contentLeft.style.display = 'none';
+                    
+                    // Show project description
+                    const desc = a.getAttribute('data-description');
+                    if (desc) {
+                        rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    
+                    // Load appropriate project gallery based on project name
+                    if (projectName === 'Personal Work') {
+                        loadPersonalWorkImages();
+                    } else if (projectName === 'Process') {
+                        loadProcessImages();
+                    }
+                    
+                    // dim only clicked catalog name to 25% opacity; reset others to 100%
+                    allLinks.forEach(l=>l.classList.remove('dimmed'));
+                    a.classList.add('dimmed');
+                    // mark this preview as active to disable its animated hover
+                    const parentCell = a.closest('.cell');
+                    if (parentCell) activePreviewId = parentCell.dataset.preview || null;
+                });
+            });
+        }
+
+        // Function to load Personal Work project (About me)
+        function loadPersonalWorkImages() {
+            const projectData = {
+                files: [
+                    'personal_1.mp4',
+                    'personal_2.jpg',
+                    'personal_3.mp4',
+                    'personal_4.jpg',
+                    'personal_5.mp4'
+                ],
+                layouts: [
+                    { colSpan: 5, startCol: 1 }, // Large video
+                    { colSpan: 4, startCol: 6 }, // Medium image
+                    { colSpan: 3, startCol: 10 }, // Small video
+                    { colSpan: 6, startCol: 1 }, // Medium-large image
+                    { colSpan: 6, startCol: 7 } // Medium-large video
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/about/personal/'
+            };
+            
+            loadProjectGallery('Personal Work', projectData);
+        }
+
+        // Function to load Process project (About me)
+        function loadProcessImages() {
+            const projectData = {
+                files: [
+                    'process_1.jpg',
+                    'process_2.mp4',
+                    'process_3.jpg',
+                    'process_4.mp4'
+                ],
+                layouts: [
+                    { colSpan: 6, startCol: 1 }, // Large image
+                    { colSpan: 6, startCol: 7 }, // Large video
+                    { colSpan: 4, startCol: 1 }, // Medium image
+                    { colSpan: 8, startCol: 5 } // Large video
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/about/process/'
+            };
+            
+            loadProjectGallery('Process', projectData);
         }
 
 
-        // Function to restore Mind content with 12-column grid
+        // Function to restore Mind content
         function updateMindContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
                 <div class="catalog-grid">
-                    <div class="col-header col-12">Than</div>
-                    <div class="col-header col-12">Now</div>
-                    <div class="col-header col-12">Then</div>
+                    <div class="col-header">Than</div>
+                    <div class="col-header">Now</div>
+                    <div class="col-header">Then</div>
 
-                    <div class="cell col-4" data-preview="1">
+                    <div class="cell" data-preview="1">
                         <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
                     </div>
-                    <div class="cell col-4" data-preview="2">
+                    <div class="cell" data-preview="2">
                         <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
                     </div>
-                    <div class="cell col-4" data-preview="3">
+                    <div class="cell" data-preview="3">
                         <span class="catalog-empty">-</span>
                     </div>
 
-                    <div class="cell col-4" data-preview="1"><span class="catalog-empty">-</span></div>
-                    <div class="cell col-4" data-preview="2">
+                    <div class="cell" data-preview="1"><span class="catalog-empty">-</span></div>
+                    <div class="cell" data-preview="2">
                         <a href="#red-building" class="catalog-link" data-description="Red Building description here...">Red Building</a>
                     </div>
-                    <div class="cell col-4" data-preview="3">
+                    <div class="cell" data-preview="3">
                         <a href="#ruins" class="catalog-link" data-description="Ruins description here...">Ruins</a>
                     </div>
                 </div>
@@ -1178,48 +1429,43 @@
                 link.addEventListener('mouseleave', stop);
             });
 
-            // swap right description on catalog click
+            // Handle Mind catalog clicks - show project galleries with 12-column grid
             const rightText = document.querySelector('.text-content');
             const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             allLinks.forEach(a=>{
                 a.addEventListener('click', (e)=>{
                     e.preventDefault();
+                    
+                    const projectName = a.textContent.trim();
+                    
+                    // Hide catalog and show project gallery
+                    const contentLeft = document.querySelector('.content-left');
+                    contentLeft.style.display = 'none';
+                    
+                    // Show project description
                     const desc = a.getAttribute('data-description');
                     if (desc) {
                         rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
+                    
+                    // Load appropriate project gallery based on project name
+                    if (projectName === 'Area 117') {
+                        loadArea117Images();
+                    } else if (projectName === 'Yoki') {
+                        loadYokiImages();
+                    } else if (projectName === 'Red Building') {
+                        loadRedBuildingImages();
+                    } else if (projectName === 'Ruins') {
+                        loadRuinsImages();
+                    }
+                    
                     // dim only clicked catalog name to 25% opacity; reset others to 100%
                     allLinks.forEach(l=>l.classList.remove('dimmed'));
                     a.classList.add('dimmed');
                     // mark this preview as active to disable its animated hover
                     const parentCell = a.closest('.cell');
                     if (parentCell) activePreviewId = parentCell.dataset.preview || null;
-                    // Replace moving preview with static rectangles placed randomly (stay within bounds)
-                    stop();
-                    const count = 6;
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = window.innerWidth; tempCanvas.height = window.innerHeight;
-                    tempCanvas.style.position = 'fixed';
-                    tempCanvas.style.inset = '0';
-                    tempCanvas.style.zIndex = '9';
-                    tempCanvas.style.pointerEvents = 'none';
-                    document.body.appendChild(tempCanvas);
-                    const tctx = tempCanvas.getContext('2d');
-                    const rnd = (min,max)=>Math.random()*(max-min)+min;
-                    tctx.fillStyle = '#D9D9D9';
-                    for(let i=0;i<count;i++){
-                        const w = rnd(180, 300), h = rnd(120, 210); // Same size as Commerce preview
-                        const x = rnd(20, tempCanvas.width - w - 10);
-                        const y = rnd(80, tempCanvas.height - h - 20);
-                        tctx.fillRect(x,y,w,h);
-                    }
-                    // auto-remove static overlay on next hover
-                    document.querySelectorAll('.cell').forEach(el=>{
-                        el.addEventListener('mouseenter', ()=>{
-                            if (tempCanvas.parentNode) tempCanvas.parentNode.removeChild(tempCanvas);
-                        }, { once: true });
-                    });
                 });
             });
         }
@@ -1236,7 +1482,7 @@
                     textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
                     break;
                 case 'About me':
-                    textContent.innerHTML = '<p>About me content will be here</p>';
+                    textContent.innerHTML = '<p>I am a creative professional specializing in visual storytelling<br>and digital media design.</p><p>My work spans across various disciplines including<br>graphic design, motion graphics, and interactive media.</p><p>I believe in the power of visual communication to<br>convey complex ideas and emotions in simple,<br>compelling ways.</p>';
                     break;
                 case 'Mind':
                     // Mind content (original description)
