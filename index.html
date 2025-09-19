@@ -1956,6 +1956,45 @@
         // Prevent right-click context menu
         drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+        // Handle mouse events on canvas to allow hover effects and clicks
+        drawingCanvas.addEventListener('mousemove', (e) => {
+            // Check if we're over clickable elements
+            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+            
+            if (elementBelow && (
+                elementBelow.classList.contains('catalog-item') ||
+                elementBelow.classList.contains('logo') ||
+                elementBelow.closest('.catalog-item') ||
+                elementBelow.closest('.logo')
+            )) {
+                // If over clickable element, trigger its hover event
+                elementBelow.dispatchEvent(new MouseEvent('mouseenter', {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    bubbles: true
+                }));
+            }
+        });
+
+        // Handle clicks through canvas
+        drawingCanvas.addEventListener('click', (e) => {
+            // Check if we're clicking on clickable elements
+            const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+            
+            if (elementBelow && (
+                elementBelow.classList.contains('catalog-item') ||
+                elementBelow.classList.contains('logo') ||
+                elementBelow.closest('.catalog-item') ||
+                elementBelow.closest('.logo') ||
+                elementBelow.classList.contains('nav-link')
+            )) {
+                // If clicking on clickable element, trigger its click event
+                elementBelow.click();
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
         function startDrawing(e) {
             // Check if right mouse button (erase mode) or left mouse button (draw mode)
             if (e.button === 2) {
@@ -2081,6 +2120,357 @@
                 cursor.style.width = cursorSize + 'px';
                 cursor.style.height = cursorSize + 'px';
             }
+        }
+
+        // Animation variables
+        let rects = [];
+        let active = false;
+        let animationId = null;
+        let activePreviewId = null;
+
+        // Animation functions
+        function animate() {
+            if (!active) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw rectangles
+            rects.forEach(rect => {
+                // Update position
+                rect.x += rect.vx;
+                rect.y += rect.vy;
+                
+                // Bounce off walls
+                if (rect.x <= 0 || rect.x + rect.w >= canvas.width) {
+                    rect.vx = -rect.vx;
+                }
+                if (rect.y <= 0 || rect.y + rect.h >= canvas.height) {
+                    rect.vy = -rect.vy;
+                }
+                
+                // Keep within bounds
+                rect.x = Math.max(0, Math.min(canvas.width - rect.w, rect.x));
+                rect.y = Math.max(0, Math.min(canvas.height - rect.h, rect.y));
+                
+                // Update video/image position
+                if (rect.video) {
+                    rect.video.style.left = rect.x + 'px';
+                    rect.video.style.top = rect.y + 'px';
+                }
+                if (rect.image) {
+                    rect.image.style.left = rect.x + 'px';
+                    rect.image.style.top = rect.y + 'px';
+                }
+            });
+            
+            // Collision detection and resolution
+            for (let i = 0; i < rects.length; i++) {
+                for (let j = i + 1; j < rects.length; j++) {
+                    const rect1 = rects[i];
+                    const rect2 = rects[j];
+                    
+                    if (rect1.x < rect2.x + rect2.w &&
+                        rect1.x + rect1.w > rect2.x &&
+                        rect1.y < rect2.y + rect2.h &&
+                        rect1.y + rect1.h > rect2.y) {
+                        
+                        // Collision detected - separate rectangles
+                        const dx = rect1.x - rect2.x;
+                        const dy = rect1.y - rect2.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 0) {
+                            const separationX = (dx / distance) * 5;
+                            const separationY = (dy / distance) * 5;
+                            
+                            rect1.x += separationX;
+                            rect1.y += separationY;
+                            rect2.x -= separationX;
+                            rect2.y -= separationY;
+                            
+                            // Update video/image positions
+                            if (rect1.video) {
+                                rect1.video.style.left = rect1.x + 'px';
+                                rect1.video.style.top = rect1.y + 'px';
+                            }
+                            if (rect1.image) {
+                                rect1.image.style.left = rect1.x + 'px';
+                                rect1.image.style.top = rect1.y + 'px';
+                            }
+                            if (rect2.video) {
+                                rect2.video.style.left = rect2.x + 'px';
+                                rect2.video.style.top = rect2.y + 'px';
+                            }
+                            if (rect2.image) {
+                                rect2.image.style.left = rect2.x + 'px';
+                                rect2.image.style.top = rect2.y + 'px';
+                            }
+                        }
+                    }
+                }
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function start(previewId) {
+            if (active) return;
+            if (activePreviewId && String(previewId) === String(activePreviewId)) return;
+            
+            active = true;
+            activePreviewId = previewId;
+            
+            const canvas = document.getElementById('previewCanvas');
+            canvas.style.display = 'block';
+            
+            // Create rectangles based on preview type
+            if (previewId === 'angry-masseur') {
+                createProjectRects('angry-masseur');
+            } else {
+                createRects();
+            }
+        }
+
+        function stop() {
+            active = false;
+            activePreviewId = null;
+            const canvas = document.getElementById('previewCanvas');
+            canvas.style.display = 'none';
+            cancelAnimationFrame(animationId);
+            
+            // Remove all preview video elements
+            document.querySelectorAll('video[style*="position: fixed"]').forEach(video => {
+                if (video.style.zIndex === '1001' && video.style.pointerEvents === 'none') {
+                    video.remove();
+                }
+            });
+            
+            // Remove all preview images
+            document.querySelectorAll('img[style*="position: fixed"]').forEach(img => {
+                if (img.style.zIndex === '1001' && img.style.pointerEvents === 'none') {
+                    img.remove();
+                }
+            });
+            
+            // Remove all placeholder elements
+            document.querySelectorAll('div[style*="position: fixed"]').forEach(div => {
+                if (div.style.zIndex === '1001' && div.style.pointerEvents === 'none' && div.style.backgroundColor === 'rgb(224, 224, 224)') {
+                    div.remove();
+                }
+            });
+            
+            // Clear rects array
+            rects = [];
+        }
+
+        // Function to create preview rectangles for Angry Masseur project
+        function createProjectRects(projectType) {
+            if (rects.length > 0) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            const rnd = (min, max) => Math.random() * (max - min) + min;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (projectType === 'angry-masseur') {
+                // Create rectangles for Angry Masseur videos
+                rects = new Array(3).fill(0).map(()=>{
+                    const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                    const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                    const w = rnd(300, 600);
+                    const h = Math.round(w / randomAspect);
+                    return {
+                        x: rnd(100, canvas.width - w),
+                        y: rnd(100, canvas.height - h),
+                        w: w,
+                        h: h,
+                        vx: rnd(-0.7, 0.7) || 0.5,
+                        vy: rnd(-0.7, 0.7) || -0.4,
+                    };
+                });
+                
+                // Load Angry Masseur videos
+                const videos = [
+                    'Zloy 011 (1080p with 30fps).mp4',
+                    'Igor.mp4',
+                    'Hood_two_screens.mp4'
+                ];
+                
+                rects.forEach((rect, i) => {
+                    if (i < videos.length) {
+                        const video = document.createElement('video');
+                        video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/angrymasseur/${videos[i]}`;
+                        video.style.position = 'fixed';
+                        video.style.left = rect.x + 'px';
+                        video.style.top = rect.y + 'px';
+                        video.style.width = rect.w + 'px';
+                        video.style.height = rect.h + 'px';
+                        video.style.objectFit = 'contain';
+                        video.style.zIndex = '1001';
+                        video.style.pointerEvents = 'none';
+                        video.muted = true;
+                        video.loop = true;
+                        video.autoplay = true;
+                        video.preload = 'auto';
+                        video.playsInline = true;
+                        
+                        // Add multiple event listeners to ensure video plays
+                        video.addEventListener('loadeddata', () => {
+                            console.log('Video loaded:', videos[i]);
+                            setTimeout(() => {
+                                video.play().catch(e => console.log('Autoplay failed:', e));
+                            }, 100);
+                        });
+                        
+                        video.addEventListener('canplay', () => {
+                            console.log('Video can play:', videos[i]);
+                            video.play().catch(e => console.log('Autoplay failed:', e));
+                        });
+                        
+                        video.addEventListener('loadedmetadata', () => {
+                            console.log('Video metadata loaded:', videos[i]);
+                            video.play().catch(e => console.log('Autoplay failed:', e));
+                        });
+                        
+                        // Try to play immediately
+                        setTimeout(() => {
+                            video.play().catch(e => console.log('Autoplay failed:', e));
+                        }, 200);
+                        
+                        document.body.appendChild(video);
+                        rect.video = video;
+                    }
+                });
+            }
+            
+            // Collision detection for initial placement
+            for (let i = 0; i < rects.length; i++) {
+                let attempts = 0;
+                do {
+                    let hasOverlap = false;
+                    for (let j = 0; j < i; j++) {
+                        if (rects[i].x < rects[j].x + rects[j].w &&
+                            rects[i].x + rects[i].w > rects[j].x &&
+                            rects[i].y < rects[j].y + rects[j].h &&
+                            rects[i].y + rects[i].h > rects[j].y) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    if (hasOverlap) {
+                        rects[i].x = rnd(100, canvas.width - rects[i].w);
+                        rects[i].y = rnd(100, canvas.height - rects[i].h);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                } while (hasOverlap && attempts < 50);
+            }
+            
+            animate();
+        }
+
+        // Function to create preview rectangles for regular projects
+        function createRects() {
+            if (rects.length > 0) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            const rnd = (min, max) => Math.random() * (max - min) + min;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Create rectangles with mix of real images and gray placeholders
+            rects = new Array(3).fill(0).map(()=>{
+                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                const w = rnd(300, 600);
+                const h = Math.round(w / randomAspect);
+                return {
+                    x: rnd(100, canvas.width - w),
+                    y: rnd(100, canvas.height - h),
+                    w: w,
+                    h: h,
+                    vx: rnd(-0.7, 0.7) || 0.5,
+                    vy: rnd(-0.7, 0.7) || -0.4,
+                    isPlaceholder: Math.random() > 0.3 // 70% chance of real image, 30% placeholder
+                };
+            });
+            
+            // Load mix of real images and create placeholders
+            const availableImages = [
+                '0.png',
+                '1.png', 
+                '2.png',
+                '3.png',
+                '4.png'
+            ];
+            
+            rects.forEach((rect, i) => {
+                if (!rect.isPlaceholder && i < availableImages.length) {
+                    // Load real image
+                    const img = document.createElement('img');
+                    img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/${availableImages[i]}`;
+                    img.style.position = 'fixed';
+                    img.style.left = rect.x + 'px';
+                    img.style.top = rect.y + 'px';
+                    img.style.width = rect.w + 'px';
+                    img.style.height = rect.h + 'px';
+                    img.style.objectFit = 'contain';
+                    img.style.zIndex = '1001';
+                    img.style.pointerEvents = 'none';
+                    
+                    document.body.appendChild(img);
+                    rect.image = img;
+                } else {
+                    // Create gray placeholder
+                    const placeholder = document.createElement('div');
+                    placeholder.style.position = 'fixed';
+                    placeholder.style.left = rect.x + 'px';
+                    placeholder.style.top = rect.y + 'px';
+                    placeholder.style.width = rect.w + 'px';
+                    placeholder.style.height = rect.h + 'px';
+                    placeholder.style.backgroundColor = '#E0E0E0';
+                    placeholder.style.zIndex = '1001';
+                    placeholder.style.pointerEvents = 'none';
+                    
+                    document.body.appendChild(placeholder);
+                    rect.placeholder = placeholder;
+                }
+            });
+            
+            // Collision detection for initial placement
+            for (let i = 0; i < rects.length; i++) {
+                let attempts = 0;
+                do {
+                    let hasOverlap = false;
+                    for (let j = 0; j < i; j++) {
+                        if (rects[i].x < rects[j].x + rects[j].w &&
+                            rects[i].x + rects[i].w > rects[j].x &&
+                            rects[i].y < rects[j].y + rects[j].h &&
+                            rects[i].y + rects[i].h > rects[j].y) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    if (hasOverlap) {
+                        rects[i].x = rnd(100, canvas.width - rects[i].w);
+                        rects[i].y = rnd(100, canvas.height - rects[i].h);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                } while (hasOverlap && attempts < 50);
+            }
+            
+            animate();
         }
 
         // Custom cursor tracking - always visible
