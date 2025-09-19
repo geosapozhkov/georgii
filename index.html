@@ -194,13 +194,13 @@
         .content-right {
             position: fixed;
             top: 100px;
-            right: 20px;
-            max-width: 420px;
-            padding: 20px;
+            left: 20px;
+            max-width: 500px;
+            padding: 0;
             z-index: 1002;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 8px;
+            background: none;
+            backdrop-filter: none;
+            border-radius: 0;
         }
 
         .text-content {
@@ -1551,7 +1551,7 @@
             
             switch(tabName) {
                 case 'Lots of Letters':
-                    textContent.innerHTML = '<p>Here my thoughts</p>';
+                    textContent.innerHTML = '';
                     break;
                 case 'Commerce':
                     textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
