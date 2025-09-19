@@ -194,7 +194,7 @@
         .content-right {
             position: fixed;
             top: 100px;
-            right: 20px;
+            right: 10px;
             max-width: 425px;
             padding: 20px;
             z-index: 1002;
@@ -361,6 +361,13 @@
                 gap: 20px;
                 padding: 20px 0 0 30px;
             }
+        }
+
+        .catalog-placeholder {
+            opacity: 0.25;
+            pointer-events: none;
+            cursor: default;
+            font-size: 15px;
         }
     </style>
 </head>
@@ -596,6 +603,12 @@
                     r.videoElement.style.left = r.x + 'px';
                     r.videoElement.style.top = r.y + 'px';
                 }
+                
+                // Update image element position if it exists
+                if (r.image) {
+                    r.image.style.left = r.x + 'px';
+                    r.image.style.top = r.y + 'px';
+                }
             }
             // pairwise collisions
             for(let i=0;i<rects.length;i++){
@@ -611,8 +624,14 @@
             for(const r of rects){
                 if (r.type === 'video') {
                     // Don't draw anything on canvas for videos - they are real video elements
+                } else if (r.image) {
+                    // Don't draw anything on canvas for images - they are real image elements
+                } else if (r.isPlaceholder) {
+                    // Draw gray placeholder rectangle
+                    ctx.fillRect(r.x, r.y, r.w, r.h);
                 } else {
-                ctx.fillRect(r.x, r.y, r.w, r.h);
+                    // Draw default rectangle
+                    ctx.fillRect(r.x, r.y, r.w, r.h);
                 }
             }
             animationId = requestAnimationFrame(step);
@@ -689,6 +708,13 @@
             // Remove all preview video elements
             const previewVideos = document.querySelectorAll('.preview-video');
             previewVideos.forEach(video => video.remove());
+            
+            // Remove all preview images
+            document.querySelectorAll('img[style*="position: fixed"]').forEach(img => {
+                if (img.style.zIndex === '1001' && img.style.pointerEvents === 'none') {
+                    img.remove();
+                }
+            });
             
             // Clear rects array
             rects = [];
@@ -834,6 +860,9 @@
             // Stop any active preview animations
             stop();
             
+            // Set home page state
+            isHomePage = true;
+            
             // Clear any project galleries
             const existingGallery = document.querySelector('.project-gallery');
             if (existingGallery) {
@@ -887,6 +916,9 @@
             // Show navigation when switching to any tab
             const navigation = document.querySelector('.navigation');
             navigation.style.display = 'flex';
+            
+            // Update home page state
+            isHomePage = (tabName === 'Home' || !tabName);
             
             // Remove active class from all links
             navLinks.forEach(l => l.classList.remove('active'));
@@ -1617,11 +1649,110 @@
             });
         });
 
+        // Function to create preview rectangles for logo hover (home page only)
+        function createLogoPreviewRects() {
+            if (rects.length > 0) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Create rectangles with mix of real images and gray placeholders
+            rects = new Array(3).fill(0).map(()=>{
+                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                const w = rnd(300, 600);
+                const h = Math.round(w / randomAspect);
+                return {
+                    x: rnd(100, canvas.width - w),
+                    y: rnd(100, canvas.height - h),
+                    w: w,
+                    h: h,
+                    vx: rnd(-0.7, 0.7) || 0.5,
+                    vy: rnd(-0.7, 0.7) || -0.4,
+                    isPlaceholder: Math.random() > 0.3 // 70% chance of real image, 30% placeholder
+                };
+            });
+            
+            // Load mix of real images and create placeholders
+            const availableImages = [
+                '0.png',
+                '1.png', 
+                '2.png',
+                'diptych.jpg',
+                'hoodies.jpg'
+            ];
+            
+            rects.forEach((rect, i) => {
+                if (!rect.isPlaceholder && i < availableImages.length) {
+                    // Load real image
+                    const img = document.createElement('img');
+                    img.src = availableImages[i];
+                    img.style.position = 'fixed';
+                    img.style.left = rect.x + 'px';
+                    img.style.top = rect.y + 'px';
+                    img.style.width = rect.w + 'px';
+                    img.style.height = rect.h + 'px';
+                    img.style.objectFit = 'contain';
+                    img.style.zIndex = '1001';
+                    img.style.pointerEvents = 'none';
+                    
+                    document.body.appendChild(img);
+                    rect.image = img;
+                } else {
+                    // Create gray placeholder
+                    rect.isPlaceholder = true;
+                }
+            });
+            
+            // Ensure no overlap on creation
+            for (let i = 0; i < rects.length; i++) {
+                let attempts = 0;
+                do {
+                    let hasOverlap = false;
+                    for (let j = 0; j < i; j++) {
+                        if (rects[i].x < rects[j].x + rects[j].w &&
+                            rects[i].x + rects[i].w > rects[j].x &&
+                            rects[i].y < rects[j].y + rects[j].h &&
+                            rects[i].y + rects[i].h > rects[j].y) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    if (hasOverlap) {
+                        rects[i].x = rnd(100, canvas.width - rects[i].w);
+                        rects[i].y = rnd(100, canvas.height - rects[i].h);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                } while (hasOverlap && attempts < 50);
+            }
+            
+            animate();
+        }
+
         // Logo handler
         const logo = document.getElementById('logo');
         logo.addEventListener('click', (e) => {
             e.preventDefault();
             showHomePage();
+        });
+
+        // Logo hover handlers (only on home page)
+        let isHomePage = true;
+        logo.addEventListener('mouseenter', () => {
+            if (isHomePage) {
+                createLogoPreviewRects();
+            }
+        });
+        
+        logo.addEventListener('mouseleave', () => {
+            if (isHomePage) {
+                stop();
+            }
         });
 
         // Navigation handlers
