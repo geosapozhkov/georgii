@@ -70,7 +70,6 @@
             z-index: 1002;
             max-width: 500px;
             width: fit-content;
-            pointer-events: none;
         }
 
         .nav-link {
@@ -403,7 +402,7 @@
             width: 100vw;
             height: 100vh;
             pointer-events: auto;
-            z-index: 10000;
+            z-index: 1001;
             cursor: crosshair;
         }
 
@@ -2056,13 +2055,26 @@
                 e.preventDefault();
                 currentBrushSize = Math.min(maxBrushSize, currentBrushSize + 1);
                 console.log('Brush size (+):', currentBrushSize);
+                updateCursorSize();
             } else if (e.key === '-') {
                 // Minus key - decrease brush size
                 e.preventDefault();
                 currentBrushSize = Math.max(0.5, currentBrushSize - 1);
                 console.log('Brush size (-):', currentBrushSize);
+                updateCursorSize();
             }
         });
+
+        // Function to update cursor size based on brush size
+        function updateCursorSize() {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                // Scale cursor size based on brush size (min 6px, max 30px for visibility)
+                const cursorSize = Math.max(6, Math.min(30, currentBrushSize * 0.1));
+                cursor.style.width = cursorSize + 'px';
+                cursor.style.height = cursorSize + 'px';
+            }
+        }
 
         // Custom cursor tracking - always visible
         document.addEventListener('mousemove', (e) => {
