@@ -390,6 +390,38 @@
         .custom-cursor:hover {
             transform: translate(-50%, -50%) scale(1.2);
         }
+
+        /* Drawing Canvas */
+        #drawingCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: auto;
+            z-index: 500;
+            cursor: crosshair;
+        }
+
+        /* Drawing Controls */
+        .drawing-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .brush-slider {
+            width: 100px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -419,6 +451,14 @@
         </div>
     </main>
     <canvas id="previewCanvas"></canvas>
+    
+    <!-- Drawing Canvas -->
+    <canvas id="drawingCanvas"></canvas>
+    
+    <!-- Drawing Controls -->
+    <div class="drawing-controls">
+        <input type="range" id="brushSize" min="1" max="20" value="3" class="brush-slider">
+    </div>
     
     <!-- Image/Video Modal -->
     <div class="image-modal" id="imageModal">
@@ -1756,6 +1796,136 @@
             animate();
         }
 
+        // Function to create random project previews for logo hover
+        function createRandomProjectRects() {
+            if (rects.length > 0) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Random project data
+            const projects = [
+                {
+                    name: 'Angry Masseur',
+                    videos: ['Zloy 011 (1080p with 30fps).mp4', 'Igor.mp4', 'Hood_two_screens.mp4']
+                },
+                {
+                    name: 'Area 117',
+                    images: ['area117_1.jpg', 'area117_2.jpg', 'area117_3.jpg']
+                },
+                {
+                    name: 'Yoki',
+                    videos: ['yoki_1.mp4', 'yoki_2.mp4', 'yoki_3.mp4']
+                },
+                {
+                    name: 'Red Building',
+                    images: ['red_building_1.jpg', 'red_building_2.jpg', 'red_building_3.jpg']
+                },
+                {
+                    name: 'Ruins',
+                    images: ['ruins_1.jpg', 'ruins_2.jpg', 'ruins_3.jpg']
+                }
+            ];
+            
+            // Pick random project
+            const randomProject = projects[Math.floor(Math.random() * projects.length)];
+            
+            // Create rectangles
+            rects = new Array(3).fill(0).map(()=>{
+                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                const w = rnd(300, 600);
+                const h = Math.round(w / randomAspect);
+                return {
+                    x: rnd(100, canvas.width - w),
+                    y: rnd(100, canvas.height - h),
+                    w: w,
+                    h: h,
+                    vx: rnd(-0.7, 0.7) || 0.5,
+                    vy: rnd(-0.7, 0.7) || -0.4,
+                };
+            });
+            
+            // Load media based on project type
+            if (randomProject.videos) {
+                rects.forEach((rect, i) => {
+                    if (i < randomProject.videos.length) {
+                        const video = document.createElement('video');
+                        video.src = randomProject.videos[i];
+                        video.style.position = 'fixed';
+                        video.style.left = rect.x + 'px';
+                        video.style.top = rect.y + 'px';
+                        video.style.width = rect.w + 'px';
+                        video.style.height = rect.h + 'px';
+                        video.style.objectFit = 'contain';
+                        video.style.zIndex = '1001';
+                        video.style.pointerEvents = 'none';
+                        video.muted = true;
+                        video.loop = true;
+                        video.autoplay = true;
+                        video.preload = 'auto';
+                        video.playsInline = true;
+                        
+                        video.addEventListener('loadeddata', () => {
+                            setTimeout(() => {
+                                video.play().catch(e => console.log('Autoplay failed:', e));
+                            }, 100);
+                        });
+                        
+                        document.body.appendChild(video);
+                        rect.video = video;
+                    }
+                });
+            } else if (randomProject.images) {
+                rects.forEach((rect, i) => {
+                    if (i < randomProject.images.length) {
+                        const img = document.createElement('img');
+                        img.src = randomProject.images[i];
+                        img.style.position = 'fixed';
+                        img.style.left = rect.x + 'px';
+                        img.style.top = rect.y + 'px';
+                        img.style.width = rect.w + 'px';
+                        img.style.height = rect.h + 'px';
+                        img.style.objectFit = 'contain';
+                        img.style.zIndex = '1001';
+                        img.style.pointerEvents = 'none';
+                        
+                        document.body.appendChild(img);
+                        rect.image = img;
+                    }
+                });
+            }
+            
+            // Ensure no overlap on creation
+            for (let i = 0; i < rects.length; i++) {
+                let attempts = 0;
+                do {
+                    let hasOverlap = false;
+                    for (let j = 0; j < i; j++) {
+                        if (rects[i].x < rects[j].x + rects[j].w &&
+                            rects[i].x + rects[i].w > rects[j].x &&
+                            rects[i].y < rects[j].y + rects[j].h &&
+                            rects[i].y + rects[i].h > rects[j].y) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    if (hasOverlap) {
+                        rects[i].x = rnd(100, canvas.width - rects[i].w);
+                        rects[i].y = rnd(100, canvas.height - rects[i].h);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                } while (hasOverlap && attempts < 50);
+            }
+            
+            animate();
+        }
+
         // Logo handler
         const logo = document.getElementById('logo');
         logo.addEventListener('click', (e) => {
@@ -1763,18 +1933,101 @@
             showHomePage();
         });
 
-        // Logo hover handlers (only on home page)
-        let isHomePage = true;
+        // Logo hover handlers - show random project previews
         logo.addEventListener('mouseenter', () => {
-            if (isHomePage) {
-                createLogoPreviewRects();
-            }
+            createRandomProjectRects();
         });
         
         logo.addEventListener('mouseleave', () => {
-            if (isHomePage) {
-                stop();
-            }
+            stop();
+        });
+
+        // Drawing functionality
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const drawingCtx = drawingCanvas.getContext('2d');
+        let isDrawing = false;
+        let currentColor = '#4D4D4D';
+        let currentBrushSize = 3;
+
+        // Set canvas size
+        function resizeDrawingCanvas() {
+            drawingCanvas.width = window.innerWidth;
+            drawingCanvas.height = window.innerHeight;
+        }
+        resizeDrawingCanvas();
+        window.addEventListener('resize', resizeDrawingCanvas);
+
+        // Drawing event listeners
+        drawingCanvas.addEventListener('mousedown', startDrawing);
+        drawingCanvas.addEventListener('mousemove', draw);
+        drawingCanvas.addEventListener('mouseup', stopDrawing);
+        drawingCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        drawingCanvas.addEventListener('touchstart', handleTouch);
+        drawingCanvas.addEventListener('touchmove', handleTouch);
+        drawingCanvas.addEventListener('touchend', stopDrawing);
+
+        // Prevent right-click context menu
+        drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function startDrawing(e) {
+            // Only start drawing with left mouse button
+            if (e.button !== 0) return;
+            
+            isDrawing = true;
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Always draw in black color like a pencil
+            drawingCtx.globalCompositeOperation = 'source-over';
+            drawingCtx.lineWidth = currentBrushSize;
+            drawingCtx.strokeStyle = '#000000'; // Always black
+            drawingCtx.lineCap = 'round';
+            
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(x, y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Always draw in black like a pencil
+            drawingCtx.strokeStyle = '#000000';
+            drawingCtx.lineCap = 'round';
+            
+            drawingCtx.lineTo(x, y);
+            drawingCtx.stroke();
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            drawingCtx.beginPath();
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        // Drawing controls
+        const brushSlider = document.getElementById('brushSize');
+
+        brushSlider.addEventListener('input', (e) => {
+            currentBrushSize = e.target.value;
         });
 
         // Custom cursor tracking
