@@ -467,6 +467,12 @@
         let rects = [];
         let active = false;
         let activePreviewId = null; // disable hover preview for active catalog
+        
+        // Get navigation links
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        // Home page state
+        let isHomePage = true;
 
         function resize(){
             canvas.width = window.innerWidth;
@@ -774,7 +780,6 @@
         // Event listeners are now attached dynamically when switching tabs
 
         // Navigation and Gallery functionality
-        const navLinks = document.querySelectorAll('.nav-link');
         const mainContent = document.querySelector('.content-left');
         const lettersGallery = document.getElementById('letters-gallery');
         const imageModal = document.getElementById('imageModal');
@@ -2167,12 +2172,6 @@
             }
         }
 
-        // Animation variables
-        let rects = [];
-        let active = false;
-        let animationId = null;
-        let activePreviewId = null;
-
         // Animation functions
         function animate() {
             if (!active) return;
@@ -2516,6 +2515,248 @@
             }
             
             animate();
+        }
+
+        // Functions to update content for different tabs
+        function updateMindContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
+                <div class="catalog">
+                    <div class="row">
+                        <div class="cell" data-preview="than-now-than">
+                            <a href="#" class="catalog-link" data-description="Visual exploration of temporal relationships and the cyclical nature of experience.">Than Now Than</a>
+                        </div>
+                        <div class="cell" data-preview="area-117">
+                            <a href="#" class="catalog-link" data-description="An immersive journey through architectural spaces and their psychological impact.">Area 117</a>
+                        </div>
+                        <div class="cell" data-preview="yoki">
+                            <a href="#" class="catalog-link" data-description="Character study exploring identity and transformation.">Yoki</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="cell" data-preview="red-building">
+                            <a href="#" class="catalog-link" data-description="Urban landscape photography focusing on architectural details.">Red Building</a>
+                        </div>
+                        <div class="cell" data-preview="ruins">
+                            <a href="#" class="catalog-link" data-description="Documentation of decay and the beauty of abandoned spaces.">Ruins</a>
+                        </div>
+                        <div class="cell catalog-placeholder">
+                            <span class="catalog-placeholder">No Data</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            contentLeft.style.display = 'block';
+            attachMindEventListeners();
+        }
+
+        function updateCommerceContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
+                <div class="catalog">
+                    <div class="row">
+                        <div class="cell" data-preview="angry-masseur">
+                            <a href="#" class="catalog-link" data-description="Commercial project for Poool client featuring dynamic video content.">Angry Masseur</a>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-placeholder">Project</span>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-placeholder">Project</span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="cell">
+                            <span class="catalog-placeholder">Project</span>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-placeholder">Project</span>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-placeholder">Project</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            contentLeft.style.display = 'block';
+            attachCommerceEventListeners();
+        }
+
+        function updateAboutMeContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = '<!-- About me content - no catalog -->';
+            contentLeft.style.display = 'none';
+        }
+
+        function attachMindEventListeners() {
+            // Trigger preview on all cells with data-preview attribute
+            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseleave', stop);
+            });
+
+            // Handle Mind catalog clicks - show project gallery
+            const rightText = document.querySelector('.text-content');
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+            
+            allLinks.forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    
+                    const projectName = a.textContent.trim();
+                    
+                    // Show project description
+                    const desc = a.getAttribute('data-description');
+                    if (desc) {
+                        rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    
+                    // Load appropriate project gallery based on project name
+                    if (projectName === 'Area 117') {
+                        loadArea117Images();
+                    } else if (projectName === 'Yoki') {
+                        loadYokiImages();
+                    } else if (projectName === 'Red Building') {
+                        loadRedBuildingImages();
+                    } else if (projectName === 'Ruins') {
+                        loadRuinsImages();
+                    }
+                    
+                    // dim only clicked catalog name to 25% opacity; reset others to 100%
+                    allLinks.forEach(l=>l.classList.remove('dimmed'));
+                    a.classList.add('dimmed');
+                    // mark this preview as active to disable its animated hover
+                    const parentCell = a.closest('.cell');
+                    if (parentCell) activePreviewId = parentCell.dataset.preview || null;
+                });
+            });
+        }
+
+        function attachCommerceEventListeners() {
+            // Trigger preview on all cells with data-preview attribute
+            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseleave', stop);
+            });
+
+            // Handle Commerce catalog clicks - show project gallery
+            const rightText = document.querySelector('.text-content');
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+            
+            allLinks.forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    
+                    const projectName = a.textContent.trim();
+                    
+                    if (projectName === 'Angry Masseur') {
+                        // Hide catalog and show project gallery
+                        const contentLeft = document.querySelector('.content-left');
+                        contentLeft.style.display = 'none';
+                        
+                        // Show project description
+                        const desc = a.getAttribute('data-description');
+                        if (desc) {
+                            rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                        
+                        // Load Angry Masseur project gallery
+                        loadAngryMasseurImages();
+                    }
+                });
+            });
+        }
+
+        function loadAngryMasseurImages() {
+            const projectData = {
+                files: [
+                    'Zloy 011 (1080p with 30fps).mp4',
+                    'Igor.mp4', 
+                    'Hood_two_screens.mp4'
+                ],
+                layouts: [
+                    { colSpan: 6, startCol: 1 }, // Large video
+                    { colSpan: 4, startCol: 7 }, // Medium video - minimum size
+                    { colSpan: 4, startCol: 1 } // Medium video - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/angrymasseur/'
+            };
+            
+            loadProjectGallery('Angry Masseur', projectData);
+        }
+
+        function loadArea117Images() {
+            const projectData = {
+                files: [
+                    'area117_1.jpg',
+                    'area117_2.jpg',
+                    'area117_3.jpg'
+                ],
+                layouts: [
+                    { colSpan: 5, startCol: 1 }, // Large image
+                    { colSpan: 4, startCol: 6 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 10 } // Medium image - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/area117/'
+            };
+            
+            loadProjectGallery('Area 117', projectData);
+        }
+
+        function loadYokiImages() {
+            const projectData = {
+                files: [
+                    'yoki_1.mp4',
+                    'yoki_2.mp4',
+                    'yoki_3.mp4'
+                ],
+                layouts: [
+                    { colSpan: 6, startCol: 1 }, // Large video
+                    { colSpan: 4, startCol: 7 }, // Medium video - minimum size
+                    { colSpan: 4, startCol: 1 } // Medium video - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/yoki/'
+            };
+            
+            loadProjectGallery('Yoki', projectData);
+        }
+
+        function loadRedBuildingImages() {
+            const projectData = {
+                files: [
+                    'red_building_1.jpg',
+                    'red_building_2.jpg',
+                    'red_building_3.jpg'
+                ],
+                layouts: [
+                    { colSpan: 5, startCol: 1 }, // Large image
+                    { colSpan: 4, startCol: 6 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 10 } // Medium image - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/redbuilding/'
+            };
+            
+            loadProjectGallery('Red Building', projectData);
+        }
+
+        function loadRuinsImages() {
+            const projectData = {
+                files: [
+                    'ruins_1.jpg',
+                    'ruins_2.jpg',
+                    'ruins_3.jpg'
+                ],
+                layouts: [
+                    { colSpan: 5, startCol: 1 }, // Large image
+                    { colSpan: 4, startCol: 6 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 10 } // Medium image - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/ruins/'
+            };
+            
+            loadProjectGallery('Ruins', projectData);
         }
 
         // Navigation handlers
