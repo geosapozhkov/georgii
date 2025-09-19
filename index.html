@@ -860,6 +860,7 @@
 
         // Function to show home page (logo + about me only)
         function showHomePage() {
+            console.log('showHomePage called');
             // Stop any active preview animations
             stop();
             
@@ -871,6 +872,7 @@
             
             // Hide main content
             const mainContent = document.querySelector('.content-left');
+            console.log('Hiding main content:', mainContent);
             mainContent.style.display = 'none';
             
             // Hide letters gallery
@@ -972,7 +974,10 @@
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
+            // Clear localStorage to ensure clean start
+            localStorage.clear();
             // Always show home page on load
+            console.log('Loading home page...');
             showHomePage();
         });
 
