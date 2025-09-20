@@ -70,6 +70,7 @@
             z-index: 1002;
             max-width: 500px;
             width: fit-content;
+            pointer-events: none;
         }
 
         .nav-link {
@@ -194,13 +195,14 @@
         .content-right {
             position: fixed;
             top: 100px;
-            left: 200px;
-            right: 300px;
-            padding: 0;
+            right: 3px;
+            max-width: 425px;
+            padding: 20px;
             z-index: 1002;
-            background: none;
-            backdrop-filter: none;
-            border-radius: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            pointer-events: none;
         }
 
         .text-content {
@@ -362,9 +364,74 @@
                 padding: 20px 0 0 30px;
             }
         }
+
+        .catalog-placeholder {
+            opacity: 0.25;
+            pointer-events: none;
+            cursor: default;
+            font-size: 15px;
+        }
+
+        /* Custom cursor */
+        * {
+            cursor: none !important;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background-color: #4D4D4D;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .custom-cursor:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        /* Drawing Canvas */
+        #drawingCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: auto;
+            z-index: 10000;
+            cursor: crosshair;
+        }
+
+        /* Drawing Controls */
+        .drawing-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 20px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+            color: #666;
+        }
+
+        .drawing-controls.show {
+            display: flex;
+        }
+
+        /* Custom cursor */
     </style>
 </head>
 <body>
+    <div class="custom-cursor" id="customCursor"></div>
     <a href="#" class="logo" id="logo">Georgii</a>
     <nav class="navigation">
         <a href="#" class="nav-link">Lots of Letters</a>
@@ -390,6 +457,14 @@
         </div>
     </main>
     <canvas id="previewCanvas"></canvas>
+    
+    <!-- Drawing Canvas -->
+    <canvas id="drawingCanvas"></canvas>
+    
+        <!-- Drawing Controls -->
+        <div class="drawing-controls">
+            <!-- Brush size controlled by mouse wheel -->
+        </div>
     
     <!-- Image/Video Modal -->
     <div class="image-modal" id="imageModal">
@@ -596,6 +671,12 @@
                     r.videoElement.style.left = r.x + 'px';
                     r.videoElement.style.top = r.y + 'px';
                 }
+                
+                // Update image element position if it exists
+                if (r.image) {
+                    r.image.style.left = r.x + 'px';
+                    r.image.style.top = r.y + 'px';
+                }
             }
             // pairwise collisions
             for(let i=0;i<rects.length;i++){
@@ -611,7 +692,13 @@
             for(const r of rects){
                 if (r.type === 'video') {
                     // Don't draw anything on canvas for videos - they are real video elements
+                } else if (r.image) {
+                    // Don't draw anything on canvas for images - they are real image elements
+                } else if (r.isPlaceholder) {
+                    // Draw gray placeholder rectangle
+                    ctx.fillRect(r.x, r.y, r.w, r.h);
                 } else {
+                    // Draw default rectangle
                 ctx.fillRect(r.x, r.y, r.w, r.h);
                 }
             }
@@ -689,6 +776,13 @@
             // Remove all preview video elements
             const previewVideos = document.querySelectorAll('.preview-video');
             previewVideos.forEach(video => video.remove());
+            
+            // Remove all preview images
+            document.querySelectorAll('img[style*="position: fixed"]').forEach(img => {
+                if (img.style.zIndex === '1001' && img.style.pointerEvents === 'none') {
+                    img.remove();
+                }
+            });
             
             // Clear rects array
             rects = [];
@@ -834,6 +928,14 @@
             // Stop any active preview animations
             stop();
             
+            // Set home page state
+            isHomePage = true;
+            
+            // Update drawing controls visibility
+            if (typeof updateDrawingControls === 'function') {
+                updateDrawingControls();
+            }
+            
             // Clear any project galleries
             const existingGallery = document.querySelector('.project-gallery');
             if (existingGallery) {
@@ -887,6 +989,14 @@
             // Show navigation when switching to any tab
             const navigation = document.querySelector('.navigation');
             navigation.style.display = 'flex';
+            
+            // Update home page state
+            isHomePage = (tabName === 'Home' || !tabName);
+            
+            // Update drawing controls visibility
+            if (typeof updateDrawingControls === 'function') {
+                updateDrawingControls();
+            }
             
             // Remove active class from all links
             navLinks.forEach(l => l.classList.remove('active'));
@@ -1617,11 +1727,391 @@
             });
         });
 
+        // Function to create preview rectangles for logo hover (home page only)
+        function createLogoPreviewRects() {
+            if (rects.length > 0) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            const rnd = (min, max) => Math.random() * (max - min) + min;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Create rectangles with mix of real images and gray placeholders
+            rects = new Array(3).fill(0).map(()=>{
+                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                const w = rnd(300, 600);
+                const h = Math.round(w / randomAspect);
+                return {
+                    x: rnd(100, canvas.width - w),
+                    y: rnd(100, canvas.height - h),
+                    w: w,
+                    h: h,
+                    vx: rnd(-0.7, 0.7) || 0.5,
+                    vy: rnd(-0.7, 0.7) || -0.4,
+                    isPlaceholder: Math.random() > 0.3 // 70% chance of real image, 30% placeholder
+                };
+            });
+            
+            // Load mix of real images and create placeholders
+            const availableImages = [
+                '0.png',
+                '1.png', 
+                '2.png',
+                'diptych.jpg',
+                'hoodies.jpg'
+            ];
+            
+            rects.forEach((rect, i) => {
+                if (!rect.isPlaceholder && i < availableImages.length) {
+                    // Load real image
+                    const img = document.createElement('img');
+                    img.src = availableImages[i];
+                    img.style.position = 'fixed';
+                    img.style.left = rect.x + 'px';
+                    img.style.top = rect.y + 'px';
+                    img.style.width = rect.w + 'px';
+                    img.style.height = rect.h + 'px';
+                    img.style.objectFit = 'contain';
+                    img.style.zIndex = '1001';
+                    img.style.pointerEvents = 'none';
+                    
+                    document.body.appendChild(img);
+                    rect.image = img;
+                } else {
+                    // Create gray placeholder
+                    rect.isPlaceholder = true;
+                }
+            });
+            
+            // Ensure no overlap on creation
+            for (let i = 0; i < rects.length; i++) {
+                let attempts = 0;
+                do {
+                    let hasOverlap = false;
+                    for (let j = 0; j < i; j++) {
+                        if (rects[i].x < rects[j].x + rects[j].w &&
+                            rects[i].x + rects[i].w > rects[j].x &&
+                            rects[i].y < rects[j].y + rects[j].h &&
+                            rects[i].y + rects[i].h > rects[j].y) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    if (hasOverlap) {
+                        rects[i].x = rnd(100, canvas.width - rects[i].w);
+                        rects[i].y = rnd(100, canvas.height - rects[i].h);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                } while (hasOverlap && attempts < 50);
+            }
+            
+            animate();
+        }
+
+        // Function to create random project previews for logo hover
+        function createRandomProjectRects() {
+            if (rects.length > 0) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Random project data
+            const projects = [
+                {
+                    name: 'Angry Masseur',
+                    videos: ['Zloy 011 (1080p with 30fps).mp4', 'Igor.mp4', 'Hood_two_screens.mp4']
+                },
+                {
+                    name: 'Area 117',
+                    images: ['area117_1.jpg', 'area117_2.jpg', 'area117_3.jpg']
+                },
+                {
+                    name: 'Yoki',
+                    videos: ['yoki_1.mp4', 'yoki_2.mp4', 'yoki_3.mp4']
+                },
+                {
+                    name: 'Red Building',
+                    images: ['red_building_1.jpg', 'red_building_2.jpg', 'red_building_3.jpg']
+                },
+                {
+                    name: 'Ruins',
+                    images: ['ruins_1.jpg', 'ruins_2.jpg', 'ruins_3.jpg']
+                }
+            ];
+            
+            // Pick random project
+            const randomProject = projects[Math.floor(Math.random() * projects.length)];
+            
+            // Create rectangles
+            rects = new Array(3).fill(0).map(()=>{
+                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
+                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
+                const w = rnd(300, 600);
+                const h = Math.round(w / randomAspect);
+                return {
+                    x: rnd(100, canvas.width - w),
+                    y: rnd(100, canvas.height - h),
+                    w: w,
+                    h: h,
+                    vx: rnd(-0.7, 0.7) || 0.5,
+                    vy: rnd(-0.7, 0.7) || -0.4,
+                };
+            });
+            
+            // Load media based on project type
+            if (randomProject.videos) {
+                rects.forEach((rect, i) => {
+                    if (i < randomProject.videos.length) {
+                        const video = document.createElement('video');
+                        video.src = randomProject.videos[i];
+                        video.style.position = 'fixed';
+                        video.style.left = rect.x + 'px';
+                        video.style.top = rect.y + 'px';
+                        video.style.width = rect.w + 'px';
+                        video.style.height = rect.h + 'px';
+                        video.style.objectFit = 'contain';
+                        video.style.zIndex = '1001';
+                        video.style.pointerEvents = 'none';
+                        video.muted = true;
+                        video.loop = true;
+                        video.autoplay = true;
+                        video.preload = 'auto';
+                        video.playsInline = true;
+                        
+                        video.addEventListener('loadeddata', () => {
+                            setTimeout(() => {
+                                video.play().catch(e => console.log('Autoplay failed:', e));
+                            }, 100);
+                        });
+                        
+                        document.body.appendChild(video);
+                        rect.video = video;
+                    }
+                });
+            } else if (randomProject.images) {
+                rects.forEach((rect, i) => {
+                    if (i < randomProject.images.length) {
+                        const img = document.createElement('img');
+                        img.src = randomProject.images[i];
+                        img.style.position = 'fixed';
+                        img.style.left = rect.x + 'px';
+                        img.style.top = rect.y + 'px';
+                        img.style.width = rect.w + 'px';
+                        img.style.height = rect.h + 'px';
+                        img.style.objectFit = 'contain';
+                        img.style.zIndex = '1001';
+                        img.style.pointerEvents = 'none';
+                        
+                        document.body.appendChild(img);
+                        rect.image = img;
+                    }
+                });
+            }
+            
+            // Ensure no overlap on creation
+            for (let i = 0; i < rects.length; i++) {
+                let attempts = 0;
+                do {
+                    let hasOverlap = false;
+                    for (let j = 0; j < i; j++) {
+                        if (rects[i].x < rects[j].x + rects[j].w &&
+                            rects[i].x + rects[i].w > rects[j].x &&
+                            rects[i].y < rects[j].y + rects[j].h &&
+                            rects[i].y + rects[i].h > rects[j].y) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    if (hasOverlap) {
+                        rects[i].x = rnd(100, canvas.width - rects[i].w);
+                        rects[i].y = rnd(100, canvas.height - rects[i].h);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                } while (hasOverlap && attempts < 50);
+            }
+            
+            animate();
+        }
+
         // Logo handler
         const logo = document.getElementById('logo');
         logo.addEventListener('click', (e) => {
             e.preventDefault();
             showHomePage();
+        });
+
+        // Logo hover handlers - show random project previews
+        logo.addEventListener('mouseenter', () => {
+            createLogoPreviewRects();
+        });
+        
+        logo.addEventListener('mouseleave', () => {
+            stop();
+        });
+
+        // Drawing functionality
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const drawingCtx = drawingCanvas.getContext('2d');
+        let isDrawing = false;
+        let currentColor = '#4D4D4D';
+        let currentBrushSize = 3;
+
+        // Set canvas size
+        function resizeDrawingCanvas() {
+            drawingCanvas.width = window.innerWidth;
+            drawingCanvas.height = window.innerHeight;
+        }
+        resizeDrawingCanvas();
+        window.addEventListener('resize', resizeDrawingCanvas);
+
+        // Drawing event listeners
+        drawingCanvas.addEventListener('mousedown', startDrawing);
+        drawingCanvas.addEventListener('mousemove', draw);
+        drawingCanvas.addEventListener('mouseup', stopDrawing);
+        drawingCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        drawingCanvas.addEventListener('touchstart', handleTouch);
+        drawingCanvas.addEventListener('touchmove', handleTouch);
+        drawingCanvas.addEventListener('touchend', stopDrawing);
+
+        // Prevent right-click context menu
+        drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function startDrawing(e) {
+            // Check if right mouse button (erase mode) or left mouse button (draw mode)
+            if (e.button === 2) {
+                // Right button - erase mode
+                isDrawing = true;
+                const rect = drawingCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                drawingCtx.globalCompositeOperation = 'destination-out';
+                drawingCtx.lineWidth = currentBrushSize * 2; // Bigger eraser
+                drawingCtx.lineCap = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(x, y);
+            } else if (e.button === 0) {
+                // Left button - draw mode
+                isDrawing = true;
+                const rect = drawingCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Always draw in black color like a pencil
+                drawingCtx.globalCompositeOperation = 'source-over';
+                drawingCtx.lineWidth = currentBrushSize;
+                drawingCtx.strokeStyle = '#000000'; // Always black
+                drawingCtx.lineCap = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(x, y);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            drawingCtx.lineCap = 'round';
+            
+            // Set stroke style based on current mode
+            if (drawingCtx.globalCompositeOperation === 'destination-out') {
+                // Erase mode - no color needed
+                drawingCtx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                // Draw mode - always black
+                drawingCtx.strokeStyle = '#000000';
+            }
+            
+            drawingCtx.lineTo(x, y);
+            drawingCtx.stroke();
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            drawingCtx.beginPath();
+            // Reset to normal drawing mode
+            drawingCtx.globalCompositeOperation = 'source-over';
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        // Drawing controls
+        const drawingControls = document.querySelector('.drawing-controls');
+
+        // Show/hide drawing controls based on page
+        function updateDrawingControls() {
+            if (isHomePage) {
+                drawingControls.classList.add('show');
+            } else {
+                drawingControls.classList.remove('show');
+            }
+        }
+
+        // Update controls visibility when page changes
+        updateDrawingControls();
+
+        // Handle window resize to update max brush size
+        window.addEventListener('resize', () => {
+            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
+            if (currentBrushSize > maxBrushSize) {
+                currentBrushSize = maxBrushSize;
+            }
+        });
+
+        // Mouse wheel event for brush size - attach to document instead of canvas
+        document.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            // Calculate max brush size as the smaller dimension of the page
+            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
+            
+            if (e.deltaY < 0) {
+                // Scroll up - increase brush size
+                currentBrushSize = Math.min(maxBrushSize, currentBrushSize + 1);
+            } else {
+                // Scroll down - decrease brush size
+                currentBrushSize = Math.max(0.5, currentBrushSize - 1);
+            }
+            
+            // Debug: log brush size changes
+            console.log('Brush size:', currentBrushSize);
+        });
+
+        // Custom cursor tracking
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            }
         });
 
         // Navigation handlers
