@@ -47,14 +47,14 @@
             width: 100vw;
             height: 100vh;
             background-image: 
-                /* Grid system - 8 columns */
-                linear-gradient(to right, transparent 0px, transparent calc(12.5vw - 1px), rgba(128, 0, 128, 0.3) calc(12.5vw - 1px), rgba(128, 0, 128, 0.3) 12.5vw, transparent 12.5vw),
-                linear-gradient(to right, transparent 0px, transparent calc(25vw - 1px), rgba(128, 0, 128, 0.3) calc(25vw - 1px), rgba(128, 0, 128, 0.3) 25vw, transparent 25vw),
-                linear-gradient(to right, transparent 0px, transparent calc(37.5vw - 1px), rgba(128, 0, 128, 0.3) calc(37.5vw - 1px), rgba(128, 0, 128, 0.3) 37.5vw, transparent 37.5vw),
-                linear-gradient(to right, transparent 0px, transparent calc(50vw - 1px), rgba(128, 0, 128, 0.3) calc(50vw - 1px), rgba(128, 0, 128, 0.3) 50vw, transparent 50vw),
-                linear-gradient(to right, transparent 0px, transparent calc(62.5vw - 1px), rgba(128, 0, 128, 0.3) calc(62.5vw - 1px), rgba(128, 0, 128, 0.3) 62.5vw, transparent 62.5vw),
-                linear-gradient(to right, transparent 0px, transparent calc(75vw - 1px), rgba(128, 0, 128, 0.3) calc(75vw - 1px), rgba(128, 0, 128, 0.3) 75vw, transparent 75vw),
-                linear-gradient(to right, transparent 0px, transparent calc(87.5vw - 1px), rgba(128, 0, 128, 0.3) calc(87.5vw - 1px), rgba(128, 0, 128, 0.3) 87.5vw, transparent 87.5vw),
+                /* Grid system - 8 columns with 17px margins */
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 10.375vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 10.375vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 10.375vw), transparent calc(17px + 10.375vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 20.75vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 20.75vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 20.75vw), transparent calc(17px + 20.75vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 31.125vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 31.125vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 31.125vw), transparent calc(17px + 31.125vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 41.5vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 41.5vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 41.5vw), transparent calc(17px + 41.5vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 51.875vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 51.875vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 51.875vw), transparent calc(17px + 51.875vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 62.25vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 62.25vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 62.25vw), transparent calc(17px + 62.25vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 72.625vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 72.625vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 72.625vw), transparent calc(17px + 72.625vw)),
                 /* Horizontal lines */
                 linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.5) calc(100px - 1px), rgba(128, 0, 128, 0.5) 100px, transparent 100px);
             background-size: 100vw 100vh;
@@ -96,7 +96,7 @@
         .navigation {
             position: fixed;
             top: 13px;
-            left: 75vw;
+            left: calc(17px + 62.25vw);
             display: flex;
             gap: 40px;
             z-index: 1002;
@@ -225,8 +225,8 @@
         .description-container {
             position: fixed;
             top: 100px;
-            left: 75vw;
-            width: 25vw;
+            left: calc(17px + 62.25vw);
+            width: calc(100vw - 17px - 17px - 62.25vw);
             padding: 0;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
@@ -1935,15 +1935,15 @@
             await loadRndImages();
             
             // Create single moving image (almost full screen)
-            const screenWidth = canvas.width;
-            const screenHeight = canvas.height;
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
             const imageWidth = Math.floor(screenWidth * 0.9); // 90% of screen width
             const imageHeight = Math.floor(screenHeight * 0.8); // 80% of screen height
             
             // Create single rectangle for the moving image
             const rect = {
-                x: rnd(20, canvas.width - imageWidth),
-                y: rnd(20, canvas.height - imageHeight),
+                x: rnd(0, screenWidth - imageWidth),
+                y: rnd(0, screenHeight - imageHeight),
                 w: imageWidth,
                 h: imageHeight, // Will be adjusted based on image aspect ratio
                 vx: rnd(-0.5, 0.5) || 0.3,
@@ -1988,13 +1988,13 @@
                 rect.y += rect.vy;
                 
                 // Bounce off edges
-                if (rect.x <= 0 || rect.x + rect.w >= canvas.width) {
+                if (rect.x <= 0 || rect.x + rect.w >= screenWidth) {
                     rect.vx *= -1;
-                    rect.x = Math.max(0, Math.min(canvas.width - rect.w, rect.x));
+                    rect.x = Math.max(0, Math.min(screenWidth - rect.w, rect.x));
                 }
-                if (rect.y <= 0 || rect.y + rect.h >= canvas.height) {
+                if (rect.y <= 0 || rect.y + rect.h >= screenHeight) {
                     rect.vy *= -1;
-                    rect.y = Math.max(0, Math.min(canvas.height - rect.h, rect.y));
+                    rect.y = Math.max(0, Math.min(screenHeight - rect.h, rect.y));
                 }
                 
                 // Update image element position
