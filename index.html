@@ -1941,15 +1941,13 @@
             await loadRndImages();
             
             // Create single moving image (almost full screen)
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
-            const imageWidth = Math.floor(screenWidth * 0.9); // 90% of screen width
-            const imageHeight = Math.floor(screenHeight * 0.8); // 80% of screen height
+            const imageWidth = Math.floor(window.innerWidth * 0.9); // 90% of screen width
+            const imageHeight = Math.floor(window.innerHeight * 0.8); // 80% of screen height
             
             // Create single rectangle for the moving image
             const rect = {
-                x: rnd(0, screenWidth - imageWidth),
-                y: rnd(0, screenHeight - imageHeight),
+                x: rnd(0, window.innerWidth - imageWidth),
+                y: rnd(0, window.innerHeight - imageHeight),
                 w: imageWidth,
                 h: imageHeight, // Will be adjusted based on image aspect ratio
                 vx: rnd(-0.5, 0.5) || 0.3,
@@ -2014,13 +2012,13 @@
                 }
                 
                 // Bounce off edges using real image dimensions
-                if (rect.x <= 0 || rect.x + realWidth >= screenWidth) {
+                if (rect.x <= 0 || rect.x + realWidth >= window.innerWidth) {
                     rect.vx *= -1;
-                    rect.x = Math.max(0, Math.min(screenWidth - realWidth, rect.x));
+                    rect.x = Math.max(0, Math.min(window.innerWidth - realWidth, rect.x));
                 }
-                if (rect.y <= 0 || rect.y + realHeight >= screenHeight) {
+                if (rect.y <= 0 || rect.y + realHeight >= window.innerHeight) {
                     rect.vy *= -1;
-                    rect.y = Math.max(0, Math.min(screenHeight - realHeight, rect.y));
+                    rect.y = Math.max(0, Math.min(window.innerHeight - realHeight, rect.y));
                 }
                 
                 // Update image element position
