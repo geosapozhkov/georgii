@@ -368,6 +368,16 @@
             margin-bottom: 1px;
         }
 
+        /* Time display positioned at bottom right */
+        .time-display {
+            position: fixed;
+            right: 17px;
+            bottom: 10px;
+            font-size: 15px;
+            color: #3C3C3C;
+            z-index: 1002;
+        }
+
         /* Responsive design for different screen sizes */
         @media (max-width: 1920px) {
             .navigation {
@@ -495,8 +505,10 @@
     <footer class="footer">
         <div>sapozhkov.george@gmail.com</div>
         <div>@georgiisapozhkov</div>
-        <div id="timeDisplay">Time: <span id="timeLeft"></span></div>
     </footer>
+    
+    <!-- Time display positioned under navigation -->
+    <div class="time-display" id="timeDisplay">Time: <span id="timeLeft"></span></div>
 </body>
 <script>
     (function(){
