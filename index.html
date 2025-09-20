@@ -112,11 +112,11 @@
         }
 
         .col-header { font-size: 15px; }
-        .cell { height: 48px; display: flex; align-items: flex-start; }
-        .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; transition: opacity 200ms ease; }
-        .catalog-empty { font-size: 48px; color: #3C3C3C; }
-        .catalog-client { font-size: 48px; color: #3C3C3C; }
-        .catalog-year { font-size: 48px; color: #3C3C3C; }
+        .cell { height: 24px; display: flex; align-items: center; }
+        .catalog-link { font-size: 48px; color: #3C3C3C; text-decoration: none; display: inline-block; transition: opacity 200ms ease; line-height: 1; }
+        .catalog-empty { font-size: 48px; color: #3C3C3C; line-height: 1; }
+        .catalog-client { font-size: 48px; color: #3C3C3C; line-height: 1; }
+        .catalog-year { font-size: 48px; color: #3C3C3C; line-height: 1; }
         .catalog-link.dimmed { opacity: 0.25; }
         .catalog-placeholder { opacity: 0.25; pointer-events: none; cursor: default; }
 
@@ -194,7 +194,7 @@
         .description-container {
             position: fixed;
             top: 100px;
-            right: 17px;
+            right: calc(100vw - 17px - 500px);
             max-width: 425px;
             padding: 20px 20px 20px 0;
             z-index: 1002;
@@ -370,6 +370,7 @@
             pointer-events: none;
             cursor: default;
             font-size: 48px;
+            line-height: 1;
         }
 
         /* Custom cursor */
