@@ -241,52 +241,59 @@
             color: #3C3C3C;
         }
 
-        /* Project catalog tables */
-        .catalog {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            padding: 0;
-            margin: 0;
+        /* Project catalog tables - restored original grid layout */
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: auto auto auto;
+            column-gap: 120px;
+            row-gap: 28px;
+            align-content: start;
+            padding-top: 10px;
+            width: fit-content;
         }
 
-        .row {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid #E0E0E0;
+        .col-header { 
+            font-size: 15px; 
         }
-
-        .row:last-child {
-            border-bottom: none;
+        
+        .cell { 
+            height: 64px; 
+            display: flex; 
+            align-items: flex-start; 
         }
-
-        .cell {
-            flex: 1;
-            padding: 20px;
-            border-right: 1px solid #E0E0E0;
-            display: flex;
-            align-items: center;
-            min-height: 60px;
+        
+        .catalog-link { 
+            font-size: 48px; 
+            color: #3C3C3C; 
+            text-decoration: none; 
+            display: inline-block; 
+            transition: opacity 200ms ease; 
         }
-
-        .cell:last-child {
-            border-right: none;
+        
+        .catalog-empty { 
+            font-size: 48px; 
+            color: #3C3C3C; 
         }
-
-        .catalog-link {
+        
+        .catalog-client { 
+            font-size: 48px; 
+            color: #3C3C3C; 
+        }
+        
+        .catalog-year { 
+            font-size: 48px; 
+            color: #3C3C3C; 
+        }
+        
+        .catalog-link.dimmed { 
+            opacity: 0.25; 
+        }
+        
+        .catalog-placeholder { 
+            opacity: 0.25; 
+            pointer-events: none; 
+            cursor: default; 
             font-size: 15px;
-            color: #3C3C3C;
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-            cursor: pointer;
-        }
-
-        .catalog-link:hover {
-            opacity: 0.7;
-        }
-
-        .catalog-link.dimmed {
-            opacity: 0.25;
         }
 
         /* Hover preview canvas */
@@ -456,11 +463,10 @@
             width: 100vw;
             height: 100vh;
             pointer-events: auto;
-            z-index: 1001;
+            z-index: 10000;
             cursor: crosshair;
         }
 
-        /* Custom cursor */
     </style>
 </head>
 <body>
@@ -2569,28 +2575,29 @@
         function updateMindContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
-                <div class="catalog">
-                    <div class="row">
-                        <div class="cell" data-preview="than-now-than">
-                            <a href="#" class="catalog-link" data-description="Visual exploration of temporal relationships and the cyclical nature of experience.">Than Now Than</a>
-                        </div>
-                        <div class="cell" data-preview="area-117">
-                            <a href="#" class="catalog-link" data-description="An immersive journey through architectural spaces and their psychological impact.">Area 117</a>
-                        </div>
-                        <div class="cell" data-preview="yoki">
-                            <a href="#" class="catalog-link" data-description="Character study exploring identity and transformation.">Yoki</a>
-                        </div>
+                <div class="catalog-grid">
+                    <div class="col-header">Than</div>
+                    <div class="col-header">Now</div>
+                    <div class="col-header">Then</div>
+
+                    <div class="cell" data-preview="than-now-than">
+                        <a href="#" class="catalog-link" data-description="Visual exploration of temporal relationships and the cyclical nature of experience.">Than Now Than</a>
                     </div>
-                    <div class="row">
-                        <div class="cell" data-preview="red-building">
-                            <a href="#" class="catalog-link" data-description="Urban landscape photography focusing on architectural details.">Red Building</a>
-                        </div>
-                        <div class="cell" data-preview="ruins">
-                            <a href="#" class="catalog-link" data-description="Documentation of decay and the beauty of abandoned spaces.">Ruins</a>
-                        </div>
-                        <div class="cell catalog-placeholder">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
+                    <div class="cell" data-preview="area-117">
+                        <a href="#" class="catalog-link" data-description="An immersive journey through architectural spaces and their psychological impact.">Area 117</a>
+                    </div>
+                    <div class="cell" data-preview="yoki">
+                        <a href="#" class="catalog-link" data-description="Character study exploring identity and transformation.">Yoki</a>
+                    </div>
+
+                    <div class="cell" data-preview="red-building">
+                        <a href="#" class="catalog-link" data-description="Urban landscape photography focusing on architectural details.">Red Building</a>
+                    </div>
+                    <div class="cell" data-preview="ruins">
+                        <a href="#" class="catalog-link" data-description="Documentation of decay and the beauty of abandoned spaces.">Ruins</a>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
                 </div>
             `;
@@ -2601,28 +2608,49 @@
         function updateCommerceContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
-                <div class="catalog">
-                    <div class="row">
-                        <div class="cell" data-preview="angry-masseur">
-                            <a href="#" class="catalog-link" data-description="Commercial project for Poool client featuring dynamic video content.">Angry Masseur</a>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">Project</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">Project</span>
-                        </div>
+                <div class="catalog-grid">
+                    <div class="col-header">Project</div>
+                    <div class="col-header">Client</div>
+                    <div class="col-header">Year</div>
+
+                    <div class="cell" data-preview="angry-masseur">
+                        <a href="#" class="catalog-link" data-description="Commercial project for Poool client featuring dynamic video content.">Angry Masseur</a>
                     </div>
-                    <div class="row">
-                        <div class="cell">
-                            <span class="catalog-placeholder">Project</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">Project</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">Project</span>
-                        </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-client">Poool</span>
+                    </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-year">2023</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">Project</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">Client</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">Year</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">Project</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">Client</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">Year</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">Project</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">Client</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">Year</span>
                     </div>
                 </div>
             `;
@@ -2840,6 +2868,173 @@
                 const linkText = link.textContent.trim();
                 switchTab(linkText);
             });
+        });
+
+        // Drawing functionality
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const drawingCtx = drawingCanvas.getContext('2d');
+        let isDrawing = false;
+        let currentBrushSize = 3;
+
+        // Set canvas size
+        function resizeDrawingCanvas() {
+            drawingCanvas.width = window.innerWidth;
+            drawingCanvas.height = window.innerHeight;
+        }
+        resizeDrawingCanvas();
+        window.addEventListener('resize', resizeDrawingCanvas);
+
+        // Drawing event listeners
+        drawingCanvas.addEventListener('mousedown', startDrawing);
+        drawingCanvas.addEventListener('mousemove', draw);
+        drawingCanvas.addEventListener('mouseup', stopDrawing);
+        drawingCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        drawingCanvas.addEventListener('touchstart', handleTouch);
+        drawingCanvas.addEventListener('touchmove', handleTouch);
+        drawingCanvas.addEventListener('touchend', stopDrawing);
+
+        // Prevent right-click context menu
+        drawingCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        function startDrawing(e) {
+            // Check if right mouse button (erase mode) or left mouse button (draw mode)
+            if (e.button === 2) {
+                // Right button - erase mode
+                isDrawing = true;
+                const rect = drawingCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                drawingCtx.globalCompositeOperation = 'destination-out';
+                drawingCtx.lineWidth = currentBrushSize * 2; // Bigger eraser
+                drawingCtx.lineCap = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(x, y);
+            } else if (e.button === 0) {
+                // Left button - draw mode
+                isDrawing = true;
+                const rect = drawingCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Always draw in black color like a pencil
+                drawingCtx.globalCompositeOperation = 'source-over';
+                drawingCtx.lineWidth = currentBrushSize;
+                drawingCtx.strokeStyle = '#000000'; // Always black
+                drawingCtx.lineCap = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(x, y);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            drawingCtx.lineCap = 'round';
+            
+            // Set stroke style based on current mode
+            if (drawingCtx.globalCompositeOperation === 'destination-out') {
+                // Erase mode - no color needed
+                drawingCtx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                // Draw mode - always black
+                drawingCtx.strokeStyle = '#000000';
+            }
+            
+            drawingCtx.lineTo(x, y);
+            drawingCtx.stroke();
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            drawingCtx.beginPath();
+            // Reset to normal drawing mode
+            drawingCtx.globalCompositeOperation = 'source-over';
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            drawingCanvas.dispatchEvent(mouseEvent);
+        }
+
+        // Handle window resize to update max brush size
+        window.addEventListener('resize', () => {
+            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
+            if (currentBrushSize > maxBrushSize) {
+                currentBrushSize = maxBrushSize;
+            }
+        });
+
+        // Mouse wheel event for brush size
+        document.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            // Calculate max brush size as the smaller dimension of the page
+            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
+            
+            if (e.deltaY < 0) {
+                // Scroll up - increase brush size
+                currentBrushSize = Math.min(maxBrushSize, currentBrushSize + 1);
+            } else {
+                // Scroll down - decrease brush size
+                currentBrushSize = Math.max(0.5, currentBrushSize - 1);
+            }
+            
+            updateCursorSize(); // Update cursor size
+        });
+
+        // Keyboard controls for brush size
+        document.addEventListener('keydown', (e) => {
+            // Calculate max brush size as the smaller dimension of the page
+            const maxBrushSize = Math.min(window.innerWidth, window.innerHeight);
+            
+            if (e.key === '+' || e.key === '=') {
+                // Plus key - increase brush size
+                e.preventDefault();
+                currentBrushSize = Math.min(maxBrushSize, currentBrushSize + 1);
+                updateCursorSize();
+            } else if (e.key === '-') {
+                // Minus key - decrease brush size
+                e.preventDefault();
+                currentBrushSize = Math.max(0.5, currentBrushSize - 1);
+                updateCursorSize();
+            }
+        });
+
+        // Function to update cursor size based on brush size
+        function updateCursorSize() {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                // Scale cursor size based on brush size (min 6px, max 30px for visibility)
+                const cursorSize = Math.max(6, Math.min(30, currentBrushSize * 0.1));
+                cursor.style.width = cursorSize + 'px';
+                cursor.style.height = cursorSize + 'px';
+            }
+        }
+
+        // Custom cursor tracking
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('customCursor');
+            if (cursor) {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            }
         });
     })();
 </script>
