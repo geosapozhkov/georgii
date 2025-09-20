@@ -102,21 +102,15 @@
             opacity: 0.7;
         }
 
-        /* Navigation - занимает последние 6 колонок с фиксированными позициями */
+        /* Navigation - занимает последние 6 колонок горизонтально */
         .navigation {
             grid-column: span 6;
             grid-column-start: 7;
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            display: flex;
             gap: 20px;
             align-items: center;
+            justify-content: flex-end;
         }
-
-        /* Каждая навигационная ссылка занимает свою колонку */
-        .nav-link:nth-child(1) { grid-column: 1; }
-        .nav-link:nth-child(2) { grid-column: 2; }
-        .nav-link:nth-child(3) { grid-column: 3; }
-        .nav-link:nth-child(4) { grid-column: 4; }
 
         .nav-link {
             text-decoration: none;
@@ -254,10 +248,10 @@
             outline: none;
         }
 
-        /* Text content positioned in grid columns 5-12 */
+        /* Text content positioned in 3 columns from right edge */
         .text-content {
-            grid-column: span 8;
-            grid-column-start: 5;
+            grid-column: span 3;
+            grid-column-start: 10;
             font-size: 15px;
             line-height: 1.6;
             color: #3C3C3C;
@@ -450,7 +444,6 @@
             align-items: center;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(60, 60, 60, 0.1);
         }
 
         /* Footer info - занимает первые 6 колонок */
@@ -469,13 +462,14 @@
             margin-bottom: 1px;
         }
 
-        /* Time display - занимает последние 4 колонки */
+        /* Time display - занимает 3 ячейки от правого края */
         .time-display {
-            grid-column: span 4;
-            grid-column-start: 9;
+            grid-column: span 3;
+            grid-column-start: 10;
             font-size: 15px;
             color: #3C3C3C;
             text-align: right;
+            white-space: nowrap;
         }
 
         /* Responsive design for different screen sizes */
@@ -505,15 +499,8 @@
             .navigation {
                 grid-column: span 7;
                 grid-column-start: 6;
-                grid-template-columns: repeat(7, 1fr);
                 gap: 15px;
             }
-            
-            /* Переопределяем позиции для планшетов */
-            .nav-link:nth-child(1) { grid-column: 1; }
-            .nav-link:nth-child(2) { grid-column: 2; }
-            .nav-link:nth-child(3) { grid-column: 3; }
-            .nav-link:nth-child(4) { grid-column: 4; }
             
             .nav-link {
                 font-size: 14px;
@@ -535,7 +522,7 @@
             }
             
             .text-content {
-                grid-column: span 7;
+                grid-column: span 3;
                 grid-column-start: 4;
             }
             
@@ -550,8 +537,8 @@
             }
             
             .time-display {
-                grid-column: span 5;
-                grid-column-start: 8;
+                grid-column: span 3;
+                grid-column-start: 4;
             }
         }
 
@@ -570,15 +557,8 @@
             .navigation {
                 grid-column: span 6;
                 grid-column-start: 7;
-                grid-template-columns: repeat(6, 1fr);
                 gap: 10px;
             }
-            
-            /* Переопределяем позиции для мобильных */
-            .nav-link:nth-child(1) { grid-column: 1; }
-            .nav-link:nth-child(2) { grid-column: 2; }
-            .nav-link:nth-child(3) { grid-column: 3; }
-            .nav-link:nth-child(4) { grid-column: 4; }
             
             .nav-link {
                 font-size: 12px;
@@ -600,7 +580,7 @@
             }
             
             .text-content {
-                grid-column: span 6;
+                grid-column: span 2;
                 grid-column-start: 3;
             }
             
@@ -616,8 +596,9 @@
             }
             
             .time-display {
-                grid-column: span 4;
-                grid-column-start: 9;
+                grid-column: span 2;
+                grid-column-start: 3;
+            }
                 font-size: 13px;
             }
         }
