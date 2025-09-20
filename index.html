@@ -68,16 +68,28 @@
         }
 
 
-        /* Logo */
-        .logo {
+        /* Header Grid Container */
+        .header-container {
             position: fixed;
-            top: 10px;
-            left: 17px;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            z-index: 1004;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            padding: 0 20px;
+            align-items: center;
+        }
+
+        /* Logo - занимает первые 4 колонки */
+        .logo {
+            grid-column: span 4;
             font-size: 72px;
             font-weight: bold;
             color: #3C3C3C;
             text-decoration: none;
-            z-index: 1004;
             cursor: pointer;
             transition: opacity 0.2s ease;
             line-height: 1;
@@ -90,14 +102,13 @@
             opacity: 0.7;
         }
 
-        /* Navigation */
+        /* Navigation - занимает последние 6 колонок */
         .navigation {
-            position: fixed;
-            top: 13px;
-            right: 17px;
+            grid-column: span 6;
+            grid-column-start: 7;
             display: flex;
             gap: 40px;
-            z-index: 1002;
+            justify-content: flex-end;
         }
 
         .nav-link {
@@ -127,7 +138,7 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 120px; }
+        .content-left { flex: 0 0 auto; padding-left: 20px; margin-top: 140px; }
 
         .catalog-grid {
             display: grid;
@@ -219,11 +230,10 @@
         }
 
         /* Description container aligned with navigation */
-        /* Description container aligned with navigation */
         .description-container {
             position: fixed;
-            top: 100px;
-            right: 17px;
+            top: 120px;
+            right: 20px;
             max-width: 500px;
             padding: 0;
             z-index: 1002;
@@ -349,10 +359,10 @@
             .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 2; }
         }
 
-        /* Footer - вернул к прежним настройкам */
+        /* Footer - использует отступы от края */
         .footer {
             position: fixed;
-            left: 17px;
+            left: 20px;
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
@@ -368,42 +378,111 @@
             margin-bottom: 1px;
         }
 
-        /* Time display aligned with letter L in "Lots" */
+        /* Time display aligned with navigation */
         .time-display {
             position: fixed;
-            right: calc(17px + 190.5px);
+            right: 20px;
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
             z-index: 1002;
-            text-align: left;
+            text-align: right;
             width: 200px;
         }
 
         /* Responsive design for different screen sizes */
         @media (max-width: 1920px) {
+            .header-container {
+                padding: 0 20px;
+                gap: 20px;
+            }
+            
             .navigation {
-                padding: 20px 0 0 30px;
                 gap: 40px;
             }
         }
 
         @media (max-width: 768px) {
+            .header-container {
+                padding: 0 15px;
+                gap: 15px;
+                height: 80px;
+            }
+            
+            .logo {
+                grid-column: span 5;
+                font-size: 48px;
+            }
+            
             .navigation {
-                padding: 20px 0 0 30px;
-                gap: 30px;
+                grid-column: span 7;
+                grid-column-start: 6;
+                gap: 20px;
             }
             
             .nav-link {
-                font-size: 23.84px;
+                font-size: 14px;
+            }
+            
+            .content-left {
+                margin-top: 120px;
+                padding-left: 15px;
+            }
+            
+            .description-container {
+                top: 100px;
+                right: 15px;
+            }
+            
+            .footer {
+                left: 15px;
+            }
+            
+            .time-display {
+                right: 15px;
             }
         }
 
         @media (max-width: 480px) {
+            .header-container {
+                padding: 0 10px;
+                gap: 10px;
+                height: 70px;
+            }
+            
+            .logo {
+                grid-column: span 6;
+                font-size: 36px;
+            }
+            
             .navigation {
+                grid-column: span 6;
+                grid-column-start: 7;
                 flex-direction: column;
-                gap: 20px;
-                padding: 20px 0 0 30px;
+                gap: 10px;
+                align-items: flex-end;
+            }
+            
+            .nav-link {
+                font-size: 12px;
+            }
+            
+            .content-left {
+                margin-top: 100px;
+                padding-left: 10px;
+            }
+            
+            .description-container {
+                top: 90px;
+                right: 10px;
+            }
+            
+            .footer {
+                left: 10px;
+            }
+            
+            .time-display {
+                right: 10px;
             }
         }
 
@@ -470,13 +549,17 @@
     <div class="custom-cursor" id="customCursor"></div>
     <canvas id="drawingCanvas"></canvas>
     <div class="drawing-cursor" id="drawingCursor"></div>
-    <a href="#" class="logo" id="logo">Georgii</a>
-    <nav class="navigation">
-        <a href="#" class="nav-link">Lots of Letters</a>
-        <a href="#" class="nav-link">Mind</a>
-        <a href="#" class="nav-link">Commerce</a>
-        <a href="#" class="nav-link">About me</a>
-    </nav>
+    
+    <!-- Header with 12-column grid -->
+    <header class="header-container">
+        <a href="#" class="logo" id="logo">Georgii</a>
+        <nav class="navigation">
+            <a href="#" class="nav-link">Lots of Letters</a>
+            <a href="#" class="nav-link">Mind</a>
+            <a href="#" class="nav-link">Commerce</a>
+            <a href="#" class="nav-link">About me</a>
+        </nav>
+    </header>
     <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
     </section>
