@@ -47,11 +47,23 @@
             width: 100vw;
             height: 100vh;
             background-image: 
-                /* Vertical lines */
-                linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(128, 0, 128, 0.3) calc(17px - 1px), rgba(128, 0, 128, 0.3) 17px, transparent 17px),
-                linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 1px), rgba(128, 0, 128, 0.3) calc(100vw - 17px - 1px), rgba(128, 0, 128, 0.3) calc(100vw - 17px), transparent calc(100vw - 17px)),
+                /* Grid columns - 12 column system */
+                linear-gradient(to right, transparent 0px, transparent calc(8.33vw - 1px), rgba(128, 0, 128, 0.2) calc(8.33vw - 1px), rgba(128, 0, 128, 0.2) 8.33vw, transparent 8.33vw),
+                linear-gradient(to right, transparent 0px, transparent calc(16.66vw - 1px), rgba(128, 0, 128, 0.2) calc(16.66vw - 1px), rgba(128, 0, 128, 0.2) 16.66vw, transparent 16.66vw),
+                linear-gradient(to right, transparent 0px, transparent calc(25vw - 1px), rgba(128, 0, 128, 0.2) calc(25vw - 1px), rgba(128, 0, 128, 0.2) 25vw, transparent 25vw),
+                linear-gradient(to right, transparent 0px, transparent calc(33.33vw - 1px), rgba(128, 0, 128, 0.2) calc(33.33vw - 1px), rgba(128, 0, 128, 0.2) 33.33vw, transparent 33.33vw),
+                linear-gradient(to right, transparent 0px, transparent calc(41.66vw - 1px), rgba(128, 0, 128, 0.2) calc(41.66vw - 1px), rgba(128, 0, 128, 0.2) 41.66vw, transparent 41.66vw),
+                linear-gradient(to right, transparent 0px, transparent calc(50vw - 1px), rgba(128, 0, 128, 0.2) calc(50vw - 1px), rgba(128, 0, 128, 0.2) 50vw, transparent 50vw),
+                linear-gradient(to right, transparent 0px, transparent calc(58.33vw - 1px), rgba(128, 0, 128, 0.2) calc(58.33vw - 1px), rgba(128, 0, 128, 0.2) 58.33vw, transparent 58.33vw),
+                linear-gradient(to right, transparent 0px, transparent calc(66.66vw - 1px), rgba(128, 0, 128, 0.2) calc(66.66vw - 1px), rgba(128, 0, 128, 0.2) 66.66vw, transparent 66.66vw),
+                linear-gradient(to right, transparent 0px, transparent calc(75vw - 1px), rgba(128, 0, 128, 0.2) calc(75vw - 1px), rgba(128, 0, 128, 0.2) 75vw, transparent 75vw),
+                linear-gradient(to right, transparent 0px, transparent calc(83.33vw - 1px), rgba(128, 0, 128, 0.2) calc(83.33vw - 1px), rgba(128, 0, 128, 0.2) 83.33vw, transparent 83.33vw),
+                linear-gradient(to right, transparent 0px, transparent calc(91.66vw - 1px), rgba(128, 0, 128, 0.2) calc(91.66vw - 1px), rgba(128, 0, 128, 0.2) 91.66vw, transparent 91.66vw),
+                /* Key alignment lines */
+                linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(128, 0, 128, 0.5) calc(17px - 1px), rgba(128, 0, 128, 0.5) 17px, transparent 17px),
+                linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.5) calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.5) calc(100vw - 17px - 500px), transparent calc(100vw - 17px - 500px)),
                 /* Horizontal lines */
-                linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.3) calc(100px - 1px), rgba(128, 0, 128, 0.3) 100px, transparent 100px);
+                linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.5) calc(100px - 1px), rgba(128, 0, 128, 0.5) 100px, transparent 100px);
             background-size: 100vw 100vh;
             pointer-events: none;
             z-index: 9999;
@@ -91,7 +103,7 @@
         .navigation {
             position: fixed;
             top: 13px;
-            right: 17px;
+            left: 66.66vw;
             display: flex;
             gap: 40px;
             z-index: 1002;
@@ -220,8 +232,8 @@
         .description-container {
             position: fixed;
             top: 100px;
-            right: 17px;
-            max-width: 500px;
+            left: 66.66vw;
+            width: 33.33vw;
             padding: 0;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
