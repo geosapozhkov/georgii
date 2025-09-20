@@ -368,14 +368,16 @@
             margin-bottom: 1px;
         }
 
-        /* Time display positioned at bottom right */
+        /* Time display aligned with letter L in "Lots" */
         .time-display {
             position: fixed;
-            right: 17px;
+            right: calc(17px + 120px);
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
             z-index: 1002;
+            text-align: left;
+            width: 200px;
         }
 
         /* Responsive design for different screen sizes */
@@ -507,8 +509,8 @@
         <div>@georgiisapozhkov</div>
     </footer>
     
-    <!-- Time display positioned under navigation -->
-    <div class="time-display" id="timeDisplay">Time: <span id="timeLeft"></span></div>
+    <!-- Time display positioned at bottom right -->
+    <div class="time-display" id="timeDisplay">End of the day <span id="timeLeft"></span></div>
 </body>
 <script>
     (function(){
