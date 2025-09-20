@@ -248,7 +248,7 @@
             height: 100vh;
             pointer-events: none;
             display: none;
-            z-index: 1001;
+            z-index: 1007;
         }
 
         /* 12-column grid system for project galleries */
@@ -545,7 +545,7 @@
                     video.preload = 'auto';
                     video.playsInline = true;
                     video.style.position = 'fixed';
-                    video.style.zIndex = '1001';
+                    video.style.zIndex = '1007';
                     video.style.pointerEvents = 'none';
                     video.style.border = 'none';
                     video.style.borderRadius = '0';
@@ -764,7 +764,7 @@
             
             // Remove all preview images
             document.querySelectorAll('img[style*="position: fixed"]').forEach(img => {
-                if (img.style.zIndex === '1001' && img.style.pointerEvents === 'none') {
+                if (img.style.zIndex === '1007' && img.style.pointerEvents === 'none') {
                     img.remove();
                 }
             });
@@ -1759,7 +1759,7 @@
                     img.style.width = rect.w + 'px';
                     img.style.height = rect.h + 'px';
                     img.style.objectFit = 'contain';
-                    img.style.zIndex = '1001';
+                    img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
                     
                     document.body.appendChild(img);
@@ -1954,7 +1954,7 @@
                 if (!isDrawingMode) return;
                 
                 if (e.key === '+' || e.key === '=') {
-                    brushSize = Math.min(brushSize + 1, 50);
+                    brushSize = Math.min(brushSize + 1, 100);
                     updateCursorSize();
                     e.preventDefault();
                 } else if (e.key === '-') {
@@ -1970,7 +1970,7 @@
                 
                 if (e.deltaY < 0) {
                     // Scroll up - increase brush size
-                    brushSize = Math.min(brushSize + 1, 50);
+                    brushSize = Math.min(brushSize + 1, 100);
                 } else {
                     // Scroll down - decrease brush size
                     brushSize = Math.max(brushSize - 1, 1);
