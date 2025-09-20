@@ -269,9 +269,12 @@
         }
         
         .text-content p {
-            width: 100%;
-            max-width: none;
+            width: 100% !important;
+            max-width: none !important;
             margin-bottom: 20px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
         }
 
         .text-content p:last-child {
@@ -1058,7 +1061,7 @@
         // Event listeners are now attached dynamically when switching tabs
 
         // Navigation and Gallery functionality
-        const navLinks = document.querySelectorAll('.nav-link');
+        let navLinks;
         const mainContent = document.querySelector('.content-left');
         const lettersGallery = document.getElementById('letters-gallery');
         const imageModal = document.getElementById('imageModal');
@@ -1306,14 +1309,7 @@
             localStorage.setItem('activeTab', tabName);
         }
 
-        // Navigation handlers
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const linkText = link.textContent.trim();
-                switchTab(linkText);
-            });
-        });
+        // Navigation handlers moved to DOMContentLoaded
 
         // Preload images for better performance
         function preloadImages() {
@@ -1328,6 +1324,18 @@
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
+            
+            // Initialize navigation links
+            navLinks = document.querySelectorAll('.nav-link');
+            
+            // Add navigation event listeners
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const linkText = link.textContent.trim();
+                    switchTab(linkText);
+                });
+            });
             
             // Clear localStorage to force fresh start
             localStorage.clear();
