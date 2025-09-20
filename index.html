@@ -371,7 +371,7 @@
         /* Time display aligned with letter L in "Lots" */
         .time-display {
             position: fixed;
-            right: calc(17px + 180px);
+            right: calc(17px + 195px);
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
@@ -1947,21 +1947,23 @@
             // Load images first
             await loadRndImages();
             
-            // Create single moving image (almost full screen)
-            const imageWidth = Math.floor(window.innerWidth * 0.9); // 90% of screen width
-            const imageHeight = Math.floor(window.innerHeight * 0.8); // 80% of screen height
+            // Create single moving image with dynamic sizing
+            const maxWidth = Math.floor(window.innerWidth * 0.9); // 90% of screen width
+            const maxHeight = Math.floor(window.innerHeight * 0.8); // 80% of screen height
             
             // Create single rectangle for the moving image
             const rect = {
-                x: rnd(0, window.innerWidth - imageWidth),
-                y: rnd(0, window.innerHeight - imageHeight),
-                w: imageWidth,
-                h: imageHeight, // Will be adjusted based on image aspect ratio
+                x: 0,
+                y: 0,
+                w: maxWidth, // Will be adjusted based on image aspect ratio
+                h: maxHeight, // Will be adjusted based on image aspect ratio
                 vx: rnd(-0.5, 0.5) || 0.3,
                 vy: rnd(-0.5, 0.5) || -0.3,
                 currentImageIndex: Math.floor(Math.random() * rndImages.length),
                 imageChangeTimer: 0,
-                imageElement: null
+                imageElement: null,
+                maxWidth: maxWidth,
+                maxHeight: maxHeight
             };
             
             rects = [rect];
@@ -1975,17 +1977,69 @@
                 
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/RND/${rndImages[rect.currentImageIndex]}`;
-                img.style.position = 'fixed';
-                img.style.left = rect.x + 'px';
-                img.style.top = rect.y + 'px';
-                img.style.width = rect.w + 'px';
-                img.style.height = rect.h + 'px';
-                img.style.objectFit = 'cover';
-                img.style.zIndex = '1007';
-                img.style.pointerEvents = 'none';
                 
-                document.body.appendChild(img);
-                rect.imageElement = img;
+                // Wait for image to load to get its natural dimensions
+                img.onload = function() {
+                    const naturalWidth = img.naturalWidth;
+                    const naturalHeight = img.naturalHeight;
+                    const aspectRatio = naturalWidth / naturalHeight;
+                    
+                    // Calculate optimal size maintaining aspect ratio
+                    let newWidth, newHeight;
+                    
+                    if (aspectRatio > rect.maxWidth / rect.maxHeight) {
+                        // Image is wider - fit to max width
+                        newWidth = rect.maxWidth;
+                        newHeight = rect.maxWidth / aspectRatio;
+                    } else {
+                        // Image is taller - fit to max height
+                        newHeight = rect.maxHeight;
+                        newWidth = rect.maxHeight * aspectRatio;
+                    }
+                    
+                    // Update rect dimensions
+                    rect.w = Math.floor(newWidth);
+                    rect.h = Math.floor(newHeight);
+                    
+                    // Ensure image fits within screen bounds
+                    if (rect.x + rect.w > window.innerWidth) {
+                        rect.x = window.innerWidth - rect.w;
+                    }
+                    if (rect.y + rect.h > window.innerHeight) {
+                        rect.y = window.innerHeight - rect.h;
+                    }
+                    
+                    // Apply styles
+                    img.style.position = 'fixed';
+                    img.style.left = rect.x + 'px';
+                    img.style.top = rect.y + 'px';
+                    img.style.width = rect.w + 'px';
+                    img.style.height = rect.h + 'px';
+                    img.style.objectFit = 'contain'; // Use contain to preserve aspect ratio
+                    img.style.zIndex = '1007';
+                    img.style.pointerEvents = 'none';
+                    
+                    document.body.appendChild(img);
+                    rect.imageElement = img;
+                };
+                
+                // If image fails to load, use fallback dimensions
+                img.onerror = function() {
+                    rect.w = rect.maxWidth;
+                    rect.h = rect.maxHeight;
+                    
+                    img.style.position = 'fixed';
+                    img.style.left = rect.x + 'px';
+                    img.style.top = rect.y + 'px';
+                    img.style.width = rect.w + 'px';
+                    img.style.height = rect.h + 'px';
+                    img.style.objectFit = 'contain';
+                    img.style.zIndex = '1007';
+                    img.style.pointerEvents = 'none';
+                    
+                    document.body.appendChild(img);
+                    rect.imageElement = img;
+                };
             }
             
             loadCurrentImage();
@@ -1998,7 +2052,7 @@
                 rect.x += rect.vx;
                 rect.y += rect.vy;
                 
-                // Bounce off edges using container dimensions only
+                // Bounce off edges using actual image dimensions
                 if (rect.x <= 0 || rect.x + rect.w >= window.innerWidth) {
                     rect.vx *= -1;
                     rect.x = Math.max(0, Math.min(window.innerWidth - rect.w, rect.x));
@@ -2008,10 +2062,12 @@
                     rect.y = Math.max(0, Math.min(window.innerHeight - rect.h, rect.y));
                 }
                 
-                // Update image element position
+                // Update image element position and size
                 if (rect.imageElement) {
                     rect.imageElement.style.left = rect.x + 'px';
                     rect.imageElement.style.top = rect.y + 'px';
+                    rect.imageElement.style.width = rect.w + 'px';
+                    rect.imageElement.style.height = rect.h + 'px';
                 }
                 
                 // Change image every second (60 frames at 60fps)
