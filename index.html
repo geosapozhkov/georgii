@@ -390,10 +390,40 @@
         .custom-cursor:hover {
             transform: translate(-50%, -50%) scale(1.2);
         }
+
+        /* Drawing canvas */
+        #drawingCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1003;
+            cursor: none;
+        }
+
+        /* Drawing cursor */
+        .drawing-cursor {
+            position: fixed;
+            background-color: #000000;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1004;
+            transition: transform 0.1s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .drawing-cursor.eraser {
+            background-color: #ffffff;
+            border: 2px solid #000000;
+        }
     </style>
 </head>
 <body>
     <div class="custom-cursor" id="customCursor"></div>
+    <canvas id="drawingCanvas"></canvas>
+    <div class="drawing-cursor" id="drawingCursor"></div>
     <a href="#" class="logo" id="logo">Georgii</a>
     <nav class="navigation">
         <a href="#" class="nav-link">Lots of Letters</a>
@@ -882,6 +912,11 @@
             // Stop any active preview animations
             stop();
             
+            // Disable drawing mode when leaving home page
+            if (window.disableDrawingMode) {
+                window.disableDrawingMode();
+            }
+            
             // Set home page state
             isHomePage = true;
             
@@ -934,6 +969,11 @@
         function switchTab(tabName) {
             // Stop any active preview animations
             stop();
+            
+            // Disable drawing mode when switching tabs
+            if (window.disableDrawingMode) {
+                window.disableDrawingMode();
+            }
             
             // Show navigation when switching to any tab
             const navigation = document.querySelector('.navigation');
@@ -1794,6 +1834,161 @@
                 switchTab(linkText);
             });
         });
+
+        // Drawing functionality
+        (function() {
+            const drawingCanvas = document.getElementById('drawingCanvas');
+            const drawingCtx = drawingCanvas.getContext('2d');
+            const drawingCursor = document.getElementById('drawingCursor');
+            const customCursor = document.getElementById('customCursor');
+            
+            let isDrawing = false;
+            let isErasing = false;
+            let brushSize = 3;
+            let isDrawingMode = false;
+            
+            // Initialize drawing canvas
+            function initDrawingCanvas() {
+                drawingCanvas.width = window.innerWidth;
+                drawingCanvas.height = window.innerHeight;
+                drawingCanvas.style.pointerEvents = 'auto';
+                drawingCtx.lineCap = 'round';
+                drawingCtx.lineJoin = 'round';
+            }
+            
+            // Update cursor size
+            function updateCursorSize() {
+                drawingCursor.style.width = brushSize + 'px';
+                drawingCursor.style.height = brushSize + 'px';
+            }
+            
+            // Enable drawing mode
+            function enableDrawingMode() {
+                if (!isHomePage) return;
+                
+                isDrawingMode = true;
+                drawingCanvas.style.display = 'block';
+                drawingCursor.style.display = 'block';
+                customCursor.style.display = 'none';
+                updateCursorSize();
+            }
+            
+            // Disable drawing mode
+            function disableDrawingMode() {
+                isDrawingMode = false;
+                drawingCanvas.style.display = 'none';
+                drawingCursor.style.display = 'none';
+                customCursor.style.display = 'block';
+            }
+            
+            // Mouse events
+            drawingCanvas.addEventListener('mousedown', (e) => {
+                if (!isDrawingMode) return;
+                
+                isDrawing = true;
+                isErasing = (e.button === 2); // Right mouse button
+                
+                drawingCursor.classList.toggle('eraser', isErasing);
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(e.clientX, e.clientY);
+                
+                if (isErasing) {
+                    drawingCtx.globalCompositeOperation = 'destination-out';
+                } else {
+                    drawingCtx.globalCompositeOperation = 'source-over';
+                    drawingCtx.strokeStyle = '#000000';
+                }
+                
+                drawingCtx.lineWidth = brushSize;
+                drawingCtx.lineTo(e.clientX, e.clientY);
+                drawingCtx.stroke();
+            });
+            
+            drawingCanvas.addEventListener('mousemove', (e) => {
+                if (!isDrawingMode) return;
+                
+                // Update cursor position
+                drawingCursor.style.left = e.clientX + 'px';
+                drawingCursor.style.top = e.clientY + 'px';
+                
+                if (isDrawing) {
+                    drawingCtx.lineTo(e.clientX, e.clientY);
+                    drawingCtx.stroke();
+                }
+            });
+            
+            drawingCanvas.addEventListener('mouseup', () => {
+                isDrawing = false;
+                isErasing = false;
+                drawingCursor.classList.remove('eraser');
+            });
+            
+            drawingCanvas.addEventListener('mouseleave', () => {
+                isDrawing = false;
+                isErasing = false;
+                drawingCursor.classList.remove('eraser');
+            });
+            
+            // Prevent context menu on right click
+            drawingCanvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+            
+            // Keyboard events
+            document.addEventListener('keydown', (e) => {
+                if (!isDrawingMode) return;
+                
+                if (e.key === '+' || e.key === '=') {
+                    brushSize = Math.min(brushSize + 1, 50);
+                    updateCursorSize();
+                    e.preventDefault();
+                } else if (e.key === '-') {
+                    brushSize = Math.max(brushSize - 1, 1);
+                    updateCursorSize();
+                    e.preventDefault();
+                }
+            });
+            
+            // Mouse wheel events
+            document.addEventListener('wheel', (e) => {
+                if (!isDrawingMode) return;
+                
+                if (e.deltaY < 0) {
+                    // Scroll up - increase brush size
+                    brushSize = Math.min(brushSize + 1, 50);
+                } else {
+                    // Scroll down - decrease brush size
+                    brushSize = Math.max(brushSize - 1, 1);
+                }
+                updateCursorSize();
+                e.preventDefault();
+            });
+            
+            // Toggle drawing mode with spacebar
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && isHomePage) {
+                    e.preventDefault();
+                    if (isDrawingMode) {
+                        disableDrawingMode();
+                    } else {
+                        enableDrawingMode();
+                    }
+                }
+            });
+            
+            // Initialize on page load
+            initDrawingCanvas();
+            
+            // Resize canvas on window resize
+            window.addEventListener('resize', () => {
+                initDrawingCanvas();
+            });
+            
+            // Expose functions globally for tab switching
+            window.enableDrawingMode = enableDrawingMode;
+            window.disableDrawingMode = disableDrawingMode;
+        })();
     })();
 </script>
 </html>
