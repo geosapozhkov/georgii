@@ -1214,8 +1214,9 @@
             // Update text content to new home page description
             const textContent = document.querySelector('.text-content');
             textContent.innerHTML = `
-                <p>Life and design explorer, pictures with meaning and quality creator.</p>
-                <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+                <p>Welcome to the extraordinary world of visual storytelling, where every pixel carries profound meaning and each image becomes a gateway to deeper understanding of our contemporary existence. As a passionate creator and design explorer, I dedicate my life to crafting visual narratives that transcend ordinary boundaries and challenge conventional perspectives on art, design, and human experience.</p>
+                <p>My work represents a continuous journey through the labyrinth of modern visual culture, constantly seeking new ways to interpret and represent the complex realities of our time. Through careful observation and meticulous attention to detail, I strive to create images that not only capture moments but also evoke emotions, provoke thoughts, and inspire conversations about the world we inhabit.</p>
+                <p>Collaboration lies at the heart of my creative process. I am deeply committed to working with visionary studios, innovative designers, forward-thinking brands, and anyone who shares my passion for creating meaningful visual content that tells authentic stories and connects with audiences on a profound level. Together, we can explore uncharted territories of creative expression and push the boundaries of what visual communication can achieve in our rapidly evolving digital landscape.</p>
             `;
             
             // Remove active class from all nav links
@@ -1315,16 +1316,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
             
-            // Get saved tab from localStorage
-            const savedTab = localStorage.getItem('activeTab');
+            // Clear localStorage to force fresh start
+            localStorage.clear();
             
-            if (savedTab && savedTab !== 'Home') {
-                // Restore the saved tab
-                switchTab(savedTab);
-            } else {
-                // Show home page if no saved tab or if saved tab is Home
-                showHomePage();
-            }
+            // Always show home page on load
+            showHomePage();
         });
 
         // Function to update Commerce content with same layout as Mind
@@ -2109,7 +2105,7 @@
                     textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
                     break;
                 case 'About me':
-                    textContent.innerHTML = '<p>Life and design explorer, pictures with meaning and quality creator.</p><p>I\'m interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I\'m open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>';
+                    textContent.innerHTML = '<p>Welcome to the extraordinary world of visual storytelling, where every pixel carries profound meaning and each image becomes a gateway to deeper understanding of our contemporary existence. As a passionate creator and design explorer, I dedicate my life to crafting visual narratives that transcend ordinary boundaries and challenge conventional perspectives on art, design, and human experience.</p><p>My work represents a continuous journey through the labyrinth of modern visual culture, constantly seeking new ways to interpret and represent the complex realities of our time. Through careful observation and meticulous attention to detail, I strive to create images that not only capture moments but also evoke emotions, provoke thoughts, and inspire conversations about the world we inhabit.</p><p>Collaboration lies at the heart of my creative process. I am deeply committed to working with visionary studios, innovative designers, forward-thinking brands, and anyone who shares my passion for creating meaningful visual content that tells authentic stories and connects with audiences on a profound level. Together, we can explore uncharted territories of creative expression and push the boundaries of what visual communication can achieve in our rapidly evolving digital landscape.</p>';
                     break;
                 case 'Mind':
                     // Mind content (original description)
