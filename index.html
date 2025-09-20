@@ -371,7 +371,7 @@
         /* Time display aligned with letter L in "Lots" */
         .time-display {
             position: fixed;
-            right: calc(17px + 30px);
+            right: calc(17px + 100px);
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
@@ -1998,34 +1998,14 @@
                 rect.x += rect.vx;
                 rect.y += rect.vy;
                 
-                // Get real image dimensions for accurate bouncing
-                let realWidth = rect.w;
-                let realHeight = rect.h;
-                
-                if (rect.imageElement && rect.imageElement.complete) {
-                    const img = rect.imageElement;
-                    const containerAspect = rect.w / rect.h;
-                    const imageAspect = img.naturalWidth / img.naturalHeight;
-                    
-                    if (imageAspect > containerAspect) {
-                        // Image is wider - constrained by width
-                        realWidth = rect.w;
-                        realHeight = rect.w / imageAspect;
-                    } else {
-                        // Image is taller - constrained by height
-                        realHeight = rect.h;
-                        realWidth = rect.h * imageAspect;
-                    }
-                }
-                
-                // Bounce off edges using real image dimensions
-                if (rect.x <= 0 || rect.x + realWidth >= window.innerWidth) {
+                // Bounce off edges using container dimensions only
+                if (rect.x <= 0 || rect.x + rect.w >= window.innerWidth) {
                     rect.vx *= -1;
-                    rect.x = Math.max(0, Math.min(window.innerWidth - realWidth, rect.x));
+                    rect.x = Math.max(0, Math.min(window.innerWidth - rect.w, rect.x));
                 }
-                if (rect.y <= 0 || rect.y + realHeight >= window.innerHeight) {
+                if (rect.y <= 0 || rect.y + rect.h >= window.innerHeight) {
                     rect.vy *= -1;
-                    rect.y = Math.max(0, Math.min(window.innerHeight - realHeight, rect.y));
+                    rect.y = Math.max(0, Math.min(window.innerHeight - rect.h, rect.y));
                 }
                 
                 // Update image element position
