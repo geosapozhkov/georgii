@@ -465,15 +465,23 @@
             margin-bottom: 1px;
         }
 
-        /* Time display - занимает 3 ячейки от правого края */
+        /* Description text - занимает 3 ячейки от правого края */
         .time-display {
             grid-column: span 3;
             grid-column-start: 10;
             font-size: 15px;
             color: #3C3C3C;
-            text-align: left !important;
-            white-space: nowrap;
-            justify-self: start;
+            text-align: left;
+            white-space: normal;
+            transition: opacity 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .time-display.fade-out {
+            opacity: 0;
+        }
+
+        .time-display.fade-in {
+            opacity: 1;
         }
 
         /* Responsive design for different screen sizes */
@@ -2615,11 +2623,55 @@
         return timezone;
     }
 
-    // Initialize time and location
+    // Quotes in different languages with proper quotation marks
+    const quotes = [
+        "Le vent se lève! il faut tenter de vivre!", // French (original) - no quotes needed
+        "The wind rises! We must try to live!", // English - straight quotes
+        "«Ветер поднимается! Надо попытаться жить!»", // Russian - «»
+        "Vinden løfter seg! Vi må prøve å leve!", // Norwegian - straight quotes
+        "風立ちぬ！生きることを試みねばならぬ！" // Japanese - no quotes needed
+    ];
+    
+    let currentQuoteIndex = 0;
+    
+    function changeQuote() {
+        const quoteElement = document.getElementById('timeDisplay');
+        if (!quoteElement) return;
+        
+        // Fade out
+        quoteElement.classList.add('fade-out');
+        
+        setTimeout(() => {
+            // Change text
+            currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+            quoteElement.textContent = quotes[currentQuoteIndex];
+            
+            // Fade in
+            quoteElement.classList.remove('fade-out');
+            quoteElement.classList.add('fade-in');
+            
+            setTimeout(() => {
+                quoteElement.classList.remove('fade-in');
+            }, 2000);
+        }, 2000); // Wait for fade out to complete
+    }
+
+    // Initialize quotes and location
     document.addEventListener('DOMContentLoaded', function() {
         getUserLocation();
-        updateTimeLeft();
-        setInterval(updateTimeLeft, 1); // Update every 1ms for smooth milliseconds
+        
+        // Set initial quote
+        const quoteElement = document.getElementById('timeDisplay');
+        if (quoteElement) {
+            quoteElement.textContent = quotes[currentQuoteIndex];
+            quoteElement.classList.add('fade-in');
+            setTimeout(() => {
+                quoteElement.classList.remove('fade-in');
+            }, 2000);
+        }
+        
+        // Change quote every minute (60000ms)
+        setInterval(changeQuote, 60000);
     });
 </script>
 </html>
