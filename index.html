@@ -47,16 +47,22 @@
             width: 100vw;
             height: 100vh;
             background-image: 
+                /* Left margin line */
+                linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(255, 0, 0, 0.5) calc(17px - 1px), rgba(255, 0, 0, 0.5) 17px, transparent 17px),
                 /* Grid system - 8 columns with 17px margins */
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 10.375vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 10.375vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 10.375vw), transparent calc(17px + 10.375vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 20.75vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 20.75vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 20.75vw), transparent calc(17px + 20.75vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 31.125vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 31.125vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 31.125vw), transparent calc(17px + 31.125vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 41.5vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 41.5vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 41.5vw), transparent calc(17px + 41.5vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 51.875vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 51.875vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 51.875vw), transparent calc(17px + 51.875vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 62.25vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 62.25vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 62.25vw), transparent calc(17px + 62.25vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 72.625vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 72.625vw - 1px), rgba(128, 0, 128, 0.3) calc(17px + 72.625vw), transparent calc(17px + 72.625vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 10.375vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 10.375vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 10.375vw), transparent calc(17px + 10.375vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 20.75vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 20.75vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 20.75vw), transparent calc(17px + 20.75vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 31.125vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 31.125vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 31.125vw), transparent calc(17px + 31.125vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 41.5vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 41.5vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 41.5vw), transparent calc(17px + 41.5vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 51.875vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 51.875vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 51.875vw), transparent calc(17px + 51.875vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 62.25vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 62.25vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 62.25vw), transparent calc(17px + 62.25vw)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 72.625vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 72.625vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 72.625vw), transparent calc(17px + 72.625vw)),
+                /* Right margin line */
+                linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 1px), rgba(255, 0, 0, 0.5) calc(100vw - 17px - 1px), rgba(255, 0, 0, 0.5) calc(100vw - 17px), transparent calc(100vw - 17px)),
                 /* Horizontal lines */
-                linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.5) calc(100px - 1px), rgba(128, 0, 128, 0.5) 100px, transparent 100px);
+                linear-gradient(to bottom, transparent 0px, transparent calc(13px - 1px), rgba(255, 0, 0, 0.5) calc(13px - 1px), rgba(255, 0, 0, 0.5) 13px, transparent 13px),
+                linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(255, 0, 0, 0.5) calc(100px - 1px), rgba(255, 0, 0, 0.5) 100px, transparent 100px),
+                linear-gradient(to bottom, transparent 0px, transparent calc(100vh - 10px - 1px), rgba(255, 0, 0, 0.5) calc(100vh - 10px - 1px), rgba(255, 0, 0, 0.5) calc(100vh - 10px), transparent calc(100vh - 10px));
             background-size: 100vw 100vh;
             pointer-events: none;
             z-index: 9999;
@@ -1987,14 +1993,34 @@
                 rect.x += rect.vx;
                 rect.y += rect.vy;
                 
-                // Bounce off edges
-                if (rect.x <= 0 || rect.x + rect.w >= screenWidth) {
-                    rect.vx *= -1;
-                    rect.x = Math.max(0, Math.min(screenWidth - rect.w, rect.x));
+                // Get real image dimensions for accurate bouncing
+                let realWidth = rect.w;
+                let realHeight = rect.h;
+                
+                if (rect.imageElement && rect.imageElement.complete) {
+                    const img = rect.imageElement;
+                    const containerAspect = rect.w / rect.h;
+                    const imageAspect = img.naturalWidth / img.naturalHeight;
+                    
+                    if (imageAspect > containerAspect) {
+                        // Image is wider - constrained by width
+                        realWidth = rect.w;
+                        realHeight = rect.w / imageAspect;
+                    } else {
+                        // Image is taller - constrained by height
+                        realHeight = rect.h;
+                        realWidth = rect.h * imageAspect;
+                    }
                 }
-                if (rect.y <= 0 || rect.y + rect.h >= screenHeight) {
+                
+                // Bounce off edges using real image dimensions
+                if (rect.x <= 0 || rect.x + realWidth >= screenWidth) {
+                    rect.vx *= -1;
+                    rect.x = Math.max(0, Math.min(screenWidth - realWidth, rect.x));
+                }
+                if (rect.y <= 0 || rect.y + realHeight >= screenHeight) {
                     rect.vy *= -1;
-                    rect.y = Math.max(0, Math.min(screenHeight - rect.h, rect.y));
+                    rect.y = Math.max(0, Math.min(screenHeight - realHeight, rect.y));
                 }
                 
                 // Update image element position
