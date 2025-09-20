@@ -51,7 +51,6 @@
                 linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(128, 0, 128, 0.3) calc(17px - 1px), rgba(128, 0, 128, 0.3) 17px, transparent 17px),
                 linear-gradient(to right, transparent 0px, transparent calc(17px + 120px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 120px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 120px), transparent calc(17px + 120px)),
                 linear-gradient(to right, transparent 0px, transparent calc(17px + 240px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 240px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 240px), transparent calc(17px + 240px)),
-                linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.3) calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.3) calc(100vw - 17px - 500px), transparent calc(100vw - 17px - 500px)),
                 /* Horizontal lines */
                 linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.3) calc(100px - 1px), rgba(128, 0, 128, 0.3) 100px, transparent 100px);
             background-size: 100vw 100vh;
@@ -93,11 +92,9 @@
         .navigation {
             position: fixed;
             top: 13px;
-            left: 0;
-            right: 0;
+            left: 17px;
             display: flex;
-            justify-content: space-between;
-            padding: 0 17px;
+            gap: 40px;
             z-index: 1002;
         }
 
@@ -108,11 +105,6 @@
             font-weight: normal;
             transition: color 0.2s ease;
             line-height: 1.6;
-        }
-
-        .nav-right {
-            display: flex;
-            gap: 40px;
         }
 
         .nav-link:hover {
@@ -465,12 +457,10 @@
     <div class="drawing-cursor" id="drawingCursor"></div>
     <a href="#" class="logo" id="logo">Georgii</a>
     <nav class="navigation">
-        <a href="#" class="nav-link nav-left">Lots of Letters</a>
-        <div class="nav-right">
-            <a href="#" class="nav-link">Mind</a>
-            <a href="#" class="nav-link">Commerce</a>
-            <a href="#" class="nav-link">About me</a>
-        </div>
+        <a href="#" class="nav-link">Lots of Letters</a>
+        <a href="#" class="nav-link">Mind</a>
+        <a href="#" class="nav-link">Commerce</a>
+        <a href="#" class="nav-link">About me</a>
     </nav>
     <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
