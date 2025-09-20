@@ -32,10 +32,12 @@
             min-height: 100vh;
             width: 100vw;
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            padding-right: 10px; /* Right gutter */
-            padding-top: 60px; /* offset for fixed nav */
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: 0;
+            padding: 0;
+            margin: 0;
         }
 
         /* Debug grid - visible only in dev tools */
@@ -47,7 +49,7 @@
             width: 100vw;
             height: 100vh;
             background-image: 
-                /* Grid columns - 12 column system */
+                /* CSS Grid lines - 12 columns */
                 linear-gradient(to right, transparent 0px, transparent calc(8.33vw - 1px), rgba(128, 0, 128, 0.2) calc(8.33vw - 1px), rgba(128, 0, 128, 0.2) 8.33vw, transparent 8.33vw),
                 linear-gradient(to right, transparent 0px, transparent calc(16.66vw - 1px), rgba(128, 0, 128, 0.2) calc(16.66vw - 1px), rgba(128, 0, 128, 0.2) 16.66vw, transparent 16.66vw),
                 linear-gradient(to right, transparent 0px, transparent calc(25vw - 1px), rgba(128, 0, 128, 0.2) calc(25vw - 1px), rgba(128, 0, 128, 0.2) 25vw, transparent 25vw),
@@ -60,8 +62,7 @@
                 linear-gradient(to right, transparent 0px, transparent calc(83.33vw - 1px), rgba(128, 0, 128, 0.2) calc(83.33vw - 1px), rgba(128, 0, 128, 0.2) 83.33vw, transparent 83.33vw),
                 linear-gradient(to right, transparent 0px, transparent calc(91.66vw - 1px), rgba(128, 0, 128, 0.2) calc(91.66vw - 1px), rgba(128, 0, 128, 0.2) 91.66vw, transparent 91.66vw),
                 /* Key alignment lines */
-                linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(128, 0, 128, 0.5) calc(17px - 1px), rgba(128, 0, 128, 0.5) 17px, transparent 17px),
-                linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.5) calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.5) calc(100vw - 17px - 500px), transparent calc(100vw - 17px - 500px)),
+                linear-gradient(to right, transparent 0px, transparent calc(75vw - 1px), rgba(128, 0, 128, 0.5) calc(75vw - 1px), rgba(128, 0, 128, 0.5) 75vw, transparent 75vw),
                 /* Horizontal lines */
                 linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.5) calc(100px - 1px), rgba(128, 0, 128, 0.5) 100px, transparent 100px);
             background-size: 100vw 100vh;
@@ -81,7 +82,7 @@
         .logo {
             position: fixed;
             top: 10px;
-            left: 17px;
+            grid-column: 1 / 2;
             font-size: 72px;
             font-weight: bold;
             color: #3C3C3C;
@@ -93,6 +94,7 @@
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+            justify-self: start;
         }
 
         .logo:hover {
@@ -103,10 +105,11 @@
         .navigation {
             position: fixed;
             top: 13px;
-            left: 66.66vw;
+            grid-column: 9 / 13;
             display: flex;
             gap: 40px;
             z-index: 1002;
+            justify-self: start;
         }
 
         .nav-link {
@@ -232,8 +235,7 @@
         .description-container {
             position: fixed;
             top: 100px;
-            left: 66.66vw;
-            width: 33.33vw;
+            grid-column: 9 / 13;
             padding: 0;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
@@ -241,6 +243,7 @@
             border-radius: 8px;
             border: none;
             outline: none;
+            justify-self: start;
         }
 
         .text-content {
