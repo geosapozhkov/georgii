@@ -2585,12 +2585,31 @@
         })();
     })();
 
-    // Debug grid toggle (Ctrl+G)
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'g') {
-            e.preventDefault();
-            document.body.classList.toggle('debug');
-        }
+    // Custom cursor functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const customCursor = document.getElementById('customCursor');
+        
+        // Track mouse movement
+        document.addEventListener('mousemove', function(e) {
+            if (customCursor) {
+                customCursor.style.left = e.clientX + 'px';
+                customCursor.style.top = e.clientY + 'px';
+            }
+        });
+        
+        // Hide cursor when mouse leaves window
+        document.addEventListener('mouseleave', function() {
+            if (customCursor) {
+                customCursor.style.opacity = '0';
+            }
+        });
+        
+        // Show cursor when mouse enters window
+        document.addEventListener('mouseenter', function() {
+            if (customCursor) {
+                customCursor.style.opacity = '1';
+            }
+        });
     });
 
     // Time and location functionality
