@@ -38,6 +38,34 @@
             padding-top: 60px; /* offset for fixed nav */
         }
 
+        /* Debug grid - visible only in dev tools */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                /* Vertical lines */
+                linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(128, 0, 128, 0.3) calc(17px - 1px), rgba(128, 0, 128, 0.3) 17px, transparent 17px),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 120px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 120px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 120px), transparent calc(17px + 120px)),
+                linear-gradient(to right, transparent 0px, transparent calc(17px + 240px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 240px - 1px), rgba(128, 0, 128, 0.3) calc(17px + 240px), transparent calc(17px + 240px)),
+                linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.3) calc(100vw - 17px - 500px - 1px), rgba(128, 0, 128, 0.3) calc(100vw - 17px - 500px), transparent calc(100vw - 17px - 500px)),
+                /* Horizontal lines */
+                linear-gradient(to bottom, transparent 0px, transparent calc(100px - 1px), rgba(128, 0, 128, 0.3) calc(100px - 1px), rgba(128, 0, 128, 0.3) 100px, transparent 100px);
+            background-size: 100vw 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Show grid when body has debug class */
+        body.debug::before {
+            opacity: 1;
+        }
+
 
         /* Logo */
         .logo {
@@ -65,12 +93,12 @@
         .navigation {
             position: fixed;
             top: 13px;
-            right: 17px;
+            left: 0;
+            right: 0;
             display: flex;
-            gap: 40px;
+            justify-content: space-between;
+            padding: 0 17px;
             z-index: 1002;
-            max-width: 500px;
-            width: fit-content;
         }
 
         .nav-link {
@@ -80,6 +108,11 @@
             font-weight: normal;
             transition: color 0.2s ease;
             line-height: 1.6;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 40px;
         }
 
         .nav-link:hover {
@@ -196,7 +229,7 @@
         .description-container {
             position: fixed;
             top: 100px;
-            right: 17px;
+            left: 17px;
             max-width: 500px;
             padding: 20px;
             z-index: 1002;
@@ -432,10 +465,12 @@
     <div class="drawing-cursor" id="drawingCursor"></div>
     <a href="#" class="logo" id="logo">Georgii</a>
     <nav class="navigation">
-        <a href="#" class="nav-link">Lots of Letters</a>
-        <a href="#" class="nav-link">Mind</a>
-        <a href="#" class="nav-link">Commerce</a>
-        <a href="#" class="nav-link">About me</a>
+        <a href="#" class="nav-link nav-left">Lots of Letters</a>
+        <div class="nav-right">
+            <a href="#" class="nav-link">Mind</a>
+            <a href="#" class="nav-link">Commerce</a>
+            <a href="#" class="nav-link">About me</a>
+        </div>
     </nav>
     <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
@@ -2209,5 +2244,13 @@
             };
         })();
     })();
+
+    // Debug grid toggle (Ctrl+G)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'g') {
+            e.preventDefault();
+            document.body.classList.toggle('debug');
+        }
+    });
 </script>
 </html>
