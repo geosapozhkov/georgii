@@ -371,7 +371,7 @@
         /* Time display aligned with letter L in "Lots" */
         .time-display {
             position: fixed;
-            right: calc(17px + 193px);
+            right: calc(17px + 192px);
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
@@ -1957,8 +1957,8 @@
                 y: window.innerHeight / 2, // Start from center
                 w: maxWidth, // Will be adjusted based on image aspect ratio
                 h: maxHeight, // Will be adjusted based on image aspect ratio
-                vx: rnd(-0.2, 0.2) || 0.1, // Slower movement
-                vy: rnd(-0.2, 0.2) || -0.1, // Slower movement
+                vx: rnd(-0.4, 0.4) || 0.2, // Smoother movement
+                vy: rnd(-0.4, 0.4) || -0.2, // Smoother movement
                 currentImageIndex: Math.floor(Math.random() * rndImages.length),
                 imageChangeTimer: 0,
                 imageElement: null,
