@@ -258,7 +258,8 @@
             transition: opacity 200ms ease;
             padding: 20px 0;
             text-align: justify;
-            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
         }
 
 
@@ -470,9 +471,8 @@
             grid-column-start: 10;
             font-size: 15px;
             color: #3C3C3C;
-            text-align: right;
+            text-align: left;
             white-space: nowrap;
-            min-width: 200px;
         }
 
         /* Responsive design for different screen sizes */
@@ -542,7 +542,6 @@
             .time-display {
                 grid-column: span 3;
                 grid-column-start: 4;
-                min-width: 150px;
             }
         }
 
@@ -602,7 +601,6 @@
             .time-display {
                 grid-column: span 2;
                 grid-column-start: 3;
-                min-width: 120px;
             }
                 font-size: 13px;
             }
