@@ -94,7 +94,7 @@
         .navigation {
             position: fixed;
             top: 13px;
-            left: calc(50vw - 200px);
+            left: calc(50vw - 300px);
             display: flex;
             gap: 40px;
             z-index: 1002;
@@ -223,15 +223,10 @@
         .description-container {
             position: fixed;
             top: 13px;
-            left: calc(50vw + 50px);
+            left: calc(50vw - 50px);
             max-width: 500px;
             padding: 0;
             z-index: 1002;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 8px;
-            border: none;
-            outline: none;
         }
 
         .text-content {
@@ -239,7 +234,9 @@
             line-height: 1.6;
             color: #3C3C3C;
             transition: opacity 200ms ease;
-            padding: 20px;
+            padding: 0;
+            display: flex;
+            align-items: center;
         }
 
         .text-content p {
