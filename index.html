@@ -398,8 +398,8 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            pointer-events: none;
-            z-index: 1003;
+            pointer-events: auto;
+            z-index: 1005;
             cursor: none;
         }
 
@@ -409,9 +409,10 @@
             background-color: #000000;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 1004;
+            z-index: 1006;
             transition: transform 0.1s ease;
             transform: translate(-50%, -50%);
+            display: none;
         }
 
         .drawing-cursor.eraser {
@@ -1817,14 +1818,21 @@
             }
         });
 
-        // Custom cursor tracking
-        document.addEventListener('mousemove', (e) => {
-            const cursor = document.getElementById('customCursor');
-            if (cursor) {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
-            }
-        });
+            // Custom cursor tracking
+            document.addEventListener('mousemove', (e) => {
+                const cursor = document.getElementById('customCursor');
+                const drawingCursor = document.getElementById('drawingCursor');
+                
+                if (cursor && !window.isDrawingMode) {
+                    cursor.style.left = e.clientX + 'px';
+                    cursor.style.top = e.clientY + 'px';
+                }
+                
+                if (drawingCursor && window.isDrawingMode) {
+                    drawingCursor.style.left = e.clientX + 'px';
+                    drawingCursor.style.top = e.clientY + 'px';
+                }
+            });
 
         // Navigation handlers
         navLinks.forEach(link => {
@@ -1852,8 +1860,10 @@
                 drawingCanvas.width = window.innerWidth;
                 drawingCanvas.height = window.innerHeight;
                 drawingCanvas.style.pointerEvents = 'auto';
+                drawingCanvas.style.display = 'none';
                 drawingCtx.lineCap = 'round';
                 drawingCtx.lineJoin = 'round';
+                drawingCtx.strokeStyle = '#000000';
             }
             
             // Update cursor size
@@ -1903,6 +1913,8 @@
                 drawingCtx.lineWidth = brushSize;
                 drawingCtx.lineTo(e.clientX, e.clientY);
                 drawingCtx.stroke();
+                
+                e.preventDefault();
             });
             
             drawingCanvas.addEventListener('mousemove', (e) => {
@@ -1916,6 +1928,8 @@
                     drawingCtx.lineTo(e.clientX, e.clientY);
                     drawingCtx.stroke();
                 }
+                
+                e.preventDefault();
             });
             
             drawingCanvas.addEventListener('mouseup', () => {
@@ -1985,9 +1999,24 @@
                 initDrawingCanvas();
             });
             
-            // Expose functions globally for tab switching
+            // Expose functions and variables globally for tab switching
             window.enableDrawingMode = enableDrawingMode;
             window.disableDrawingMode = disableDrawingMode;
+            window.isDrawingMode = false;
+            
+            // Update global variable when drawing mode changes
+            const originalEnableDrawingMode = enableDrawingMode;
+            const originalDisableDrawingMode = disableDrawingMode;
+            
+            window.enableDrawingMode = function() {
+                originalEnableDrawingMode();
+                window.isDrawingMode = true;
+            };
+            
+            window.disableDrawingMode = function() {
+                originalDisableDrawingMode();
+                window.isDrawingMode = false;
+            };
         })();
     })();
 </script>
