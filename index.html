@@ -105,16 +105,15 @@
             opacity: 0.7;
         }
 
-        /* Navigation - занимает последние 4 колонки горизонтально */
-        .navigation {
+        /* Navigation - занимает колонки 9-12 горизонтально */
+        .navigation-lots {
             grid-column: span 4;
             grid-column-start: 9;
             display: flex;
-            gap: 20px;
             align-items: center;
             justify-content: flex-end;
             white-space: nowrap;
-            flex-wrap: nowrap;
+            gap: 20px;
         }
 
         .nav-link {
@@ -517,10 +516,15 @@
                 font-size: 48px;
             }
             
-            .navigation {
-                grid-column: span 5;
+            .navigation-lots {
+                grid-column: span 1;
                 grid-column-start: 8;
-                gap: 15px;
+            }
+            
+            .navigation {
+                grid-column: span 1;
+                grid-column-start: 9;
+                gap: 10px;
             }
             
             .nav-link {
@@ -543,8 +547,8 @@
             }
             
             .text-content {
-                grid-column: span 3;
-                grid-column-start: 4;
+                grid-column: span 1;
+                grid-column-start: 6;
             }
             
             .footer-container {
@@ -558,8 +562,8 @@
             }
             
             .time-display {
-                grid-column: span 2;
-                grid-column-start: 5;
+                grid-column: span 1;
+                grid-column-start: 6;
             }
         }
 
@@ -575,9 +579,14 @@
                 font-size: 36px;
             }
             
-            .navigation {
-                grid-column: span 6;
+            .navigation-lots {
+                grid-column: span 1;
                 grid-column-start: 7;
+            }
+            
+            .navigation {
+                grid-column: span 1;
+                grid-column-start: 8;
                 gap: 8px;
             }
             
@@ -601,8 +610,8 @@
             }
             
             .text-content {
-                grid-column: span 2;
-                grid-column-start: 3;
+                grid-column: span 1;
+                grid-column-start: 4;
             }
             
             .footer-container {
@@ -617,8 +626,8 @@
             }
             
             .time-display {
-                grid-column: span 2;
-                grid-column-start: 3;
+                grid-column: span 1;
+                grid-column-start: 4;
                 font-size: 13px;
             }
         }
@@ -690,7 +699,7 @@
     <!-- Header with 12-column grid -->
     <header class="header-container">
         <a href="#" class="logo" id="logo">Georgii</a>
-        <nav class="navigation">
+        <nav class="navigation-lots">
             <a href="#" class="nav-link">Lots of Letters</a>
             <a href="#" class="nav-link">Mind</a>
             <a href="#" class="nav-link">Commerce</a>
@@ -1277,8 +1286,7 @@
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
-                // Clear any project images and back button
-                clearCommerceProject();
+                // Load commerce content directly
                 updateCommerceContent();
             } else if (tabName === 'About me') {
                 mainContent.style.display = 'block';
@@ -1290,7 +1298,7 @@
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
-                clearCommerceProject();
+                // Load mind content directly
                 updateMindContent();
             }
             
