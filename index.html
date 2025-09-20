@@ -194,7 +194,7 @@
         .content-right {
             position: fixed;
             top: 100px;
-            right: 3px;
+            right: 17px;
             max-width: 425px;
             padding: 20px;
             z-index: 1002;
@@ -1049,10 +1049,17 @@
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
-            // Clear localStorage to ensure clean start
-            localStorage.clear();
-            // Always show home page on load
-            showHomePage();
+            
+            // Get saved tab from localStorage
+            const savedTab = localStorage.getItem('activeTab');
+            
+            if (savedTab && savedTab !== 'Home') {
+                // Restore the saved tab
+                switchTab(savedTab);
+            } else {
+                // Show home page if no saved tab or if saved tab is Home
+                showHomePage();
+            }
         });
 
         // Function to update Commerce content with same layout as Mind
