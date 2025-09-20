@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>georgii</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <link rel="preload" href="BookletSans-regular.woff" as="font" type="font/woff" crossorigin>
     <!-- Preload critical images for faster loading -->
     <link rel="preload" href="https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/0.png" as="image">
@@ -68,36 +72,43 @@
         }
 
 
-        /* Logo */
+        /* Logo - Bootstrap aligned */
         .logo {
-            position: fixed;
-            top: 10px;
-            left: 17px;
+            position: static;
             font-size: 72px;
             font-weight: bold;
             color: #3C3C3C;
             text-decoration: none;
-            z-index: 1004;
             cursor: pointer;
             transition: opacity 0.2s ease;
             line-height: 1;
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+            margin: 0;
         }
 
         .logo:hover {
             opacity: 0.7;
         }
 
-        /* Navigation */
+        /* Navigation - Bootstrap aligned */
         .navigation {
-            position: fixed;
-            top: 13px;
-            right: 17px;
+            position: static;
             display: flex;
             gap: 40px;
             z-index: 1002;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Responsive navigation adjustments */
+        @media (max-width: 768px) {
+            .navigation {
+                flex-direction: column;
+                gap: 20px;
+                margin-top: 20px;
+            }
         }
 
         .nav-link {
@@ -118,16 +129,22 @@
             opacity: 0.5;
         }
 
-        /* Main Content */
+        /* Main Content - Bootstrap integration */
         .main-content {
-            display: flex;
-            flex: 1;
-            padding: 0 0 0 20px;
-            gap: 60px;
+            min-height: calc(100vh - 200px);
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 120px; }
+        .content-left { 
+            padding-left: 17px; 
+            margin-top: 120px; 
+        }
+
+        /* Bootstrap container adjustments */
+        .container-fluid {
+            padding-left: 17px;
+            padding-right: 17px;
+        }
 
         .catalog-grid {
             display: grid;
@@ -137,6 +154,21 @@
             align-content: start;
             padding-top: 10px;
             width: fit-content;
+        }
+
+        /* Bootstrap catalog grid alternative */
+        .catalog-bootstrap-grid {
+            padding-top: 10px;
+        }
+
+        .catalog-bootstrap-grid .row {
+            margin-bottom: 16px;
+        }
+
+        .catalog-bootstrap-grid .col-header {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 8px;
         }
 
         .col-header { font-size: 15px; }
@@ -218,20 +250,18 @@
             object-fit: contain;
         }
 
-        /* Description container aligned with navigation */
-        /* Description container aligned with navigation */
+        /* Description container - Bootstrap aligned */
         .description-container {
-            position: fixed;
-            top: 100px;
-            right: 17px;
-            max-width: 500px;
-            padding: 0;
+            position: static;
+            max-width: none;
+            padding: 20px;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 8px;
             border: none;
             outline: none;
+            margin: 0;
         }
 
         .text-content {
@@ -349,14 +379,13 @@
             .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 2; }
         }
 
-        /* Footer - вернул к прежним настройкам */
+        /* Footer - Bootstrap aligned */
         .footer {
-            position: fixed;
-            left: 17px;
-            bottom: 10px;
+            position: static;
             font-size: 15px;
             color: #3C3C3C;
             z-index: 1002;
+            margin: 0;
         }
 
         .footer div {
@@ -368,42 +397,94 @@
             margin-bottom: 1px;
         }
 
-        /* Time display aligned with letter L in "Lots" */
+        /* Time display - Bootstrap aligned */
         .time-display {
-            position: fixed;
-            right: calc(17px + 190.5px);
-            bottom: 10px;
+            position: static;
             font-size: 15px;
             color: #3C3C3C;
             z-index: 1002;
             text-align: left;
-            width: 200px;
+            margin: 0;
         }
 
-        /* Responsive design for different screen sizes */
-        @media (max-width: 1920px) {
-            .navigation {
-                padding: 20px 0 0 30px;
-                gap: 40px;
-            }
-        }
-
+        /* Bootstrap responsive design adjustments */
         @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .logo {
+                font-size: 48px;
+                margin-bottom: 20px;
+            }
+            
             .navigation {
-                padding: 20px 0 0 30px;
-                gap: 30px;
+                flex-direction: column;
+                gap: 20px;
+                margin-bottom: 30px;
             }
             
             .nav-link {
-                font-size: 23.84px;
+                font-size: 18px;
+            }
+            
+            .content-left {
+                margin-top: 20px;
+                padding-left: 0;
+            }
+            
+            .description-container {
+                margin-top: 30px;
+                background: transparent;
+                backdrop-filter: none;
+                border-radius: 0;
+                padding: 20px 0;
+            }
+            
+            .footer {
+                margin-top: 30px;
+            }
+            
+            .time-display {
+                text-align: left;
+                margin-top: 20px;
+            }
+            
+            /* Stack columns on mobile */
+            .row.mt-5 {
+                margin-top: 2rem !important;
             }
         }
 
         @media (max-width: 480px) {
-            .navigation {
-                flex-direction: column;
-                gap: 20px;
-                padding: 20px 0 0 30px;
+            .logo {
+                font-size: 36px;
+            }
+            
+            .nav-link {
+                font-size: 16px;
+            }
+            
+            .catalog-bootstrap-grid .row {
+                margin-bottom: 20px;
+            }
+            
+            .catalog-link {
+                font-size: 32px;
+            }
+            
+            /* Full width columns on mobile */
+            .col-lg-8, .col-xl-7 {
+                width: 100% !important;
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+            
+            .col-lg-4, .col-xl-5 {
+                width: 100% !important;
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
             }
         }
 
@@ -413,6 +494,28 @@
             cursor: default;
             font-size: 48px;
             line-height: 1;
+        }
+
+        /* Bootstrap grid utilities */
+        .row {
+            --bs-gutter-x: 1.5rem;
+            --bs-gutter-y: 0;
+        }
+
+        .g-3 {
+            --bs-gutter-x: 1rem;
+            --bs-gutter-y: 1rem;
+        }
+
+        /* Ensure proper spacing in Bootstrap grid */
+        .container-fluid {
+            --bs-gutter-x: 1.5rem;
+        }
+
+        /* Custom Bootstrap column adjustments */
+        .col-3, .col-4, .col-6, .col-8, .col-12 {
+            padding-left: calc(var(--bs-gutter-x) * 0.5);
+            padding-right: calc(var(--bs-gutter-x) * 0.5);
         }
 
         /* Custom cursor */
@@ -470,30 +573,68 @@
     <div class="custom-cursor" id="customCursor"></div>
     <canvas id="drawingCanvas"></canvas>
     <div class="drawing-cursor" id="drawingCursor"></div>
-    <a href="#" class="logo" id="logo">Georgii</a>
-    <nav class="navigation">
-        <a href="#" class="nav-link">Lots of Letters</a>
-        <a href="#" class="nav-link">Mind</a>
-        <a href="#" class="nav-link">Commerce</a>
-        <a href="#" class="nav-link">About me</a>
-    </nav>
-    <section class="content-left" style="display: none;">
-        <!-- Content will be dynamically loaded here -->
-    </section>
-
-    <!-- Lots of Letters Gallery -->
-    <section class="letters-gallery" id="letters-gallery" style="display: none;">
-        <canvas id="texts-canvas"></canvas>
-    </section>
-
-    <main class="main-content">
-        <div class="description-container">
-            <div class="text-content">
-                <p>Life and design explorer, pictures with meaning and quality creator.</p>
-                <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+    
+    <!-- Bootstrap Container -->
+    <div class="container-fluid">
+        <!-- Header Row with Logo and Navigation -->
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <a href="#" class="logo" id="logo">Georgii</a>
+            </div>
+            <div class="col-auto ms-auto">
+                <nav class="navigation">
+                    <a href="#" class="nav-link">Lots of Letters</a>
+                    <a href="#" class="nav-link">Mind</a>
+                    <a href="#" class="nav-link">Commerce</a>
+                    <a href="#" class="nav-link">About me</a>
+                </nav>
             </div>
         </div>
-    </main>
+
+        <!-- Main Content Row -->
+        <div class="row mt-5">
+            <!-- Left Content Column -->
+            <div class="col-lg-8 col-xl-7">
+                <section class="content-left" style="display: none;">
+                    <!-- Content will be dynamically loaded here -->
+                </section>
+
+                <!-- Lots of Letters Gallery -->
+                <section class="letters-gallery" id="letters-gallery" style="display: none;">
+                    <canvas id="texts-canvas"></canvas>
+                </section>
+            </div>
+
+            <!-- Right Content Column - aligned with navigation -->
+            <div class="col-lg-4 col-xl-5">
+                <div class="description-container">
+                    <div class="text-content">
+                        <p>Life and design explorer, pictures with meaning and quality creator.</p>
+                        <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Row -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="row justify-content-between align-items-end">
+                    <div class="col-auto">
+                        <footer class="footer">
+                            <div>sapozhkov.george@gmail.com</div>
+                            <div>@georgiisapozhkov</div>
+                        </footer>
+                    </div>
+                    <div class="col-auto">
+                        <!-- Time display positioned at bottom right -->
+                        <div class="time-display" id="timeDisplay">End of the day <span id="timeLeft"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <canvas id="previewCanvas"></canvas>
     
     <!-- Image/Video Modal -->
@@ -503,14 +644,6 @@
             <source src="" type="video/mp4">
         </video>
     </div>
-    
-    <footer class="footer">
-        <div>sapozhkov.george@gmail.com</div>
-        <div>@georgiisapozhkov</div>
-    </footer>
-    
-    <!-- Time display positioned at bottom right -->
-    <div class="time-display" id="timeDisplay">End of the day <span id="timeLeft"></span></div>
 </body>
 <script>
     (function(){
@@ -1110,53 +1243,96 @@
             }
         });
 
-        // Function to update Commerce content with same layout as Mind
+        // Function to update Commerce content with Bootstrap grid layout
         function updateCommerceContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = `
-                <div class="catalog-grid">
-                    <div class="col-header">Project</div>
-                    <div class="col-header">Client</div>
-                    <div class="col-header">Year</div>
-
-                    <div class="cell" data-preview="angry-masseur">
-                        <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
-                    </div>
-                    <div class="cell" data-preview="angry-masseur">
-                        <span class="catalog-client">Poool</span>
-                    </div>
-                    <div class="cell" data-preview="angry-masseur">
-                        <span class="catalog-year">2023</span>
-                    </div>
-
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
+                <div class="catalog-bootstrap-grid">
+                    <!-- Header Row -->
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="col-header">Project</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="col-header">Client</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="col-header">Year</div>
+                        </div>
                     </div>
 
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
-                    </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
+                    <!-- First Project Row -->
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="cell" data-preview="angry-masseur">
+                                <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell" data-preview="angry-masseur">
+                                <span class="catalog-client">Poool</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell" data-preview="angry-masseur">
+                                <span class="catalog-year">2023</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
+                    <!-- Empty rows for future projects -->
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
+
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="cell">
-                        <span class="catalog-placeholder">No Data</span>
+
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="cell">
+                                <span class="catalog-placeholder">No Data</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="cell"><span class="catalog-placeholder">No Data</span></div>
@@ -1297,7 +1473,7 @@
             contentLeft.style.display = 'block';
         }
 
-        // Universal function to load project gallery with 12-column grid
+        // Universal function to load project gallery with Bootstrap grid
         function loadProjectGallery(projectName, projectData) {
             // Stop any active preview animations
             stop();
@@ -1308,9 +1484,9 @@
                 existingGallery.remove();
             }
             
-            // Create project gallery container with 12-column grid
+            // Create project gallery container with Bootstrap grid
             const gallery = document.createElement('div');
-            gallery.className = 'project-gallery';
+            gallery.className = 'project-gallery container-fluid';
             gallery.style.position = 'fixed';
             gallery.style.top = '0';
             gallery.style.left = '0';
@@ -1319,18 +1495,27 @@
             gallery.style.zIndex = '100';
             gallery.style.backgroundColor = '#ffffff';
             gallery.style.overflowY = 'auto';
+            gallery.style.paddingTop = '120px';
             
             // Project data structure: { files: [], layouts: [], basePath: '' }
             const files = projectData.files || [];
             const layouts = projectData.layouts || [];
             const basePath = projectData.basePath || '';
             
+            // Create Bootstrap row container
+            const row = document.createElement('div');
+            row.className = 'row g-3';
+            
             files.forEach((filename, i) => {
                 const layout = layouts[i] || { colSpan: 4, startCol: 1 };
                 
-                // Create media container
+                // Convert to Bootstrap 12-column system with minimum 3 columns
+                let bootstrapCols = Math.max(layout.colSpan, 3); // Minimum 3 columns
+                if (bootstrapCols > 12) bootstrapCols = 12; // Maximum 12 columns
+                
+                // Create media container with Bootstrap classes
                 const container = document.createElement('div');
-                container.className = `media-container gallery-col-${layout.colSpan} gallery-start-${layout.startCol}`;
+                container.className = `col-${bootstrapCols} media-container`;
                 container.style.cursor = 'pointer';
                 container.style.border = 'none';
                 container.style.borderRadius = '0';
@@ -1473,14 +1658,15 @@
                     });
                 }
                 
-                gallery.appendChild(container);
+                row.appendChild(container);
             });
             
+            gallery.appendChild(row);
             document.body.appendChild(gallery);
-            console.log('Loaded', files.length, `${projectName} project media in 12-column grid layout`);
+            console.log('Loaded', files.length, `${projectName} project media in Bootstrap grid layout`);
         }
 
-        // Function to load Angry Masseur project (Commerce)
+        // Function to load Angry Masseur project (Commerce) - 12-column grid
         function loadAngryMasseurImages() {
             const projectData = {
                 files: [
@@ -1491,9 +1677,9 @@
                 ],
                 layouts: [
                     { colSpan: 6, startCol: 1 }, // Large video - half width
-                    { colSpan: 4, startCol: 7 }, // Medium video - minimum size
-                    { colSpan: 4, startCol: 1 }, // Medium video - minimum size
-                    { colSpan: 4, startCol: 5 } // Medium video - minimum size
+                    { colSpan: 3, startCol: 7 }, // Medium video - minimum 3 columns
+                    { colSpan: 3, startCol: 1 }, // Medium video - minimum 3 columns
+                    { colSpan: 6, startCol: 4 } // Large video - half width
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/poool/AngryM/'
             };
@@ -1501,7 +1687,7 @@
             loadProjectGallery('Angry Masseur', projectData);
         }
 
-        // Function to load Area 117 project (Mind)
+        // Function to load Area 117 project (Mind) - 12-column grid
         function loadArea117Images() {
             const projectData = {
                 files: [
@@ -1512,7 +1698,7 @@
                 ],
                 layouts: [
                     { colSpan: 8, startCol: 1 }, // Large image
-                    { colSpan: 4, startCol: 9 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 9 }, // Medium image
                     { colSpan: 6, startCol: 1 }, // Medium-large image
                     { colSpan: 6, startCol: 7 } // Medium-large image
                 ],
@@ -1522,7 +1708,7 @@
             loadProjectGallery('Area 117', projectData);
         }
 
-        // Function to load Yoki project (Mind)
+        // Function to load Yoki project (Mind) - 12-column grid
         function loadYokiImages() {
             const projectData = {
                 files: [
@@ -1532,8 +1718,8 @@
                 ],
                 layouts: [
                     { colSpan: 6, startCol: 1 }, // Large video
-                    { colSpan: 4, startCol: 7 }, // Medium image - minimum size
-                    { colSpan: 4, startCol: 1 } // Medium video - minimum size
+                    { colSpan: 6, startCol: 7 }, // Medium image
+                    { colSpan: 6, startCol: 1 } // Medium video
                 ],
                 basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/mind/yoki/'
             };
@@ -2371,5 +2557,11 @@
         updateTimeLeft();
         setInterval(updateTimeLeft, 1); // Update every 1ms for smooth milliseconds
     });
+
+    // Bootstrap JS
+    // Note: Bootstrap JS is loaded via CDN in the head section
 </script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </html>
