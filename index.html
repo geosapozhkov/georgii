@@ -1781,7 +1781,7 @@
         });
 
         // Function to create preview rectangles for logo hover (home page only)
-        function createLogoPreviewRects() {
+        async function createLogoPreviewRects() {
             if (rects.length > 0) return;
             
             const canvas = document.getElementById('previewCanvas');
@@ -1791,14 +1791,34 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // RND images from GitHub
-            const rndImages = [
-                'image 2090008773.png',
-                'image 1.png',
-                'image 5.png',
-                'image 2090008760.png',
-                'image 2090008770.png'
-            ];
+            // RND images from GitHub - dynamically loaded
+            let rndImages = [];
+            
+            // Function to load images list from GitHub
+            async function loadRndImages() {
+                try {
+                    const response = await fetch('https://api.github.com/repos/geosapozhkov/georgii/contents/RND');
+                    const files = await response.json();
+                    rndImages = files
+                        .filter(file => file.name.toLowerCase().endsWith('.png') || file.name.toLowerCase().endsWith('.jpg'))
+                        .map(file => file.name);
+                    
+                    console.log('Loaded RND images:', rndImages);
+                } catch (error) {
+                    console.log('Failed to load RND images, using fallback:', error);
+                    // Fallback to hardcoded list
+                    rndImages = [
+                        'image 1.png',
+                        'image 5.png',
+                        'image 2090008760.png',
+                        'image 2090008770.png',
+                        'Crash0016.png'
+                    ];
+                }
+            }
+            
+            // Load images first
+            await loadRndImages();
             
             // Create single moving image (almost full screen)
             const screenWidth = canvas.width;
@@ -1892,9 +1912,9 @@
 
         // Logo hover handlers (only on home page)
         let isHomePage = true;
-        logo.addEventListener('mouseenter', () => {
+        logo.addEventListener('mouseenter', async () => {
             if (isHomePage) {
-                createLogoPreviewRects();
+                await createLogoPreviewRects();
             }
         });
         
