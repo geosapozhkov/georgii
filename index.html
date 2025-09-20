@@ -371,7 +371,7 @@
         /* Time display aligned with letter L in "Lots" */
         .time-display {
             position: fixed;
-            right: calc(17px + 192px);
+            right: calc(17px + 191.5px);
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
@@ -2356,28 +2356,11 @@
         }
     }
 
-    // Get user's timezone and location
+    // Get user's timezone only (no geolocation request)
     function getUserLocation() {
         // Try to get timezone from Intl API
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         console.log('User timezone:', timezone);
-        
-        // Try to get location (requires user permission)
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    console.log('User location:', lat, lon);
-                    
-                    // You can use this data to determine country
-                    // For now, we'll just use timezone
-                },
-                function(error) {
-                    console.log('Location access denied or failed:', error.message);
-                }
-            );
-        }
         
         return timezone;
     }
