@@ -465,14 +465,15 @@
             margin-bottom: 1px;
         }
 
-        /* Description text - занимает 3 ячейки от правого края */
+        /* Description text - занимает 2 ячейки от правого края */
         .time-display {
-            grid-column: span 3;
-            grid-column-start: 10;
+            grid-column: span 2;
+            grid-column-start: 11;
             font-size: 15px;
             color: #3C3C3C;
             text-align: left;
             white-space: normal;
+            line-height: 1;
             transition: opacity 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
@@ -549,8 +550,8 @@
             }
             
             .time-display {
-                grid-column: span 3;
-                grid-column-start: 4;
+                grid-column: span 2;
+                grid-column-start: 5;
             }
         }
 
@@ -610,7 +611,6 @@
             .time-display {
                 grid-column: span 2;
                 grid-column-start: 3;
-            }
                 font-size: 13px;
             }
         }
@@ -701,8 +701,9 @@
     <main class="main-content">
         <div class="description-container">
             <div class="text-content">
-                <p>Life and design explorer, pictures with meaning and quality creator.</p>
-                <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+                <p>Welcome to the extraordinary world of visual storytelling, where every pixel carries profound meaning and each image becomes a gateway to deeper understanding of our contemporary existence. As a passionate creator and design explorer, I dedicate my life to crafting visual narratives that transcend ordinary boundaries and challenge conventional perspectives on art, design, and human experience.</p>
+                <p>My work represents a continuous journey through the labyrinth of modern visual culture, constantly seeking new ways to interpret and represent the complex realities of our time. Through careful observation and meticulous attention to detail, I strive to create images that not only capture moments but also evoke emotions, provoke thoughts, and inspire conversations about the world we inhabit.</p>
+                <p>Collaboration lies at the heart of my creative process. I am deeply committed to working with visionary studios, innovative designers, forward-thinking brands, and anyone who shares my passion for creating meaningful visual content that tells authentic stories and connects with audiences on a profound level. Together, we can explore uncharted territories of creative expression and push the boundaries of what visual communication can achieve in our rapidly evolving digital landscape.</p>
             </div>
         </div>
     </main>
@@ -2625,11 +2626,8 @@
 
     // Quotes in different languages with proper quotation marks
     const quotes = [
-        "Le vent se lève! il faut tenter de vivre!", // French (original) - no quotes needed
-        "The wind rises! We must try to live!", // English - straight quotes
-        "«Ветер поднимается! Надо попытаться жить!»", // Russian - «»
-        "Vinden løfter seg! Vi må prøve å leve!", // Norwegian - straight quotes
-        "風立ちぬ！生きることを試みねばならぬ！" // Japanese - no quotes needed
+        "«Ветер крепчает, значит жить старайся!»", // Russian - «»
+        "The wind rises! Live on!" // English - straight quotes
     ];
     
     let currentQuoteIndex = 0;
