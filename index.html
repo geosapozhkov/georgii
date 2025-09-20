@@ -105,7 +105,7 @@
             display: grid;
             grid-template-columns: auto auto auto;
             column-gap: 120px;
-            row-gap: 8px;
+            row-gap: 12px;
             align-content: start;
             padding-top: 10px;
             width: fit-content;
@@ -191,6 +191,7 @@
         }
 
         /* Description container aligned with navigation */
+        /* Description container aligned with navigation */
         .description-container {
             position: fixed;
             top: 100px;
@@ -203,6 +204,8 @@
             border-radius: 8px;
             border: none;
             outline: none;
+            /* Align text with navigation using same left margin */
+            margin-left: calc(100vw - 17px - 500px);
         }
 
         .text-content {
