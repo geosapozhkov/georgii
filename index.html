@@ -105,14 +105,16 @@
             opacity: 0.7;
         }
 
-        /* Navigation - занимает последние 6 колонок горизонтально */
+        /* Navigation - занимает последние 4 колонки горизонтально */
         .navigation {
-            grid-column: span 6;
-            grid-column-start: 7;
+            grid-column: span 4;
+            grid-column-start: 9;
             display: flex;
             gap: 20px;
             align-items: center;
             justify-content: flex-end;
+            white-space: nowrap;
+            flex-wrap: nowrap;
         }
 
         .nav-link {
@@ -122,6 +124,7 @@
             font-weight: normal;
             transition: color 0.2s ease;
             line-height: 1.6;
+            white-space: nowrap;
         }
 
         .nav-link:hover {
@@ -261,12 +264,14 @@
             transition: opacity 200ms ease;
             padding: 20px 0;
             width: 100%;
+            max-width: none;
             box-sizing: border-box;
             min-width: 0;
         }
-
-
+        
         .text-content p {
+            width: 100%;
+            max-width: none;
             margin-bottom: 20px;
         }
 
@@ -513,8 +518,8 @@
             }
             
             .navigation {
-                grid-column: span 7;
-                grid-column-start: 6;
+                grid-column: span 5;
+                grid-column-start: 8;
                 gap: 15px;
             }
             
@@ -573,7 +578,7 @@
             .navigation {
                 grid-column: span 6;
                 grid-column-start: 7;
-                gap: 10px;
+                gap: 8px;
             }
             
             .nav-link {
