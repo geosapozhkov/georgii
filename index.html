@@ -371,7 +371,7 @@
         /* Time display aligned with letter L in "Lots" */
         .time-display {
             position: fixed;
-            right: calc(17px + 195px);
+            right: calc(17px + 193px);
             bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
@@ -1953,12 +1953,12 @@
             
             // Create single rectangle for the moving image
             const rect = {
-                x: 0,
-                y: 0,
+                x: window.innerWidth / 2, // Start from center
+                y: window.innerHeight / 2, // Start from center
                 w: maxWidth, // Will be adjusted based on image aspect ratio
                 h: maxHeight, // Will be adjusted based on image aspect ratio
-                vx: rnd(-0.5, 0.5) || 0.3,
-                vy: rnd(-0.5, 0.5) || -0.3,
+                vx: rnd(-0.2, 0.2) || 0.1, // Slower movement
+                vy: rnd(-0.2, 0.2) || -0.1, // Slower movement
                 currentImageIndex: Math.floor(Math.random() * rndImages.length),
                 imageChangeTimer: 0,
                 imageElement: null,
@@ -1970,11 +1970,7 @@
             
             // Create and load the first image
             function loadCurrentImage() {
-                // Remove previous image if exists
-                if (rect.imageElement) {
-                    rect.imageElement.remove();
-                }
-                
+                // Create new image element first
                 const img = document.createElement('img');
                 img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/RND/${rndImages[rect.currentImageIndex]}`;
                 
@@ -2001,6 +1997,12 @@
                     rect.w = Math.floor(newWidth);
                     rect.h = Math.floor(newHeight);
                     
+                    // Center the image if it's the first load
+                    if (!rect.imageElement) {
+                        rect.x = (window.innerWidth - rect.w) / 2;
+                        rect.y = (window.innerHeight - rect.h) / 2;
+                    }
+                    
                     // Ensure image fits within screen bounds
                     if (rect.x + rect.w > window.innerWidth) {
                         rect.x = window.innerWidth - rect.w;
@@ -2018,6 +2020,12 @@
                     img.style.objectFit = 'contain'; // Use contain to preserve aspect ratio
                     img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
+                    img.style.transition = 'none'; // Disable transitions to prevent flicker
+                    
+                    // Remove old image only after new one is ready
+                    if (rect.imageElement) {
+                        rect.imageElement.remove();
+                    }
                     
                     document.body.appendChild(img);
                     rect.imageElement = img;
@@ -2028,6 +2036,12 @@
                     rect.w = rect.maxWidth;
                     rect.h = rect.maxHeight;
                     
+                    // Center the image if it's the first load
+                    if (!rect.imageElement) {
+                        rect.x = (window.innerWidth - rect.w) / 2;
+                        rect.y = (window.innerHeight - rect.h) / 2;
+                    }
+                    
                     img.style.position = 'fixed';
                     img.style.left = rect.x + 'px';
                     img.style.top = rect.y + 'px';
@@ -2036,6 +2050,12 @@
                     img.style.objectFit = 'contain';
                     img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
+                    img.style.transition = 'none';
+                    
+                    // Remove old image only after new one is ready
+                    if (rect.imageElement) {
+                        rect.imageElement.remove();
+                    }
                     
                     document.body.appendChild(img);
                     rect.imageElement = img;
