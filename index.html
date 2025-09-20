@@ -105,7 +105,7 @@
             display: grid;
             grid-template-columns: auto auto auto;
             column-gap: 120px;
-            row-gap: 12px;
+            row-gap: 20px;
             align-content: start;
             padding-top: 10px;
             width: fit-content;
@@ -195,17 +195,15 @@
         .description-container {
             position: fixed;
             top: 100px;
-            right: 17px;
-            max-width: 425px;
-            padding: 20px 20px 20px 0;
+            left: calc(100vw - 17px - 500px);
+            max-width: 500px;
+            padding: 20px;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 8px;
             border: none;
             outline: none;
-            /* Align text with navigation using same left margin */
-            margin-left: calc(100vw - 17px - 500px);
         }
 
         .text-content {
