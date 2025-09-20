@@ -105,7 +105,7 @@
             display: grid;
             grid-template-columns: auto auto auto;
             column-gap: 120px;
-            row-gap: 12px;
+            row-gap: 0;
             align-content: start;
             padding-top: 10px;
             width: fit-content;
@@ -1722,79 +1722,101 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Create rectangles with mix of real images and gray placeholders
-            rects = new Array(3).fill(0).map(()=>{
-                const aspectRatios = [4/3, 3/2, 16/9, 5/4];
-                const randomAspect = aspectRatios[Math.floor(Math.random() * aspectRatios.length)];
-                const w = rnd(300, 600);
-                const h = Math.round(w / randomAspect);
-                return {
-                    x: rnd(100, canvas.width - w),
-                    y: rnd(100, canvas.height - h),
-                    w: w,
-                    h: h,
-                    vx: rnd(-0.7, 0.7) || 0.5,
-                    vy: rnd(-0.7, 0.7) || -0.4,
-                    isPlaceholder: Math.random() > 0.3 // 70% chance of real image, 30% placeholder
-                };
-            });
-            
-            // Load mix of real images and create placeholders
-            const availableImages = [
-                '0.png',
-                '1.png', 
-                '2.png',
-                'diptych.jpg',
-                'hoodies.jpg'
+            // RND images from GitHub
+            const rndImages = [
+                'image 2090008773.png',
+                'image 1.png',
+                'image 5.png',
+                'image 2090008760.png',
+                'image 2090008770.png'
             ];
             
-            rects.forEach((rect, i) => {
-                if (!rect.isPlaceholder && i < availableImages.length) {
-                    // Load real image
-                    const img = document.createElement('img');
-                    img.src = availableImages[i];
-                    img.style.position = 'fixed';
-                    img.style.left = rect.x + 'px';
-                    img.style.top = rect.y + 'px';
-                    img.style.width = rect.w + 'px';
-                    img.style.height = rect.h + 'px';
-                    img.style.objectFit = 'contain';
-                    img.style.zIndex = '1007';
-                    img.style.pointerEvents = 'none';
-                    
-                    document.body.appendChild(img);
-                    rect.image = img;
-                } else {
-                    // Create gray placeholder
-                    rect.isPlaceholder = true;
-                }
-            });
+            // Create single moving image (1/3 of screen width)
+            const screenWidth = canvas.width;
+            const imageWidth = Math.floor(screenWidth / 3);
             
-            // Ensure no overlap on creation
-            for (let i = 0; i < rects.length; i++) {
-                let attempts = 0;
-                do {
-                    let hasOverlap = false;
-                    for (let j = 0; j < i; j++) {
-                        if (rects[i].x < rects[j].x + rects[j].w &&
-                            rects[i].x + rects[i].w > rects[j].x &&
-                            rects[i].y < rects[j].y + rects[j].h &&
-                            rects[i].y + rects[i].h > rects[j].y) {
-                            hasOverlap = true;
-                            break;
-                        }
-                    }
-                    if (hasOverlap) {
-                        rects[i].x = rnd(100, canvas.width - rects[i].w);
-                        rects[i].y = rnd(100, canvas.height - rects[i].h);
-                        attempts++;
-                    } else {
-                        break;
-                    }
-                } while (hasOverlap && attempts < 50);
+            // Create single rectangle for the moving image
+            const rect = {
+                x: rnd(50, canvas.width - imageWidth),
+                y: rnd(50, canvas.height - imageWidth),
+                w: imageWidth,
+                h: imageWidth, // Will be adjusted based on image aspect ratio
+                vx: rnd(-1, 1) || 0.5,
+                vy: rnd(-1, 1) || -0.5,
+                currentImageIndex: Math.floor(Math.random() * rndImages.length),
+                imageChangeTimer: 0,
+                imageElement: null
+            };
+            
+            rects = [rect];
+            
+            // Create and load the first image
+            function loadCurrentImage() {
+                // Remove previous image if exists
+                if (rect.imageElement) {
+                    rect.imageElement.remove();
+                }
+                
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/RND/${rndImages[rect.currentImageIndex]}`;
+                img.style.position = 'fixed';
+                img.style.left = rect.x + 'px';
+                img.style.top = rect.y + 'px';
+                img.style.width = rect.w + 'px';
+                img.style.height = 'auto'; // Let image maintain aspect ratio
+                img.style.objectFit = 'contain';
+                img.style.zIndex = '1007';
+                img.style.pointerEvents = 'none';
+                
+                // Adjust height based on image aspect ratio when loaded
+                img.onload = function() {
+                    const aspectRatio = img.naturalHeight / img.naturalWidth;
+                    rect.h = rect.w * aspectRatio;
+                    img.style.height = rect.h + 'px';
+                };
+                
+                document.body.appendChild(img);
+                rect.imageElement = img;
             }
             
-            animate();
+            loadCurrentImage();
+            
+            // Start animation with image changing
+            function animateWithImageChange() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update position
+                rect.x += rect.vx;
+                rect.y += rect.vy;
+                
+                // Bounce off edges
+                if (rect.x <= 0 || rect.x + rect.w >= canvas.width) {
+                    rect.vx *= -1;
+                    rect.x = Math.max(0, Math.min(canvas.width - rect.w, rect.x));
+                }
+                if (rect.y <= 0 || rect.y + rect.h >= canvas.height) {
+                    rect.vy *= -1;
+                    rect.y = Math.max(0, Math.min(canvas.height - rect.h, rect.y));
+                }
+                
+                // Update image element position
+                if (rect.imageElement) {
+                    rect.imageElement.style.left = rect.x + 'px';
+                    rect.imageElement.style.top = rect.y + 'px';
+                }
+                
+                // Change image every second (60 frames at 60fps)
+                rect.imageChangeTimer++;
+                if (rect.imageChangeTimer >= 60) {
+                    rect.currentImageIndex = Math.floor(Math.random() * rndImages.length);
+                    loadCurrentImage();
+                    rect.imageChangeTimer = 0;
+                }
+                
+                animationId = requestAnimationFrame(animateWithImageChange);
+            }
+            
+            animateWithImageChange();
         }
 
         // Logo handler
