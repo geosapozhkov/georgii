@@ -47,17 +47,9 @@
             width: 100vw;
             height: 100vh;
             background-image: 
-                /* Left margin line */
+                /* Left margin line (17px) */
                 linear-gradient(to right, transparent 0px, transparent calc(17px - 1px), rgba(255, 0, 0, 0.5) calc(17px - 1px), rgba(255, 0, 0, 0.5) 17px, transparent 17px),
-                /* Grid system - 8 columns with 17px margins */
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 10.375vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 10.375vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 10.375vw), transparent calc(17px + 10.375vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 20.75vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 20.75vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 20.75vw), transparent calc(17px + 20.75vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 31.125vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 31.125vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 31.125vw), transparent calc(17px + 31.125vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 41.5vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 41.5vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 41.5vw), transparent calc(17px + 41.5vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 51.875vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 51.875vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 51.875vw), transparent calc(17px + 51.875vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 62.25vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 62.25vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 62.25vw), transparent calc(17px + 62.25vw)),
-                linear-gradient(to right, transparent 0px, transparent calc(17px + 72.625vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 72.625vw - 1px), rgba(255, 0, 0, 0.3) calc(17px + 72.625vw), transparent calc(17px + 72.625vw)),
-                /* Right margin line */
+                /* Right margin line (17px from right) */
                 linear-gradient(to right, transparent 0px, transparent calc(100vw - 17px - 1px), rgba(255, 0, 0, 0.5) calc(100vw - 17px - 1px), rgba(255, 0, 0, 0.5) calc(100vw - 17px), transparent calc(100vw - 17px)),
                 /* Horizontal lines */
                 linear-gradient(to bottom, transparent 0px, transparent calc(13px - 1px), rgba(255, 0, 0, 0.5) calc(13px - 1px), rgba(255, 0, 0, 0.5) 13px, transparent 13px),
@@ -102,7 +94,7 @@
         .navigation {
             position: fixed;
             top: 13px;
-            left: calc(17px + 62.25vw);
+            right: 17px;
             display: flex;
             gap: 40px;
             z-index: 1002;
@@ -231,8 +223,8 @@
         .description-container {
             position: fixed;
             top: 100px;
-            left: calc(17px + 62.25vw);
-            width: calc(100vw - 17px - 17px - 62.25vw);
+            right: 17px;
+            max-width: 500px;
             padding: 0;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
@@ -503,6 +495,7 @@
     <footer class="footer">
         <div>sapozhkov.george@gmail.com</div>
         <div>@georgiisapozhkov</div>
+        <div id="timeDisplay">Time: <span id="timeLeft"></span></div>
     </footer>
 </body>
 <script>
@@ -2270,6 +2263,60 @@
             e.preventDefault();
             document.body.classList.toggle('debug');
         }
+    });
+
+    // Time and location functionality
+    function updateTimeLeft() {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        
+        const timeLeft = tomorrow - now;
+        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        const milliseconds = Math.floor((timeLeft % 1000));
+        
+        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(3, '0')}`;
+        
+        const timeElement = document.getElementById('timeLeft');
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
+    }
+
+    // Get user's timezone and location
+    function getUserLocation() {
+        // Try to get timezone from Intl API
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        console.log('User timezone:', timezone);
+        
+        // Try to get location (requires user permission)
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    console.log('User location:', lat, lon);
+                    
+                    // You can use this data to determine country
+                    // For now, we'll just use timezone
+                },
+                function(error) {
+                    console.log('Location access denied or failed:', error.message);
+                }
+            );
+        }
+        
+        return timezone;
+    }
+
+    // Initialize time and location
+    document.addEventListener('DOMContentLoaded', function() {
+        getUserLocation();
+        updateTimeLeft();
+        setInterval(updateTimeLeft, 1); // Update every 1ms for smooth milliseconds
     });
 </script>
 </html>
