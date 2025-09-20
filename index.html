@@ -68,20 +68,22 @@
         }
 
 
-        /* Logo - Bootstrap aligned */
+        /* Logo */
         .logo {
-            position: static;
+            position: fixed;
+            top: 10px;
+            left: 17px;
             font-size: 72px;
             font-weight: bold;
             color: #3C3C3C;
             text-decoration: none;
+            z-index: 1004;
             cursor: pointer;
             transition: opacity 0.2s ease;
             line-height: 1;
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            margin: 0;
         }
 
         .logo:hover {
@@ -96,15 +98,6 @@
             display: flex;
             gap: 40px;
             z-index: 1002;
-        }
-
-        /* Responsive navigation adjustments */
-        @media (max-width: 768px) {
-            .navigation {
-                flex-direction: column;
-                gap: 20px;
-                margin-top: 20px;
-            }
         }
 
         .nav-link {
@@ -145,7 +138,6 @@
             padding-top: 10px;
             width: fit-content;
         }
-
 
         .col-header { font-size: 15px; }
         .cell { height: 32px; display: flex; align-items: center; }
@@ -227,12 +219,13 @@
         }
 
         /* Description container aligned with navigation */
+        /* Description container aligned with navigation */
         .description-container {
             position: fixed;
             top: 100px;
             right: 17px;
             max-width: 500px;
-            padding: 20px;
+            padding: 0;
             z-index: 1002;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -356,7 +349,7 @@
             .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 2; }
         }
 
-        /* Footer */
+        /* Footer - вернул к прежним настройкам */
         .footer {
             position: fixed;
             left: 17px;
@@ -422,7 +415,6 @@
             line-height: 1;
         }
 
-
         /* Custom cursor */
         * {
             cursor: none !important;
@@ -478,7 +470,6 @@
     <div class="custom-cursor" id="customCursor"></div>
     <canvas id="drawingCanvas"></canvas>
     <div class="drawing-cursor" id="drawingCursor"></div>
-    
     <a href="#" class="logo" id="logo">Georgii</a>
     <nav class="navigation">
         <a href="#" class="nav-link">Lots of Letters</a>
@@ -503,15 +494,6 @@
             </div>
         </div>
     </main>
-    
-    <footer class="footer">
-        <div>sapozhkov.george@gmail.com</div>
-        <div>@georgiisapozhkov</div>
-    </footer>
-    
-    <!-- Time display positioned at bottom right -->
-    <div class="time-display" id="timeDisplay">End of the day <span id="timeLeft"></span></div>
-
     <canvas id="previewCanvas"></canvas>
     
     <!-- Image/Video Modal -->
@@ -521,6 +503,14 @@
             <source src="" type="video/mp4">
         </video>
     </div>
+    
+    <footer class="footer">
+        <div>sapozhkov.george@gmail.com</div>
+        <div>@georgiisapozhkov</div>
+    </footer>
+    
+    <!-- Time display positioned at bottom right -->
+    <div class="time-display" id="timeDisplay">End of the day <span id="timeLeft"></span></div>
 </body>
 <script>
     (function(){
@@ -1139,59 +1129,34 @@
                         <span class="catalog-year">2023</span>
                     </div>
 
-                    <!-- Empty rows for future projects -->
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
 
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
 
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="cell">
-                                <span class="catalog-placeholder">No Data</span>
-                            </div>
-                        </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
                     </div>
 
                     <div class="cell"><span class="catalog-placeholder">No Data</span></div>
