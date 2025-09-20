@@ -532,8 +532,8 @@
                     const h = Math.round(w / randomAspect);
                     
                     rect = {
-                        x: rnd(100, canvas.width - w),
-                        y: rnd(100, canvas.height - h),
+                        x: rnd(0, window.innerWidth - w),
+                        y: rnd(0, window.innerHeight - h),
                         w: w,
                         h: h,
                 vx: rnd(-0.7, 0.7) || 0.5,
@@ -604,8 +604,8 @@
                     const w = rnd(300, 600);
                     const h = 'auto'; // Let video maintain its original aspect ratio
                     
-                    const x = rnd(100, canvas.width - w);
-                    const y = rnd(100, canvas.height - 400); // Use max expected height
+                    const x = rnd(0, window.innerWidth - w);
+                    const y = rnd(0, window.innerHeight - 400); // Use max expected height
                     
                     video.style.width = w + 'px';
                     video.style.height = h;
@@ -683,8 +683,8 @@
             // integrate
             for(const r of rects){
                 r.x += r.vx; r.y += r.vy;
-                if (r.x <= 0 || r.x + r.w >= canvas.width) { r.vx *= -1; r.x = Math.max(0, Math.min(canvas.width - r.w, r.x)); }
-                if (r.y <= 0 || r.y + r.h >= canvas.height) { r.vy *= -1; r.y = Math.max(0, Math.min(canvas.height - r.h, r.y)); }
+                if (r.x <= 0 || r.x + r.w >= window.innerWidth) { r.vx *= -1; r.x = Math.max(0, Math.min(window.innerWidth - r.w, r.x)); }
+                if (r.y <= 0 || r.y + r.h >= window.innerHeight) { r.vy *= -1; r.y = Math.max(0, Math.min(window.innerHeight - r.h, r.y)); }
                 
                 // Update video element position if it exists
                 if (r.type === 'video' && r.videoElement) {
