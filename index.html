@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>georgii</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <link rel="preload" href="BookletSans-regular.woff" as="font" type="font/woff" crossorigin>
     <!-- Preload critical images for faster loading -->
     <link rel="preload" href="https://raw.githubusercontent.com/geosapozhkov/georgii/main/texts/0.png" as="image">
@@ -71,28 +68,16 @@
         }
 
 
-        /* Header Grid Container */
-        .header-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 100px;
-            z-index: 1004;
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-            padding: 0 20px;
-            align-items: center;
-        }
-
-        /* Logo - занимает первые 4 колонки */
+        /* Logo */
         .logo {
-            grid-column: span 4;
+            position: fixed;
+            top: 10px;
+            left: 17px;
             font-size: 72px;
             font-weight: bold;
             color: #3C3C3C;
             text-decoration: none;
+            z-index: 1004;
             cursor: pointer;
             transition: opacity 0.2s ease;
             line-height: 1;
@@ -105,16 +90,14 @@
             opacity: 0.7;
         }
 
-        /* Navigation - в крайнем правом углу */
-        .navigation-lots {
-            grid-column: span 1;
-            grid-column-start: 12;
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            top: 13px;
+            right: 17px;
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            justify-content: flex-start;
-            white-space: nowrap;
-            gap: 10px;
+            gap: 40px;
+            z-index: 1002;
         }
 
         .nav-link {
@@ -124,7 +107,6 @@
             font-weight: normal;
             transition: color 0.2s ease;
             line-height: 1.6;
-            white-space: nowrap;
         }
 
         .nav-link:hover {
@@ -140,12 +122,12 @@
         .main-content {
             display: flex;
             flex: 1;
-            padding: 0 20px 0 20px;
+            padding: 0 0 0 20px;
             gap: 60px;
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 0 0 auto; padding-left: 20px; margin-top: 140px; }
+        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 120px; }
 
         .catalog-grid {
             display: grid;
@@ -236,17 +218,15 @@
             object-fit: contain;
         }
 
-        /* Description container with 12-column grid positioning */
+        /* Description container aligned with navigation */
+        /* Description container aligned with navigation */
         .description-container {
             position: fixed;
-            top: 120px;
-            left: 0;
-            right: 0;
+            top: 100px;
+            right: 17px;
+            max-width: 500px;
+            padding: 0;
             z-index: 1002;
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-            padding: 0 20px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 8px;
@@ -254,28 +234,16 @@
             outline: none;
         }
 
-        /* Text content positioned in 3 columns from right edge */
         .text-content {
-            grid-column: span 3;
-            grid-column-start: 10;
             font-size: 15px;
             line-height: 1.6;
             color: #3C3C3C;
             transition: opacity 200ms ease;
-            padding: 20px 0;
-            width: 100%;
-            max-width: none;
-            box-sizing: border-box;
-            min-width: 0;
+            padding: 20px;
         }
-        
+
         .text-content p {
-            width: 100% !important;
-            max-width: none !important;
             margin-bottom: 20px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            hyphens: auto;
         }
 
         .text-content p:last-child {
@@ -326,42 +294,6 @@
             max-width: none;
         }
 
-        /* Project header with metadata */
-        .project-header {
-            grid-column: span 12;
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-            margin-bottom: 40px;
-            padding: 0;
-        }
-
-        .project-metadata {
-            grid-column: span 3;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .metadata-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .metadata-label {
-            font-size: 15px;
-            color: #666666;
-            line-height: 1;
-        }
-
-        .metadata-value {
-            font-size: 15px;
-            color: #3C3C3C;
-            line-height: 1;
-            font-weight: normal;
-        }
-
         /* Column span classes for project galleries - minimum 4 columns */
         .gallery-col-1 { grid-column: span 4; } /* Minimum size */
         .gallery-col-2 { grid-column: span 4; } /* Minimum size */
@@ -400,17 +332,6 @@
                 padding: 0;
             }
             
-            .project-header {
-                gap: 15px;
-                margin-bottom: 30px;
-            }
-            
-            .project-metadata {
-                grid-column: span 6;
-                flex-direction: row;
-                gap: 30px;
-            }
-            
             /* Minimum 3 columns on tablets */
             .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 3; }
         }
@@ -424,47 +345,18 @@
                 padding: 0;
             }
             
-            .project-header {
-                gap: 10px;
-                margin-bottom: 20px;
-            }
-            
-            .project-metadata {
-                grid-column: span 4;
-                flex-direction: row;
-                gap: 20px;
-            }
-            
-            .metadata-label, .metadata-value {
-                font-size: 13px;
-            }
-            
             /* Minimum 2 columns on mobile */
             .gallery-col-1, .gallery-col-2, .gallery-col-3 { grid-column: span 2; }
         }
 
-        /* Footer Container with 12-column grid */
-        .footer-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            z-index: 1002;
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-            padding: 0 20px;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Footer info - занимает первые 6 колонок */
+        /* Footer - вернул к прежним настройкам */
         .footer {
-            grid-column: span 6;
+            position: fixed;
+            left: 17px;
+            bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
+            z-index: 1002;
         }
 
         .footer div {
@@ -476,163 +368,42 @@
             margin-bottom: 1px;
         }
 
-        /* Description text - занимает 2 ячейки от правого края */
+        /* Time display aligned with letter L in "Lots" */
         .time-display {
-            grid-column: span 2;
-            grid-column-start: 11;
+            position: fixed;
+            right: calc(17px + 190.5px);
+            bottom: 10px;
             font-size: 15px;
             color: #3C3C3C;
+            z-index: 1002;
             text-align: left;
-            white-space: normal;
-            line-height: 1;
-            transition: opacity 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        .time-display.fade-out {
-            opacity: 0;
-        }
-
-        .time-display.fade-in {
-            opacity: 1;
+            width: 200px;
         }
 
         /* Responsive design for different screen sizes */
         @media (max-width: 1920px) {
-            .header-container {
-                padding: 0 20px;
-                gap: 20px;
-            }
-            
             .navigation {
+                padding: 20px 0 0 30px;
                 gap: 40px;
             }
         }
 
         @media (max-width: 768px) {
-            .header-container {
-                padding: 0 15px;
-                gap: 15px;
-                height: 80px;
-            }
-            
-            .logo {
-                grid-column: span 5;
-                font-size: 48px;
-            }
-            
-            .navigation-lots {
-                grid-column: span 1;
-                grid-column-start: 8;
-            }
-            
             .navigation {
-                grid-column: span 1;
-                grid-column-start: 9;
-                gap: 10px;
+                padding: 20px 0 0 30px;
+                gap: 30px;
             }
             
             .nav-link {
-                font-size: 14px;
-            }
-            
-            .main-content {
-                padding: 0 15px 0 15px;
-            }
-            
-            .content-left {
-                margin-top: 120px;
-                padding-left: 15px;
-            }
-            
-            .description-container {
-                top: 100px;
-                padding: 0 15px;
-                gap: 15px;
-            }
-            
-            .text-content {
-                grid-column: span 1;
-                grid-column-start: 6;
-            }
-            
-            .footer-container {
-                padding: 0 15px;
-                gap: 15px;
-                height: 50px;
-            }
-            
-            .footer {
-                grid-column: span 7;
-            }
-            
-            .time-display {
-                grid-column: span 1;
-                grid-column-start: 6;
+                font-size: 23.84px;
             }
         }
 
         @media (max-width: 480px) {
-            .header-container {
-                padding: 0 10px;
-                gap: 10px;
-                height: 70px;
-            }
-            
-            .logo {
-                grid-column: span 6;
-                font-size: 36px;
-            }
-            
-            .navigation-lots {
-                grid-column: span 1;
-                grid-column-start: 7;
-            }
-            
             .navigation {
-                grid-column: span 1;
-                grid-column-start: 8;
-                gap: 8px;
-            }
-            
-            .nav-link {
-                font-size: 12px;
-            }
-            
-            .main-content {
-                padding: 0 10px 0 10px;
-            }
-            
-            .content-left {
-                margin-top: 100px;
-                padding-left: 10px;
-            }
-            
-            .description-container {
-                top: 90px;
-                padding: 0 10px;
-                gap: 10px;
-            }
-            
-            .text-content {
-                grid-column: span 1;
-                grid-column-start: 4;
-            }
-            
-            .footer-container {
-                padding: 0 10px;
-                gap: 10px;
-                height: 45px;
-            }
-            
-            .footer {
-                grid-column: span 8;
-                font-size: 13px;
-            }
-            
-            .time-display {
-                grid-column: span 1;
-                grid-column-start: 4;
-                font-size: 13px;
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 0 0 30px;
             }
         }
 
@@ -699,18 +470,14 @@
     <div class="custom-cursor" id="customCursor"></div>
     <canvas id="drawingCanvas"></canvas>
     <div class="drawing-cursor" id="drawingCursor"></div>
-    
-    <!-- Header with 12-column grid -->
-    <header class="header-container">
-        <a href="#" class="logo" id="logo">Georgii</a>
-        <nav class="navigation-lots">
-            <a href="#" class="nav-link">Lots of Letters</a>
-            <a href="#" class="nav-link">Mind</a>
-            <a href="#" class="nav-link">Commerce</a>
-            <a href="#" class="nav-link">About me</a>
-        </nav>
-    </header>
-    <section class="content-left">
+    <a href="#" class="logo" id="logo">Georgii</a>
+    <nav class="navigation">
+        <a href="#" class="nav-link">Lots of Letters</a>
+        <a href="#" class="nav-link">Mind</a>
+        <a href="#" class="nav-link">Commerce</a>
+        <a href="#" class="nav-link">About me</a>
+    </nav>
+    <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
     </section>
 
@@ -722,9 +489,8 @@
     <main class="main-content">
         <div class="description-container">
             <div class="text-content">
-                <p>Welcome to the extraordinary world of visual storytelling, where every pixel carries profound meaning and each image becomes a gateway to deeper understanding of our contemporary existence. As a passionate creator and design explorer, I dedicate my life to crafting visual narratives that transcend ordinary boundaries and challenge conventional perspectives on art, design, and human experience.</p>
-                <p>My work represents a continuous journey through the labyrinth of modern visual culture, constantly seeking new ways to interpret and represent the complex realities of our time. Through careful observation and meticulous attention to detail, I strive to create images that not only capture moments but also evoke emotions, provoke thoughts, and inspire conversations about the world we inhabit.</p>
-                <p>Collaboration lies at the heart of my creative process. I am deeply committed to working with visionary studios, innovative designers, forward-thinking brands, and anyone who shares my passion for creating meaningful visual content that tells authentic stories and connects with audiences on a profound level. Together, we can explore uncharted territories of creative expression and push the boundaries of what visual communication can achieve in our rapidly evolving digital landscape.</p>
+                <p>Life and design explorer, pictures with meaning and quality creator.</p>
+                <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
             </div>
         </div>
     </main>
@@ -738,14 +504,13 @@
         </video>
     </div>
     
-    <!-- Footer with 12-column grid -->
-    <footer class="footer-container">
-        <div class="footer">
-            <div>sapozhkov.george@gmail.com</div>
-            <div>@georgiisapozhkov</div>
-        </div>
-        <div class="time-display" id="timeDisplay">"Le vent se lève! il faut tenter de vivre!"</div>
+    <footer class="footer">
+        <div>sapozhkov.george@gmail.com</div>
+        <div>@georgiisapozhkov</div>
     </footer>
+    
+    <!-- Time display positioned at bottom right -->
+    <div class="time-display" id="timeDisplay">End of the day <span id="timeLeft"></span></div>
 </body>
 <script>
     (function(){
@@ -1062,7 +827,7 @@
         // Event listeners are now attached dynamically when switching tabs
 
         // Navigation and Gallery functionality
-        let navLinks;
+        const navLinks = document.querySelectorAll('.nav-link');
         const mainContent = document.querySelector('.content-left');
         const lettersGallery = document.getElementById('letters-gallery');
         const imageModal = document.getElementById('imageModal');
@@ -1232,9 +997,8 @@
             // Update text content to new home page description
             const textContent = document.querySelector('.text-content');
             textContent.innerHTML = `
-                <p>Welcome to the extraordinary world of visual storytelling, where every pixel carries profound meaning and each image becomes a gateway to deeper understanding of our contemporary existence. As a passionate creator and design explorer, I dedicate my life to crafting visual narratives that transcend ordinary boundaries and challenge conventional perspectives on art, design, and human experience.</p>
-                <p>My work represents a continuous journey through the labyrinth of modern visual culture, constantly seeking new ways to interpret and represent the complex realities of our time. Through careful observation and meticulous attention to detail, I strive to create images that not only capture moments but also evoke emotions, provoke thoughts, and inspire conversations about the world we inhabit.</p>
-                <p>Collaboration lies at the heart of my creative process. I am deeply committed to working with visionary studios, innovative designers, forward-thinking brands, and anyone who shares my passion for creating meaningful visual content that tells authentic stories and connects with audiences on a profound level. Together, we can explore uncharted territories of creative expression and push the boundaries of what visual communication can achieve in our rapidly evolving digital landscape.</p>
+                <p>Life and design explorer, pictures with meaning and quality creator.</p>
+                <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
             `;
             
             // Remove active class from all nav links
@@ -1290,7 +1054,8 @@
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
-                // Load commerce content directly
+                // Clear any project images and back button
+                clearCommerceProject();
                 updateCommerceContent();
             } else if (tabName === 'About me') {
                 mainContent.style.display = 'block';
@@ -1302,7 +1067,7 @@
                 mainContent.style.display = 'block';
                 lettersGallery.style.display = 'none';
                 resetAllPapers();
-                // Load mind content directly
+                clearCommerceProject();
                 updateMindContent();
             }
             
@@ -1310,7 +1075,14 @@
             localStorage.setItem('activeTab', tabName);
         }
 
-        // Navigation handlers moved to DOMContentLoaded
+        // Navigation handlers
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const linkText = link.textContent.trim();
+                switchTab(linkText);
+            });
+        });
 
         // Preload images for better performance
         function preloadImages() {
@@ -1326,22 +1098,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
             
-            // Initialize navigation links
-            navLinks = document.querySelectorAll('.nav-link');
+            // Get saved tab from localStorage
+            const savedTab = localStorage.getItem('activeTab');
             
-            // Add navigation event listeners
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const linkText = link.textContent.trim();
-                    switchTab(linkText);
-                });
-            });
-            
-            // Clear localStorage to force fresh start
-            localStorage.clear();
-            
-            // Don't force home page - let user navigate
+            if (savedTab && savedTab !== 'Home') {
+                // Restore the saved tab
+                switchTab(savedTab);
+            } else {
+                // Show home page if no saved tab or if saved tab is Home
+                showHomePage();
+            }
         });
 
         // Function to update Commerce content with same layout as Mind
@@ -1554,41 +1320,6 @@
             gallery.style.backgroundColor = '#ffffff';
             gallery.style.overflowY = 'auto';
             
-            // Create project header with metadata
-            const projectHeader = document.createElement('div');
-            projectHeader.className = 'project-header';
-            
-            const projectMetadata = document.createElement('div');
-            projectMetadata.className = 'project-metadata';
-            
-            // Add project metadata
-            const clientItem = document.createElement('div');
-            clientItem.className = 'metadata-item';
-            clientItem.innerHTML = `
-                <div class="metadata-label">Client</div>
-                <div class="metadata-value">${projectData.client || 'Personal'}</div>
-            `;
-            
-            const projectItem = document.createElement('div');
-            projectItem.className = 'metadata-item';
-            projectItem.innerHTML = `
-                <div class="metadata-label">Project</div>
-                <div class="metadata-value">${projectName}</div>
-            `;
-            
-            const yearItem = document.createElement('div');
-            yearItem.className = 'metadata-item';
-            yearItem.innerHTML = `
-                <div class="metadata-label">Year</div>
-                <div class="metadata-value">${projectData.year || '2024'}</div>
-            `;
-            
-            projectMetadata.appendChild(clientItem);
-            projectMetadata.appendChild(projectItem);
-            projectMetadata.appendChild(yearItem);
-            projectHeader.appendChild(projectMetadata);
-            gallery.appendChild(projectHeader);
-            
             // Project data structure: { files: [], layouts: [], basePath: '' }
             const files = projectData.files || [];
             const layouts = projectData.layouts || [];
@@ -1752,8 +1483,6 @@
         // Function to load Angry Masseur project (Commerce)
         function loadAngryMasseurImages() {
             const projectData = {
-                client: 'Poool',
-                year: '2023',
                 files: [
                     'Hood_two_screens.mp4',
                     'Icons.mp4', 
@@ -1775,8 +1504,6 @@
         // Function to load Area 117 project (Mind)
         function loadArea117Images() {
             const projectData = {
-                client: 'Personal',
-                year: '2024',
                 files: [
                     'area117_1.jpg',
                     'area117_2.jpg',
@@ -1798,8 +1525,6 @@
         // Function to load Yoki project (Mind)
         function loadYokiImages() {
             const projectData = {
-                client: 'Personal',
-                year: '2024',
                 files: [
                     'yoki_1.mp4',
                     'yoki_2.jpg',
@@ -1819,8 +1544,6 @@
         // Function to load Red Building project (Mind)
         function loadRedBuildingImages() {
             const projectData = {
-                client: 'Personal',
-                year: '2024',
                 files: [
                     'red_building_1.jpg',
                     'red_building_2.jpg',
@@ -1840,8 +1563,6 @@
         // Function to load Ruins project (Mind)
         function loadRuinsImages() {
             const projectData = {
-                client: 'Personal',
-                year: '2024',
                 files: [
                     'ruins_1.mp4',
                     'ruins_2.jpg',
@@ -2126,7 +1847,7 @@
                     textContent.innerHTML = '<p>Here you can see my commercial projects<br>and collaborations with various clients.</p><p>Each project represents a unique challenge<br>and creative solution tailored to specific<br>brand needs and market requirements.</p><p>I work closely with clients to understand<br>their vision and translate it into compelling<br>visual narratives that resonate with their<br>target audience.</p>';
                     break;
                 case 'About me':
-                    textContent.innerHTML = '<p>Welcome to the extraordinary world of visual storytelling, where every pixel carries profound meaning and each image becomes a gateway to deeper understanding of our contemporary existence. As a passionate creator and design explorer, I dedicate my life to crafting visual narratives that transcend ordinary boundaries and challenge conventional perspectives on art, design, and human experience.</p><p>My work represents a continuous journey through the labyrinth of modern visual culture, constantly seeking new ways to interpret and represent the complex realities of our time. Through careful observation and meticulous attention to detail, I strive to create images that not only capture moments but also evoke emotions, provoke thoughts, and inspire conversations about the world we inhabit.</p><p>Collaboration lies at the heart of my creative process. I am deeply committed to working with visionary studios, innovative designers, forward-thinking brands, and anyone who shares my passion for creating meaningful visual content that tells authentic stories and connects with audiences on a profound level. Together, we can explore uncharted territories of creative expression and push the boundaries of what visual communication can achieve in our rapidly evolving digital landscape.</p>';
+                    textContent.innerHTML = '<p>Life and design explorer, pictures with meaning and quality creator.</p><p>I\'m interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I\'m open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>';
                     break;
                 case 'Mind':
                     // Mind content (original description)
@@ -2644,52 +2365,12 @@
         return timezone;
     }
 
-    // Quotes in different languages with proper quotation marks
-    const quotes = [
-        "«Ветер крепчает, значит жить старайся!»", // Russian - «»
-        "The wind rises! Live on!" // English - straight quotes
-    ];
-    
-    let currentQuoteIndex = 0;
-    
-    function changeQuote() {
-        const quoteElement = document.getElementById('timeDisplay');
-        if (!quoteElement) return;
-        
-        // Fade out
-        quoteElement.classList.add('fade-out');
-        
-        setTimeout(() => {
-            // Change text
-            currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
-            quoteElement.textContent = quotes[currentQuoteIndex];
-            
-            // Fade in
-            quoteElement.classList.remove('fade-out');
-            quoteElement.classList.add('fade-in');
-            
-            setTimeout(() => {
-                quoteElement.classList.remove('fade-in');
-            }, 2000);
-        }, 2000); // Wait for fade out to complete
-    }
-
-    // Initialize quotes and location
+    // Initialize time and location
     document.addEventListener('DOMContentLoaded', function() {
         getUserLocation();
-        
-        // Set initial quote
-        const quoteElement = document.getElementById('timeDisplay');
-        if (quoteElement) {
-            quoteElement.textContent = quotes[currentQuoteIndex];
-            quoteElement.classList.add('fade-in');
-            setTimeout(() => {
-                quoteElement.classList.remove('fade-in');
-            }, 2000);
-        }
-        
-        // Change quote every minute (60000ms)
-        setInterval(changeQuote, 60000);
+        updateTimeLeft();
+        setInterval(updateTimeLeft, 1); // Update every 1ms for smooth milliseconds
     });
 </script>
 </html>
+
