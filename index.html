@@ -581,7 +581,7 @@
         /* Smooth fade-in/out for preview elements */
         .preview-video, .preview-image {
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.15s ease-in-out;
         }
 
         .preview-video.fade-in, .preview-image.fade-in {
@@ -1016,7 +1016,7 @@
             setTimeout(() => {
                 previewVideos.forEach(video => video.remove());
                 previewImages.forEach(img => img.remove());
-            }, 300); // Match the CSS transition duration
+            }, 150); // Match the CSS transition duration
             
             // Clear rects array
             rects = [];
@@ -2377,7 +2377,7 @@
                     img.style.objectFit = 'contain'; // Use contain to preserve aspect ratio
                     img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
-                    img.style.transition = 'none'; // Disable transitions to prevent flicker
+                    img.style.transition = 'opacity 0.15s ease-in-out'; // Enable fade transitions
                     
                     // Remove old image only after new one is ready
                     if (rect.imageElement) {
