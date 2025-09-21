@@ -71,7 +71,7 @@
         /* Header Grid System */
         .header-grid {
             position: fixed;
-            top: 0;
+            top: 10px;
             left: 17px;
             right: 17px;
             display: grid;
@@ -79,7 +79,6 @@
             gap: 20px;
             z-index: 1004;
             align-items: center;
-            padding-top: 17px;
         }
 
         /* Logo in grid */
@@ -103,19 +102,22 @@
 
         /* Navigation in header content */
         .navigation {
+            position: fixed;
+            top: 0;
+            right: 17px;
             display: flex;
             gap: 40px;
             align-items: center;
             flex-shrink: 0;
+            padding-top: 17px;
+            z-index: 1005;
         }
 
-        /* Description and Navigation container */
+        /* Description container */
         .header-content {
             grid-column: 6 / 13; /* Spans 7 columns from column 6 to edge */
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 40px;
         }
 
         /* Description in header grid */
@@ -155,7 +157,7 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 187px; }
+        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 170px; }
 
         .catalog-grid {
             display: grid;
@@ -399,7 +401,6 @@
         @media (max-width: 1024px) {
             .header-grid {
                 gap: 15px;
-                padding-top: 15px;
             }
             
             .logo {
@@ -409,7 +410,12 @@
             
             .header-content {
                 grid-column: 4 / 13; /* Adjust content area */
+            }
+            
+            .navigation {
                 gap: 30px;
+                padding-top: 15px;
+                right: 15px;
             }
             
             .footer-grid {
@@ -424,7 +430,6 @@
         @media (max-width: 768px) {
             .header-grid {
                 gap: 10px;
-                padding-top: 10px;
             }
             
             .logo {
@@ -434,9 +439,7 @@
             
             .header-content {
                 grid-column: 6 / 13; /* Expand content area */
-                flex-direction: column;
                 align-items: flex-start;
-                gap: 15px;
             }
             
             .header-description {
@@ -445,6 +448,8 @@
             
             .navigation {
                 gap: 20px;
+                padding-top: 10px;
+                right: 10px;
             }
             
             .nav-link {
@@ -464,7 +469,6 @@
             .header-grid {
                 grid-template-columns: 1fr; /* Single column layout */
                 gap: 15px;
-                padding-top: 15px;
             }
             
             .logo {
@@ -487,6 +491,8 @@
                 justify-content: center;
                 flex-wrap: wrap;
                 gap: 15px;
+                padding-top: 15px;
+                right: 15px;
             }
             
             .footer-grid {
@@ -571,14 +577,14 @@
                     <p>Life and design explorer, pictures with meaning and quality creator.<br>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
                 </div>
             </div>
-            <nav class="navigation">
-                <a href="#" class="nav-link">Lots of Letters</a>
-                <a href="#" class="nav-link">Mind</a>
-                <a href="#" class="nav-link">Commerce</a>
-                <a href="#" class="nav-link">About me</a>
-            </nav>
         </div>
     </div>
+    <nav class="navigation">
+        <a href="#" class="nav-link">Lots of Letters</a>
+        <a href="#" class="nav-link">Mind</a>
+        <a href="#" class="nav-link">Commerce</a>
+        <a href="#" class="nav-link">About me</a>
+    </nav>
     <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
     </section>
