@@ -1432,7 +1432,7 @@
                     });
 
                     cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group with longer delay
+                        // Check if mouse left all cells in this group
                         hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(angryMasseurCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
@@ -1442,7 +1442,7 @@
                                 stop();
                             }
                             hoverTimeout = null;
-                        }, 150); // Increased delay to 150ms
+                        }, 10); // Minimal delay
                     });
                 });
             }
@@ -1471,7 +1471,7 @@
                     });
 
                     cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group with longer delay
+                        // Check if mouse left all cells in this group
                         hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(typeOclockCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
@@ -1481,7 +1481,7 @@
                                 stop();
                             }
                             hoverTimeout = null;
-                        }, 150); // Increased delay to 150ms
+                        }, 10); // Minimal delay
                     });
                 });
             }
