@@ -580,8 +580,9 @@
             transition: opacity 0.2s ease;
         }
 
-        /* Project Gallery Styles */
+        /* Project Gallery Styles - 12-column grid */
         .project-gallery {
+            width: 100%;
             padding: 20px;
         }
 
@@ -1911,10 +1912,6 @@
 
         // Function to load project gallery with 12-column grid layout
         function loadProjectGallery(projectName, projectData) {
-            // Hide the catalog grid completely
-            const contentLeft = document.querySelector('.content-left');
-            contentLeft.style.display = 'none';
-            
             // Create project gallery container
             const projectGallery = document.createElement('div');
             projectGallery.className = 'project-gallery';
@@ -1939,9 +1936,10 @@
                 </div>
             `;
             
-            // Add to main content area
-            const mainContent = document.querySelector('.main-content');
-            mainContent.appendChild(projectGallery);
+            // Replace content-left with gallery
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = '';
+            contentLeft.appendChild(projectGallery);
             
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1949,16 +1947,6 @@
 
         // Function to show Commerce page (for back button)
         function showCommercePage() {
-            // Remove project gallery
-            const projectGallery = document.querySelector('.project-gallery');
-            if (projectGallery) {
-                projectGallery.remove();
-            }
-            
-            // Show catalog again
-            const contentLeft = document.querySelector('.content-left');
-            contentLeft.style.display = 'block';
-            
             updateCommerceContent();
         }
 
