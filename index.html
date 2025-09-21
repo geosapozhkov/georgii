@@ -568,12 +568,14 @@
         }
 
         /* Hover effect for project rows - all cells in a row change color together */
-        .catalog-grid:hover .cell[data-preview="angry-masseur"] {
+        .cell[data-preview="angry-masseur"]:hover ~ .cell[data-preview="angry-masseur"],
+        .cell[data-preview="angry-masseur"]:hover {
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
 
-        .catalog-grid:hover .cell[data-preview="type-oclock"] {
+        .cell[data-preview="type-oclock"]:hover ~ .cell[data-preview="type-oclock"],
+        .cell[data-preview="type-oclock"]:hover {
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
