@@ -745,52 +745,51 @@
                     };
                 });
             } else if (previewId === 'type-oclock') {
-                // Create preview for Type O'clock project
-                const imageFiles = [
-                    'cover_01.png',
-                    'cover_1920_1080_0600.png'
-                ];
+                // Create preview for Type O'clock project - single video like other projects
+                const videoFile = 'typoclock_1920_1080.mp4';
                 
-                // Clear existing preview images
-                document.querySelectorAll('.preview-image').forEach(img => img.remove());
+                // Clear existing preview videos
+                document.querySelectorAll('.preview-video').forEach(video => video.remove());
                 
-                rects = new Array(2).fill(0).map((_, i) => {
-                    const imageFile = imageFiles[i];
+                rects = new Array(1).fill(0).map((_, i) => {
+                    // Create actual video element for preview
+                    const video = document.createElement('video');
+                    video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/CoFo/${videoFile}`;
+                    video.className = 'preview-video';
+                    video.muted = true;
+                    video.loop = true;
+                    video.autoplay = true;
+                    video.preload = 'auto';
+                    video.style.position = 'fixed';
+                    video.style.zIndex = '1007';
+                    video.style.pointerEvents = 'none';
+                    video.style.border = 'none';
+                    video.style.borderRadius = '0';
+                    video.style.objectFit = 'contain';
                     
-                    // Create actual image element for preview
-                    const img = document.createElement('img');
-                    img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/CoFo/${imageFile}`;
-                    img.className = 'preview-image';
-                    img.style.position = 'fixed';
-                    img.style.zIndex = '1007';
-                    img.style.pointerEvents = 'none';
-                    img.style.border = 'none';
-                    img.style.borderRadius = '0';
-                    img.style.objectFit = 'contain';
-                    
-                    // Random width, let image determine its own height based on original proportions
-                    const w = rnd(300, 500);
-                    const h = 'auto'; // Let image maintain its original aspect ratio
+                    // Random dimensions
+                    const w = rnd(400, 600);
+                    const h = Math.round(w * 0.5625); // 16:9 aspect ratio
                     
                     const x = rnd(0, window.innerWidth - w);
-                    const y = rnd(0, window.innerHeight - 400); // Use max expected height
+                    const y = rnd(0, window.innerHeight - h);
                     
-                    img.style.width = w + 'px';
-                    img.style.height = h;
-                    img.style.left = x + 'px';
-                    img.style.top = y + 'px';
+                    video.style.width = w + 'px';
+                    video.style.height = h + 'px';
+                    video.style.left = x + 'px';
+                    video.style.top = y + 'px';
                     
-                    document.body.appendChild(img);
+                    document.body.appendChild(video);
                     
                     return {
                         x: x,
                         y: y,
                         w: w,
-                        h: 400, // Use estimated height for collision detection
-                        vx: rnd(-0.5, 0.5) || 0.3,
-                        vy: rnd(-0.5, 0.5) || -0.2,
-                        imageElement: img,
-                        type: 'image'
+                        h: h,
+                        vx: rnd(-0.7, 0.7) || 0.5,
+                        vy: rnd(-0.7, 0.7) || -0.4,
+                        videoElement: video,
+                        type: 'video'
                     };
                 });
             } else {
@@ -1397,33 +1396,23 @@
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Group cells by preview ID to handle them as single units
-            const previewGroups = {};
-            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                const previewId = cell.dataset.preview;
-                if (!previewGroups[previewId]) {
-                    previewGroups[previewId] = [];
-                }
-                previewGroups[previewId].push(cell);
-            });
-
-            // Add event listeners to each group
-            Object.keys(previewGroups).forEach(previewId => {
-                const cells = previewGroups[previewId];
+            // Handle Angry Masseur with grouped logic - animation continues across cells
+            const angryMasseurCells = document.querySelectorAll('.cell[data-preview="angry-masseur"]');
+            if (angryMasseurCells.length > 0) {
                 let isHovering = false;
 
-                cells.forEach(cell => {
+                angryMasseurCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
                         if (!isHovering) {
                             isHovering = true;
-                            start(previewId);
+                            start('angry-masseur');
                         }
                     });
 
                     cell.addEventListener('mouseleave', () => {
                         // Check if mouse left all cells in this group
                         setTimeout(() => {
-                            const stillHovering = cells.some(c => c.matches(':hover'));
+                            const stillHovering = Array.from(angryMasseurCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
                                 isHovering = false;
                                 stop();
@@ -1431,7 +1420,33 @@
                         }, 10);
                     });
                 });
-            });
+            }
+
+            // Handle Type O'clock with grouped logic
+            const typeOclockCells = document.querySelectorAll('.cell[data-preview="type-oclock"]');
+            if (typeOclockCells.length > 0) {
+                let isHovering = false;
+
+                typeOclockCells.forEach(cell => {
+                    cell.addEventListener('mouseenter', () => {
+                        if (!isHovering) {
+                            isHovering = true;
+                            start('type-oclock');
+                        }
+                    });
+
+                    cell.addEventListener('mouseleave', () => {
+                        // Check if mouse left all cells in this group
+                        setTimeout(() => {
+                            const stillHovering = Array.from(typeOclockCells).some(c => c.matches(':hover'));
+                            if (!stillHovering) {
+                                isHovering = false;
+                                stop();
+                            }
+                        }, 10);
+                    });
+                });
+            }
 
             // Handle Commerce catalog clicks - show project gallery
             const rightText = document.querySelector('.text-content');
@@ -1815,40 +1830,10 @@
 
         // Function to attach event listeners for About me catalog
         function attachAboutMeEventListeners() {
-            // Group cells by preview ID to handle them as single units
-            const previewGroups = {};
+            // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                const previewId = cell.dataset.preview;
-                if (!previewGroups[previewId]) {
-                    previewGroups[previewId] = [];
-                }
-                previewGroups[previewId].push(cell);
-            });
-
-            // Add event listeners to each group
-            Object.keys(previewGroups).forEach(previewId => {
-                const cells = previewGroups[previewId];
-                let isHovering = false;
-
-                cells.forEach(cell => {
-                    cell.addEventListener('mouseenter', () => {
-                        if (!isHovering) {
-                            isHovering = true;
-                            start(previewId);
-                        }
-                    });
-
-                    cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group
-                        setTimeout(() => {
-                            const stillHovering = cells.some(c => c.matches(':hover'));
-                            if (!stillHovering) {
-                                isHovering = false;
-                                stop();
-                            }
-                        }, 10);
-                    });
-                });
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseleave', stop);
             });
 
             // Handle About me catalog clicks - show project galleries with 12-column grid
@@ -2041,40 +2026,12 @@
 
         // Function to attach event listeners for Mind catalog
         function attachMindEventListeners() {
-            // Group cells by preview ID to handle them as single units
-            const previewGroups = {};
-            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                const previewId = cell.dataset.preview;
-                if (!previewGroups[previewId]) {
-                    previewGroups[previewId] = [];
-                }
-                previewGroups[previewId].push(cell);
-            });
-
-            // Add event listeners to each group
-            Object.keys(previewGroups).forEach(previewId => {
-                const cells = previewGroups[previewId];
-                let isHovering = false;
-
-                cells.forEach(cell => {
-                    cell.addEventListener('mouseenter', () => {
-                        if (!isHovering) {
-                            isHovering = true;
-                            start(previewId);
-                        }
-                    });
-
-                    cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group
-                        setTimeout(() => {
-                            const stillHovering = cells.some(c => c.matches(':hover'));
-                            if (!stillHovering) {
-                                isHovering = false;
-                                stop();
-                            }
-                        }, 10);
-                    });
-                });
+            // Trigger preview only on catalog links, not empty cells
+            document.querySelectorAll('.catalog-link').forEach(link=>{
+                const cell = link.closest('.cell');
+                if (!cell) return;
+                link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                link.addEventListener('mouseleave', stop);
             });
 
             // Handle Mind catalog clicks - show project galleries with 12-column grid
