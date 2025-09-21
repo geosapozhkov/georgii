@@ -566,6 +566,16 @@
             background-color: #ffffff;
             border: 2px solid #000000;
         }
+
+        /* Make catalog cells with data-preview clickable */
+        .cell[data-preview] {
+            cursor: pointer !important;
+        }
+
+        .cell[data-preview]:hover {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
     </style>
 </head>
 <body>
@@ -1400,9 +1410,16 @@
             const angryMasseurCells = document.querySelectorAll('.cell[data-preview="angry-masseur"]');
             if (angryMasseurCells.length > 0) {
                 let isHovering = false;
+                let hoverTimeout = null;
 
                 angryMasseurCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
+                        // Clear any pending stop timeout
+                        if (hoverTimeout) {
+                            clearTimeout(hoverTimeout);
+                            hoverTimeout = null;
+                        }
+                        
                         if (!isHovering) {
                             isHovering = true;
                             start('angry-masseur');
@@ -1410,14 +1427,15 @@
                     });
 
                     cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group
-                        setTimeout(() => {
+                        // Check if mouse left all cells in this group with longer delay
+                        hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(angryMasseurCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
                                 isHovering = false;
                                 stop();
                             }
-                        }, 10);
+                            hoverTimeout = null;
+                        }, 50); // Increased delay to 50ms
                     });
                 });
             }
@@ -1426,9 +1444,16 @@
             const typeOclockCells = document.querySelectorAll('.cell[data-preview="type-oclock"]');
             if (typeOclockCells.length > 0) {
                 let isHovering = false;
+                let hoverTimeout = null;
 
                 typeOclockCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
+                        // Clear any pending stop timeout
+                        if (hoverTimeout) {
+                            clearTimeout(hoverTimeout);
+                            hoverTimeout = null;
+                        }
+                        
                         if (!isHovering) {
                             isHovering = true;
                             start('type-oclock');
@@ -1436,64 +1461,80 @@
                     });
 
                     cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group
-                        setTimeout(() => {
+                        // Check if mouse left all cells in this group with longer delay
+                        hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(typeOclockCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
                                 isHovering = false;
                                 stop();
                             }
-                        }, 10);
+                            hoverTimeout = null;
+                        }, 50); // Increased delay to 50ms
                     });
                 });
             }
 
             // Handle Commerce catalog clicks - show project gallery
             const rightText = document.querySelector('.text-content');
-            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             
+            // Function to handle project click
+            function handleProjectClick(projectName, description) {
+                // Hide catalog and show project gallery
+                const contentLeft = document.querySelector('.content-left');
+                contentLeft.style.display = 'none';
+                
+                // Show project description
+                if (description) {
+                    rightText.innerHTML = '<p>'+description.replace(/\n/g,'</p><p>')+'</p>';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                
+                // Load appropriate project gallery
+                if (projectName === 'Angry Masseur') {
+                    loadAngryMasseurImages();
+                } else if (projectName === 'Type O\'clock') {
+                    loadTypeOclockImages();
+                }
+                
+                // dim all catalog links to 25% opacity; reset others to 100%
+                const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+                allLinks.forEach(l=>l.classList.remove('dimmed'));
+                allLinks.forEach(l=>l.classList.add('dimmed'));
+                
+                // mark this preview as active to disable its animated hover
+                activePreviewId = projectName.toLowerCase().replace(' ', '-');
+            }
+            
+            // Handle clicks on catalog links (project names)
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             allLinks.forEach(a=>{
                 a.addEventListener('click', (e)=>{
                     e.preventDefault();
                     
                     const projectName = a.textContent.trim();
+                    const desc = a.getAttribute('data-description');
                     
-                    if (projectName === 'Angry Masseur') {
-                        // Hide catalog and show project gallery
-                        const contentLeft = document.querySelector('.content-left');
-                        contentLeft.style.display = 'none';
+                    handleProjectClick(projectName, desc);
+                });
+            });
+            
+            // Handle clicks on all project cells (client, year, etc.)
+            document.querySelectorAll('.cell[data-preview]').forEach(cell => {
+                cell.addEventListener('click', (e) => {
+                    const previewId = cell.dataset.preview;
+                    
+                    // Find the project link in the same project row
+                    const catalogGrid = cell.closest('.catalog-grid');
+                    const projectLink = catalogGrid.querySelector(`.cell[data-preview="${previewId}"] .catalog-link`);
+                    
+                    if (projectLink) {
+                        e.preventDefault();
                         
-                        // Show project description
-                        const desc = a.getAttribute('data-description');
-                        if (desc) {
-                            rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
+                        const projectName = projectLink.textContent.trim();
+                        const desc = projectLink.getAttribute('data-description');
                         
-                        // Load project gallery with 12-column grid
-                        loadAngryMasseurImages();
-                    } else if (projectName === 'Type O\'clock') {
-                        // Hide catalog and show project gallery
-                        const contentLeft = document.querySelector('.content-left');
-                        contentLeft.style.display = 'none';
-                        
-                        // Show project description
-                        const desc = a.getAttribute('data-description');
-                        if (desc) {
-                            rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                        
-                        // Load project gallery with 12-column grid
-                        loadTypeOclockImages();
+                        handleProjectClick(projectName, desc);
                     }
-                    
-                    // dim only clicked catalog name to 25% opacity; reset others to 100%
-                    allLinks.forEach(l=>l.classList.remove('dimmed'));
-                    a.classList.add('dimmed');
-                    // mark this preview as active to disable its animated hover
-                    const parentCell = a.closest('.cell');
-                    if (parentCell) activePreviewId = parentCell.dataset.preview || null;
                 });
             });
         }
