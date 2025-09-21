@@ -71,7 +71,7 @@
         /* Header Grid System */
         .header-grid {
             position: fixed;
-            top: 10px;
+            top: 0;
             left: 17px;
             right: 17px;
             display: grid;
@@ -79,6 +79,7 @@
             gap: 20px;
             z-index: 1004;
             align-items: center;
+            padding-top: 17px;
         }
 
         /* Logo in grid */
@@ -154,7 +155,7 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 170px; }
+        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 187px; }
 
         .catalog-grid {
             display: grid;
@@ -398,6 +399,7 @@
         @media (max-width: 1024px) {
             .header-grid {
                 gap: 15px;
+                padding-top: 15px;
             }
             
             .logo {
@@ -422,6 +424,7 @@
         @media (max-width: 768px) {
             .header-grid {
                 gap: 10px;
+                padding-top: 10px;
             }
             
             .logo {
@@ -461,6 +464,7 @@
             .header-grid {
                 grid-template-columns: 1fr; /* Single column layout */
                 gap: 15px;
+                padding-top: 15px;
             }
             
             .logo {
