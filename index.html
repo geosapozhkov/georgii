@@ -578,6 +578,20 @@
             transition: opacity 0.2s ease;
         }
 
+        /* Smooth fade-in/out for preview elements */
+        .preview-video, .preview-image {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .preview-video.fade-in, .preview-image.fade-in {
+            opacity: 1;
+        }
+
+        .preview-video.fade-out, .preview-image.fade-out {
+            opacity: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -745,6 +759,11 @@
                     
                     document.body.appendChild(video);
                     
+                    // Add fade-in effect after a short delay
+                    setTimeout(() => {
+                        video.classList.add('fade-in');
+                    }, 50);
+                    
                     return {
                         x: x,
                         y: y,
@@ -792,6 +811,11 @@
                     video.style.top = y + 'px';
                     
                     document.body.appendChild(video);
+                    
+                    // Add fade-in effect after a short delay
+                    setTimeout(() => {
+                        video.classList.add('fade-in');
+                    }, 50);
                     
                     return {
                         x: x,
@@ -972,16 +996,27 @@
             canvas.style.display = 'none';
             cancelAnimationFrame(animationId);
             
-            // Remove all preview video elements
+            // Add fade-out effect to all preview elements
             const previewVideos = document.querySelectorAll('.preview-video');
-            previewVideos.forEach(video => video.remove());
+            const previewImages = document.querySelectorAll('.preview-image');
             
-            // Remove all preview images
-            document.querySelectorAll('img[style*="position: fixed"]').forEach(img => {
-                if (img.style.zIndex === '1007' && img.style.pointerEvents === 'none') {
-                    img.remove();
-                }
+            // Add fade-out class to videos
+            previewVideos.forEach(video => {
+                video.classList.remove('fade-in');
+                video.classList.add('fade-out');
             });
+            
+            // Add fade-out class to images
+            previewImages.forEach(img => {
+                img.classList.remove('fade-in');
+                img.classList.add('fade-out');
+            });
+            
+            // Remove elements after fade-out transition completes
+            setTimeout(() => {
+                previewVideos.forEach(video => video.remove());
+                previewImages.forEach(img => img.remove());
+            }, 300); // Match the CSS transition duration
             
             // Clear rects array
             rects = [];
@@ -1406,48 +1441,74 @@
             attachCommerceEventListeners();
         }
 
+        // Global state for project hover management
+        let currentHoveringProject = null;
+        let projectHoverStates = {};
+
+        // Function to reset all project hover states
+        function resetAllProjectStates() {
+            // Stop any active animations
+            stop();
+            
+            // Remove all hover effects
+            document.querySelectorAll('.cell[data-preview]').forEach(c => c.classList.remove('group-hover'));
+            
+            // Reset all project states
+            Object.keys(projectHoverStates).forEach(projectId => {
+                if (projectHoverStates[projectId].hoverTimeout) {
+                    clearTimeout(projectHoverStates[projectId].hoverTimeout);
+                }
+                projectHoverStates[projectId].isHovering = false;
+                projectHoverStates[projectId].hoverTimeout = null;
+            });
+            
+            currentHoveringProject = null;
+        }
+
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
             // Handle Angry Masseur with grouped logic - animation continues across cells
             const angryMasseurCells = document.querySelectorAll('.cell[data-preview="angry-masseur"]');
             if (angryMasseurCells.length > 0) {
-                let isHovering = false;
-                let hoverTimeout = null;
+                // Initialize state for this project
+                projectHoverStates['angry-masseur'] = {
+                    isHovering: false,
+                    hoverTimeout: null
+                };
 
                 angryMasseurCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
-                        // Clear any pending stop timeout
-                        if (hoverTimeout) {
-                            clearTimeout(hoverTimeout);
-                            hoverTimeout = null;
-                        }
+                        // Reset all other projects first
+                        resetAllProjectStates();
                         
-                        // Force stop any other animations first
-                        stop();
+                        const state = projectHoverStates['angry-masseur'];
                         
                         // Add group hover effect to all cells in this project
                         angryMasseurCells.forEach(c => c.classList.add('group-hover'));
                         
-                        // Remove hover effect from other projects
-                        document.querySelectorAll('.cell[data-preview="type-oclock"]').forEach(c => c.classList.remove('group-hover'));
-                        
-                        if (!isHovering) {
-                            isHovering = true;
+                        if (!state.isHovering) {
+                            state.isHovering = true;
+                            currentHoveringProject = 'angry-masseur';
                             start('angry-masseur');
                         }
                     });
 
                     cell.addEventListener('mouseleave', () => {
+                        const state = projectHoverStates['angry-masseur'];
+                        
                         // Check if mouse left all cells in this group
-                        hoverTimeout = setTimeout(() => {
+                        state.hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(angryMasseurCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
                                 // Remove group hover effect from all cells
                                 angryMasseurCells.forEach(c => c.classList.remove('group-hover'));
-                                isHovering = false;
-                                stop();
+                                state.isHovering = false;
+                                if (currentHoveringProject === 'angry-masseur') {
+                                    stop();
+                                    currentHoveringProject = null;
+                                }
                             }
-                            hoverTimeout = null;
+                            state.hoverTimeout = null;
                         }, 10); // Minimal delay
                     });
                 });
@@ -1456,43 +1517,45 @@
             // Handle Type O'clock with grouped logic
             const typeOclockCells = document.querySelectorAll('.cell[data-preview="type-oclock"]');
             if (typeOclockCells.length > 0) {
-                let isHovering = false;
-                let hoverTimeout = null;
+                // Initialize state for this project
+                projectHoverStates['type-oclock'] = {
+                    isHovering: false,
+                    hoverTimeout: null
+                };
 
                 typeOclockCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
-                        // Clear any pending stop timeout
-                        if (hoverTimeout) {
-                            clearTimeout(hoverTimeout);
-                            hoverTimeout = null;
-                        }
+                        // Reset all other projects first
+                        resetAllProjectStates();
                         
-                        // Force stop any other animations first
-                        stop();
+                        const state = projectHoverStates['type-oclock'];
                         
                         // Add group hover effect to all cells in this project
                         typeOclockCells.forEach(c => c.classList.add('group-hover'));
                         
-                        // Remove hover effect from other projects
-                        document.querySelectorAll('.cell[data-preview="angry-masseur"]').forEach(c => c.classList.remove('group-hover'));
-                        
-                        if (!isHovering) {
-                            isHovering = true;
+                        if (!state.isHovering) {
+                            state.isHovering = true;
+                            currentHoveringProject = 'type-oclock';
                             start('type-oclock');
                         }
                     });
 
                     cell.addEventListener('mouseleave', () => {
+                        const state = projectHoverStates['type-oclock'];
+                        
                         // Check if mouse left all cells in this group
-                        hoverTimeout = setTimeout(() => {
+                        state.hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(typeOclockCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
                                 // Remove group hover effect from all cells
                                 typeOclockCells.forEach(c => c.classList.remove('group-hover'));
-                                isHovering = false;
-                                stop();
+                                state.isHovering = false;
+                                if (currentHoveringProject === 'type-oclock') {
+                                    stop();
+                                    currentHoveringProject = null;
+                                }
                             }
-                            hoverTimeout = null;
+                            state.hoverTimeout = null;
                         }, 10); // Minimal delay
                     });
                 });
@@ -2265,6 +2328,7 @@
             function loadCurrentImage() {
                 // Create new image element first
                 const img = document.createElement('img');
+                img.className = 'preview-image'; // Add class for fade effects
                 img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/RND/${rndImages[rect.currentImageIndex]}`;
                 
                 // Wait for image to load to get its natural dimensions
@@ -2322,6 +2386,11 @@
                     
                     document.body.appendChild(img);
                     rect.imageElement = img;
+                    
+                    // Add fade-in effect after a short delay
+                    setTimeout(() => {
+                        img.classList.add('fade-in');
+                    }, 50);
                 };
                 
                 // If image fails to load, use fallback dimensions
