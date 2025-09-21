@@ -223,7 +223,7 @@
         .description-container {
             position: fixed;
             top: 13px;
-            left: calc(17px + 1250px);
+            left: calc(17px + 1150px);
             max-width: 600px;
             padding: 0;
             z-index: 1002;
@@ -368,19 +368,6 @@
             margin-bottom: 1px;
         }
 
-        /* Time display aligned with letter L in "Lots" */
-        .time-display {
-            position: fixed;
-            right: calc(17px + 190.5px);
-            bottom: 10px;
-            font-size: 15px;
-            color: #3C3C3C;
-            z-index: 1002;
-            text-align: left;
-            width: 200px;
-            line-height: 1;
-            margin: 0;
-        }
 
         /* Responsive design for different screen sizes */
         @media (max-width: 768px) {
@@ -501,8 +488,6 @@
         <div>@georgiisapozhkov</div>
     </footer>
     
-    <!-- Time display positioned at bottom right -->
-    <div class="time-display" id="timeDisplay"></div>
 </body>
 <script>
     (function(){
@@ -2312,42 +2297,6 @@
         }
     });
 
-    // Time and location functionality
-    function updateTimeLeft() {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        
-        const timeLeft = tomorrow - now;
-        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-        const milliseconds = Math.floor((timeLeft % 1000));
-        
-        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${milliseconds.toString().padStart(3, '0')}`;
-        
-        const timeElement = document.getElementById('timeLeft');
-        if (timeElement) {
-            timeElement.textContent = timeString;
-        }
-    }
-
-    // Get user's timezone only (no geolocation request)
-    function getUserLocation() {
-        // Try to get timezone from Intl API
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        console.log('User timezone:', timezone);
-        
-        return timezone;
-    }
-
-    // Initialize time and location
-    document.addEventListener('DOMContentLoaded', function() {
-        getUserLocation();
-        updateTimeLeft();
-        setInterval(updateTimeLeft, 1); // Update every 1ms for smooth milliseconds
-    });
 </script>
 </html>
 
