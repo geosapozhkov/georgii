@@ -68,16 +68,26 @@
         }
 
 
-        /* Logo */
-        .logo {
+        /* Header Grid System */
+        .header-grid {
             position: fixed;
             top: 10px;
             left: 17px;
+            right: 17px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            z-index: 1004;
+            align-items: center;
+        }
+
+        /* Logo in grid */
+        .logo {
+            grid-column: 1 / 4; /* Spans 3 columns */
             font-size: 72px;
             font-weight: bold;
             color: #3C3C3C;
             text-decoration: none;
-            z-index: 1004;
             cursor: pointer;
             transition: opacity 0.2s ease;
             line-height: 1;
@@ -90,14 +100,13 @@
             opacity: 0.7;
         }
 
-        /* Navigation */
+        /* Navigation in grid */
         .navigation {
-            position: fixed;
-            top: 9.5px;
-            right: 17px;
+            grid-column: 9 / 13; /* Spans 4 columns, aligned to right */
             display: flex;
             gap: 40px;
-            z-index: 1002;
+            justify-content: flex-end;
+            align-items: center;
         }
 
         .nav-link {
@@ -218,17 +227,23 @@
             object-fit: contain;
         }
 
-        /* Description container aligned with navigation */
-        /* Description container aligned with navigation */
+        /* Description container in grid system */
         .description-container {
             position: fixed;
-            top: 13px;
-            left: calc(17px + 1150px);
-            max-width: 600px;
-            padding: 0;
+            top: 100px; /* Below the header */
+            left: 17px;
+            right: 17px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
             z-index: 1002;
-            display: flex;
             align-items: flex-start;
+        }
+
+        .description-content {
+            grid-column: 8 / 13; /* Spans 5 columns, positioned after navigation */
+            max-width: none;
+            padding: 0;
         }
 
         .text-content {
@@ -370,20 +385,71 @@
 
 
         /* Responsive design for different screen sizes */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+            .header-grid {
+                gap: 15px;
+            }
+            
+            .logo {
+                grid-column: 1 / 6; /* Expand logo area */
+                font-size: 60px;
+            }
+            
             .navigation {
-                gap: 30px;
+                grid-column: 6 / 13; /* Adjust navigation area */
+                gap: 25px;
+            }
+            
+            .description-content {
+                grid-column: 6 / 13; /* Expand description area */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-grid {
+                gap: 10px;
+            }
+            
+            .logo {
+                grid-column: 1 / 8; /* Further expand logo */
+                font-size: 48px;
+            }
+            
+            .navigation {
+                grid-column: 8 / 13; /* Compress navigation */
+                gap: 20px;
             }
             
             .nav-link {
-                font-size: 23.84px;
+                font-size: 14px;
+            }
+            
+            .description-content {
+                grid-column: 5 / 13; /* Expand description */
             }
         }
 
         @media (max-width: 480px) {
+            .header-grid {
+                grid-template-columns: 1fr; /* Single column layout */
+                gap: 15px;
+            }
+            
+            .logo {
+                grid-column: 1;
+                font-size: 40px;
+                text-align: center;
+            }
+            
             .navigation {
-                flex-direction: column;
-                gap: 20px;
+                grid-column: 1;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .description-content {
+                grid-column: 1;
             }
         }
 
@@ -450,13 +516,15 @@
     <div class="custom-cursor" id="customCursor"></div>
     <canvas id="drawingCanvas"></canvas>
     <div class="drawing-cursor" id="drawingCursor"></div>
-    <a href="#" class="logo" id="logo">Georgii</a>
-    <nav class="navigation">
-        <a href="#" class="nav-link">Lots of Letters</a>
-        <a href="#" class="nav-link">Mind</a>
-        <a href="#" class="nav-link">Commerce</a>
-        <a href="#" class="nav-link">About me</a>
-    </nav>
+    <div class="header-grid">
+        <a href="#" class="logo" id="logo">Georgii</a>
+        <nav class="navigation">
+            <a href="#" class="nav-link">Lots of Letters</a>
+            <a href="#" class="nav-link">Mind</a>
+            <a href="#" class="nav-link">Commerce</a>
+            <a href="#" class="nav-link">About me</a>
+        </nav>
+    </div>
     <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
     </section>
@@ -468,8 +536,10 @@
 
     <main class="main-content">
         <div class="description-container">
-            <div class="text-content">
-                <p>Life and design explorer, pictures with meaning and quality creator.<br>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+            <div class="description-content">
+                <div class="text-content">
+                    <p>Life and design explorer, pictures with meaning and quality creator.<br>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+                </div>
             </div>
         </div>
     </main>
