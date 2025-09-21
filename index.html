@@ -102,7 +102,7 @@
 
         /* Navigation in grid */
         .navigation {
-            grid-column: 9 / 13; /* Spans 4 columns, aligned to right */
+            grid-column: 6 / 13; /* Spans 7 columns, starts from column 6 */
             display: flex;
             gap: 40px;
             justify-content: flex-end;
@@ -111,7 +111,7 @@
 
         /* Description in header grid */
         .header-description {
-            grid-column: 4 / 8; /* Spans 4 columns, between logo and navigation */
+            grid-column: 6 / 9; /* Spans 3 columns, moved to column 6 */
             font-size: 15px;
             line-height: 1.2;
             color: #3C3C3C;
@@ -395,16 +395,16 @@
             }
             
             .logo {
-                grid-column: 1 / 5; /* Reduce logo area */
+                grid-column: 1 / 4; /* Reduce logo area */
                 font-size: 60px;
             }
             
             .header-description {
-                grid-column: 5 / 9; /* Adjust description area */
+                grid-column: 4 / 7; /* Adjust description area */
             }
             
             .navigation {
-                grid-column: 9 / 13; /* Keep navigation area */
+                grid-column: 7 / 13; /* Adjust navigation area */
                 gap: 25px;
             }
             
