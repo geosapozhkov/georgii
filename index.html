@@ -579,31 +579,6 @@
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
-
-        /* Project Gallery Styles - 12-column grid */
-        .project-gallery {
-            width: 100%;
-            padding: 20px;
-        }
-
-        .project-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-            align-items: start;
-        }
-
-        .project-item {
-            overflow: hidden;
-            border-radius: 4px;
-        }
-
-        .project-media {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
     </style>
 </head>
 <body>
@@ -1910,45 +1885,6 @@
             loadProjectGallery('Process', projectData);
         }
 
-        // Function to load project gallery with 12-column grid layout
-        function loadProjectGallery(projectName, projectData) {
-            // Create project gallery container
-            const projectGallery = document.createElement('div');
-            projectGallery.className = 'project-gallery';
-            projectGallery.innerHTML = `
-                <div class="project-grid">
-                    ${projectData.files.map((file, index) => {
-                        const layout = projectData.layouts[index] || { colSpan: Math.max(4, projectData.layouts[index]?.colSpan || 4), startCol: 1 };
-                        const isVideo = file.toLowerCase().endsWith('.mp4');
-                        const elementType = isVideo ? 'video' : 'img';
-                        
-                        return `
-                            <div class="project-item" style="grid-column: ${layout.startCol} / ${layout.startCol + layout.colSpan};">
-                                <${elementType} 
-                                    src="${projectData.basePath}${file}"
-                                    ${isVideo ? 'muted loop controls' : ''}
-                                    class="project-media"
-                                    loading="lazy"
-                                ></${elementType}>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-            
-            // Replace content-left with gallery
-            const contentLeft = document.querySelector('.content-left');
-            contentLeft.innerHTML = '';
-            contentLeft.appendChild(projectGallery);
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Function to show Commerce page (for back button)
-        function showCommercePage() {
-            updateCommerceContent();
-        }
 
         // Function to restore Mind content
         function updateMindContent() {
