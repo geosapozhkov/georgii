@@ -567,42 +567,7 @@
             border: 2px solid #000000;
         }
 
-        /* Hover effect for project rows - all cells in a row change color together */
-        .catalog-grid:hover .cell[data-preview] {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        /* Specific hover effects for each project */
-        .cell[data-preview="angry-masseur"]:hover,
-        .cell[data-preview="angry-masseur"]:hover ~ .cell[data-preview="angry-masseur"] {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        .cell[data-preview="type-oclock"]:hover,
-        .cell[data-preview="type-oclock"]:hover ~ .cell[data-preview="type-oclock"] {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        .cell[data-preview="1"]:hover,
-        .cell[data-preview="1"]:hover ~ .cell[data-preview="1"] {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        .cell[data-preview="2"]:hover,
-        .cell[data-preview="2"]:hover ~ .cell[data-preview="2"] {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        .cell[data-preview="3"]:hover,
-        .cell[data-preview="3"]:hover ~ .cell[data-preview="3"] {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
+        /* Remove CSS hover effects - we'll use only JavaScript */
 
         /* Hovered class for JavaScript-controlled hover effects */
         .cell.hovered {
@@ -669,6 +634,7 @@
         let rects = [];
         let active = false;
         let activePreviewId = null; // disable hover preview for active catalog
+        let currentHoveredPreview = null; // track currently hovered preview
 
         function resize(){
             canvas.width = window.innerWidth;
@@ -987,8 +953,11 @@
             // do not show animated preview for the active catalog (only for Mind tab)
             const currentTab = localStorage.getItem('activeTab') || 'Mind';
             if (currentTab !== 'Commerce' && activePreviewId && String(previewId) === String(activePreviewId)) return;
+            if (active && currentHoveredPreview === previewId) return; // prevent duplicate starts
             if (active) return;
+            
             active = true;
+            currentHoveredPreview = previewId;
             canvas.style.display = 'block';
             createProjectRects(previewId);
             
@@ -1000,6 +969,7 @@
         }
         function stop(){
             active = false;
+            currentHoveredPreview = null;
             canvas.style.display = 'none';
             cancelAnimationFrame(animationId);
             
@@ -1439,24 +1409,38 @@
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
+            // Remove existing listeners first to prevent duplicates
+            document.querySelectorAll('.cell[data-preview]').forEach(cell => {
+                cell.removeEventListener('mouseenter', cell._commerceMouseEnter);
+                cell.removeEventListener('mouseleave', cell._commerceMouseLeave);
+            });
+            
             // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>{
+                const mouseEnterHandler = ()=>{
                     // Add hover class to all cells with same data-preview
                     const previewId = cell.dataset.preview;
                     document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
                         siblingCell.classList.add('hovered');
                     });
                     start(previewId);
-                });
-                cell.addEventListener('mouseleave', ()=>{
+                };
+                
+                const mouseLeaveHandler = ()=>{
                     // Remove hover class from all cells with same data-preview
                     const previewId = cell.dataset.preview;
                     document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
                         siblingCell.classList.remove('hovered');
                     });
                     stop();
-                });
+                };
+                
+                // Store handlers for later removal
+                cell._commerceMouseEnter = mouseEnterHandler;
+                cell._commerceMouseLeave = mouseLeaveHandler;
+                
+                cell.addEventListener('mouseenter', mouseEnterHandler);
+                cell.addEventListener('mouseleave', mouseLeaveHandler);
             });
 
             // Handle Commerce catalog clicks - show project gallery
@@ -1841,24 +1825,38 @@
 
         // Function to attach event listeners for About me catalog
         function attachAboutMeEventListeners() {
+            // Remove existing listeners first to prevent duplicates
+            document.querySelectorAll('.cell[data-preview]').forEach(cell => {
+                cell.removeEventListener('mouseenter', cell._aboutMeMouseEnter);
+                cell.removeEventListener('mouseleave', cell._aboutMeMouseLeave);
+            });
+            
             // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>{
+                const mouseEnterHandler = ()=>{
                     // Add hover class to all cells with same data-preview
                     const previewId = cell.dataset.preview;
                     document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
                         siblingCell.classList.add('hovered');
                     });
                     start(previewId);
-                });
-                cell.addEventListener('mouseleave', ()=>{
+                };
+                
+                const mouseLeaveHandler = ()=>{
                     // Remove hover class from all cells with same data-preview
                     const previewId = cell.dataset.preview;
                     document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
                         siblingCell.classList.remove('hovered');
                     });
                     stop();
-                });
+                };
+                
+                // Store handlers for later removal
+                cell._aboutMeMouseEnter = mouseEnterHandler;
+                cell._aboutMeMouseLeave = mouseLeaveHandler;
+                
+                cell.addEventListener('mouseenter', mouseEnterHandler);
+                cell.addEventListener('mouseleave', mouseLeaveHandler);
             });
 
             // Handle About me catalog clicks - show project galleries with 12-column grid
@@ -2051,26 +2049,41 @@
 
         // Function to attach event listeners for Mind catalog
         function attachMindEventListeners() {
+            // Remove existing listeners first to prevent duplicates
+            document.querySelectorAll('.catalog-link').forEach(link => {
+                link.removeEventListener('mouseenter', link._mindMouseEnter);
+                link.removeEventListener('mouseleave', link._mindMouseLeave);
+            });
+            
             // Trigger preview only on catalog links, not empty cells
             document.querySelectorAll('.catalog-link').forEach(link=>{
                 const cell = link.closest('.cell');
                 if (!cell) return;
-                link.addEventListener('mouseenter', ()=>{
+                
+                const mouseEnterHandler = ()=>{
                     // Add hover class to all cells with same data-preview
                     const previewId = cell.dataset.preview;
                     document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
                         siblingCell.classList.add('hovered');
                     });
                     start(previewId);
-                });
-                link.addEventListener('mouseleave', ()=>{
+                };
+                
+                const mouseLeaveHandler = ()=>{
                     // Remove hover class from all cells with same data-preview
                     const previewId = cell.dataset.preview;
                     document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
                         siblingCell.classList.remove('hovered');
                     });
                     stop();
-                });
+                };
+                
+                // Store handlers for later removal
+                link._mindMouseEnter = mouseEnterHandler;
+                link._mindMouseLeave = mouseLeaveHandler;
+                
+                link.addEventListener('mouseenter', mouseEnterHandler);
+                link.addEventListener('mouseleave', mouseLeaveHandler);
             });
 
             // Handle Mind catalog clicks - show project galleries with 12-column grid
