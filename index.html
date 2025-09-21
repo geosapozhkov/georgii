@@ -568,14 +568,44 @@
         }
 
         /* Hover effect for project rows - all cells in a row change color together */
-        .cell[data-preview="angry-masseur"]:hover ~ .cell[data-preview="angry-masseur"],
-        .cell[data-preview="angry-masseur"]:hover {
+        .catalog-grid:hover .cell[data-preview] {
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
 
-        .cell[data-preview="type-oclock"]:hover ~ .cell[data-preview="type-oclock"],
-        .cell[data-preview="type-oclock"]:hover {
+        /* Specific hover effects for each project */
+        .cell[data-preview="angry-masseur"]:hover,
+        .cell[data-preview="angry-masseur"]:hover ~ .cell[data-preview="angry-masseur"] {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .cell[data-preview="type-oclock"]:hover,
+        .cell[data-preview="type-oclock"]:hover ~ .cell[data-preview="type-oclock"] {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .cell[data-preview="1"]:hover,
+        .cell[data-preview="1"]:hover ~ .cell[data-preview="1"] {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .cell[data-preview="2"]:hover,
+        .cell[data-preview="2"]:hover ~ .cell[data-preview="2"] {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .cell[data-preview="3"]:hover,
+        .cell[data-preview="3"]:hover ~ .cell[data-preview="3"] {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Hovered class for JavaScript-controlled hover effects */
+        .cell.hovered {
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
@@ -1411,8 +1441,22 @@
         function attachCommerceEventListeners() {
             // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                cell.addEventListener('mouseleave', stop);
+                cell.addEventListener('mouseenter', ()=>{
+                    // Add hover class to all cells with same data-preview
+                    const previewId = cell.dataset.preview;
+                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
+                        siblingCell.classList.add('hovered');
+                    });
+                    start(previewId);
+                });
+                cell.addEventListener('mouseleave', ()=>{
+                    // Remove hover class from all cells with same data-preview
+                    const previewId = cell.dataset.preview;
+                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
+                        siblingCell.classList.remove('hovered');
+                    });
+                    stop();
+                });
             });
 
             // Handle Commerce catalog clicks - show project gallery
@@ -1799,8 +1843,22 @@
         function attachAboutMeEventListeners() {
             // Trigger preview on all cells with data-preview attribute
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                cell.addEventListener('mouseleave', stop);
+                cell.addEventListener('mouseenter', ()=>{
+                    // Add hover class to all cells with same data-preview
+                    const previewId = cell.dataset.preview;
+                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
+                        siblingCell.classList.add('hovered');
+                    });
+                    start(previewId);
+                });
+                cell.addEventListener('mouseleave', ()=>{
+                    // Remove hover class from all cells with same data-preview
+                    const previewId = cell.dataset.preview;
+                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
+                        siblingCell.classList.remove('hovered');
+                    });
+                    stop();
+                });
             });
 
             // Handle About me catalog clicks - show project galleries with 12-column grid
@@ -1997,8 +2055,22 @@
             document.querySelectorAll('.catalog-link').forEach(link=>{
                 const cell = link.closest('.cell');
                 if (!cell) return;
-                link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                link.addEventListener('mouseleave', stop);
+                link.addEventListener('mouseenter', ()=>{
+                    // Add hover class to all cells with same data-preview
+                    const previewId = cell.dataset.preview;
+                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
+                        siblingCell.classList.add('hovered');
+                    });
+                    start(previewId);
+                });
+                link.addEventListener('mouseleave', ()=>{
+                    // Remove hover class from all cells with same data-preview
+                    const previewId = cell.dataset.preview;
+                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
+                        siblingCell.classList.remove('hovered');
+                    });
+                    stop();
+                });
             });
 
             // Handle Mind catalog clicks - show project galleries with 12-column grid
