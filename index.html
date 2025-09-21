@@ -1422,8 +1422,14 @@
                             hoverTimeout = null;
                         }
                         
+                        // Force stop any other animations first
+                        stop();
+                        
                         // Add group hover effect to all cells in this project
                         angryMasseurCells.forEach(c => c.classList.add('group-hover'));
+                        
+                        // Remove hover effect from other projects
+                        document.querySelectorAll('.cell[data-preview="type-oclock"]').forEach(c => c.classList.remove('group-hover'));
                         
                         if (!isHovering) {
                             isHovering = true;
@@ -1461,8 +1467,14 @@
                             hoverTimeout = null;
                         }
                         
+                        // Force stop any other animations first
+                        stop();
+                        
                         // Add group hover effect to all cells in this project
                         typeOclockCells.forEach(c => c.classList.add('group-hover'));
+                        
+                        // Remove hover effect from other projects
+                        document.querySelectorAll('.cell[data-preview="angry-masseur"]').forEach(c => c.classList.remove('group-hover'));
                         
                         if (!isHovering) {
                             isHovering = true;
