@@ -1213,101 +1213,38 @@
             }
         });
 
-        // Dynamic project management system
-        const projectData = {
-            commerce: [
-                { name: 'Angry Masseur', client: 'Poool', year: 2023, preview: 'angry-masseur', description: 'Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.' },
-                { name: 'Type O\'clock', client: 'Contrast Foundry', year: 2022, preview: 'type-oclock', description: 'Type O\'clock - A typography-focused project exploring the intersection of time and design. This project showcases innovative approaches to type design and visual communication through the lens of temporal aesthetics.' }
-            ],
-            mind: [
-                { name: 'Area 117', client: '', year: 2020, preview: '1', description: 'Area 117 description here...' },
-                { name: 'Yoki', client: '', year: 2021, preview: '2', description: 'Yoki description here...' },
-                { name: 'Red Building', client: '', year: 2022, preview: '2', description: 'Red Building description here...' },
-                { name: 'Ruins', client: '', year: 2023, preview: '3', description: 'Ruins description here...' }
-            ],
-            about: []
-        };
-
-        // Function to add a new project with automatic sorting by year
-        function addProject(section, projectName, client, year, preview = '', description = '') {
-            const newProject = {
-                name: projectName,
-                client: client,
-                year: parseInt(year),
-                preview: preview,
-                description: description
-            };
-            
-            // Add project to the section
-            projectData[section].push(newProject);
-            
-            // Sort projects by year (newest first)
-            projectData[section].sort((a, b) => b.year - a.year);
-            
-            // Update the content if this section is currently active
-            const currentTab = localStorage.getItem('activeTab');
-            if (currentTab === 'Commerce' && section === 'commerce') {
-                updateCommerceContent();
-            } else if (currentTab === 'Mind' && section === 'mind') {
-                updateMindContent();
-            } else if (currentTab === 'About me' && section === 'about') {
-                updateAboutMeContent();
-            }
-            
-            console.log(`Added project "${projectName}" (${year}) to ${section}. Projects sorted by year.`);
-        }
-
-        // Function to generate catalog HTML from project data
-        function generateCatalogHTML(section) {
-            const projects = projectData[section];
-            const maxRows = 20; // Maximum number of rows to display
-            
-            let html = `
+        // Function to update Commerce content with same layout as Mind
+        function updateCommerceContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
                 <div class="catalog-grid">
                     <div class="col-header">Project</div>
                     <div class="col-header">Client</div>
                     <div class="col-header">Year</div>
-            `;
-            
-            // Add project rows
-            for (let i = 0; i < maxRows; i++) {
-                if (i < projects.length) {
-                    const project = projects[i];
-                    html += `
-                        <div class="cell" data-preview="${project.preview}">
-                            <a href="#${project.name.toLowerCase().replace(/\s+/g, '-')}" class="catalog-link" data-description="${project.description}">${project.name}</a>
-                        </div>
-                        <div class="cell" data-preview="${project.preview}">
-                            <span class="catalog-client">${project.client || 'No Data'}</span>
-                        </div>
-                        <div class="cell" data-preview="${project.preview}">
-                            <span class="catalog-year">${project.year}</span>
-                        </div>
-                    `;
-                } else {
-                    // Add placeholder rows
-                    html += `
-                        <div class="cell">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
-                    `;
-                }
-            }
-            
-            html += `</div>`;
-            return html;
-        }
 
-        // Function to update Commerce content with same layout as Mind
-        function updateCommerceContent() {
-            const contentLeft = document.querySelector('.content-left');
-            contentLeft.innerHTML = generateCatalogHTML('commerce');
+                    <div class="cell" data-preview="angry-masseur">
+                        <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
+                    </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-client">Poool</span>
+                    </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-year">2023</span>
+                    </div>
+
+                    <div class="cell" data-preview="type-oclock">
+                        <a href="#type-oclock" class="catalog-link" data-description="Type O'clock - A typography-focused project exploring the intersection of time and design. This project showcases innovative approaches to type design and visual communication through the lens of temporal aesthetics.">Type O'clock</a>
+                    </div>
+                    <div class="cell" data-preview="type-oclock">
+                        <span class="catalog-client">Contrast Foundry</span>
+                    </div>
+                    <div class="cell" data-preview="type-oclock">
+                        <span class="catalog-year">2022</span>
+                    </div>
+
+                    <div class="cell">
+                        <span class="catalog-placeholder">No Data</span>
+                    </div>
                     <div class="cell">
                         <span class="catalog-placeholder">No Data</span>
                     </div>
@@ -1408,14 +1345,6 @@
             // Re-attach event listeners for Commerce catalog links
             attachCommerceEventListeners();
         }
-
-        // Global function to add projects - can be called from browser console
-        window.addProject = function(section, projectName, client, year, preview = '', description = '') {
-            addProject(section, projectName, client, year, preview, description);
-        };
-
-        // Example usage:
-        // addProject('commerce', 'New Project', 'Client Name', 2025, 'preview-id', 'Project description...');
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
@@ -1768,15 +1697,8 @@
         // Function to update About me content with projects
         function updateAboutMeContent() {
             const contentLeft = document.querySelector('.content-left');
-            if (projectData.about.length > 0) {
-                contentLeft.innerHTML = generateCatalogHTML('about');
-                contentLeft.style.display = 'block';
-                // Re-attach event listeners for About me catalog links
-                attachAboutMeEventListeners();
-            } else {
-                contentLeft.innerHTML = '<!-- About me content - no catalog -->';
-                contentLeft.style.display = 'none';
-            }
+            contentLeft.innerHTML = '<!-- About me content - no catalog -->';
+            contentLeft.style.display = 'none';
         }
 
         // Function to attach event listeners for About me catalog
@@ -1870,57 +1792,18 @@
         }
 
 
-        // Function to generate Mind catalog HTML with custom headers
-        function generateMindCatalogHTML() {
-            const projects = projectData.mind;
-            const maxRows = 20;
-            
-            let html = `
+        // Function to restore Mind content
+        function updateMindContent() {
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.innerHTML = `
                 <div class="catalog-grid">
                     <div class="col-header">Than</div>
                     <div class="col-header">Now</div>
                     <div class="col-header">Then</div>
-            `;
-            
-            // Add project rows
-            for (let i = 0; i < maxRows; i++) {
-                if (i < projects.length) {
-                    const project = projects[i];
-                    html += `
-                        <div class="cell" data-preview="${project.preview}">
-                            <a href="#${project.name.toLowerCase().replace(/\s+/g, '-')}" class="catalog-link" data-description="${project.description}">${project.name}</a>
-                        </div>
-                        <div class="cell" data-preview="${project.preview}">
-                            <span class="catalog-client">${project.client || 'No Data'}</span>
-                        </div>
-                        <div class="cell" data-preview="${project.preview}">
-                            <span class="catalog-year">${project.year}</span>
-                        </div>
-                    `;
-                } else {
-                    // Add placeholder rows
-                    html += `
-                        <div class="cell">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-placeholder">No Data</span>
-                        </div>
-                    `;
-                }
-            }
-            
-            html += `</div>`;
-            return html;
-        }
 
-        // Function to restore Mind content
-        function updateMindContent() {
-            const contentLeft = document.querySelector('.content-left');
-            contentLeft.innerHTML = generateMindCatalogHTML();
+                    <div class="cell" data-preview="1">
+                        <a href="#area117" class="catalog-link" data-description="Area 117 description here...">Area 117</a>
+                    </div>
                     <div class="cell" data-preview="2">
                         <a href="#yoki" class="catalog-link" data-description="Yoki description here...">Yoki</a>
                     </div>
