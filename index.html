@@ -1457,9 +1457,6 @@
             // Remove all hover effects
             document.querySelectorAll('.cell[data-preview]').forEach(c => c.classList.remove('group-hover'));
             
-            // Remove hover areas
-            document.querySelectorAll('.project-row-hover-area').forEach(area => area.remove());
-            
             // Reset all project states
             Object.keys(projectHoverStates).forEach(projectId => {
                 if (projectHoverStates[projectId].hoverTimeout) {
@@ -1473,118 +1470,40 @@
         }
 
 
-        // Function to create invisible hover areas for project rows
-        function createProjectRowHoverAreas() {
-            // Remove existing hover areas
-            document.querySelectorAll('.project-row-hover-area').forEach(area => area.remove());
-            
-            // Create hover areas for each project row
-            const projects = [
-                { previewId: 'angry-masseur', cells: document.querySelectorAll('.cell[data-preview="angry-masseur"]') },
-                { previewId: 'type-oclock', cells: document.querySelectorAll('.cell[data-preview="type-oclock"]') }
-            ];
-            
-            projects.forEach(project => {
-                if (project.cells.length > 0) {
-                    const firstCell = project.cells[0];
-                    const rect = firstCell.getBoundingClientRect();
-                    const gridContainer = firstCell.closest('.catalog-grid');
-                    const gridRect = gridContainer.getBoundingClientRect();
-                    
-                    // Create hover area
-                    const hoverArea = document.createElement('div');
-                    hoverArea.className = 'project-row-hover-area';
-                    hoverArea.dataset.preview = project.previewId;
-                    
-                    // Position to cover the entire row
-                    hoverArea.style.position = 'absolute';
-                    hoverArea.style.top = (rect.top - gridRect.top) + 'px';
-                    hoverArea.style.left = '0px';
-                    hoverArea.style.width = '100%';
-                    hoverArea.style.height = rect.height + 'px';
-                    hoverArea.style.zIndex = '1';
-                    hoverArea.style.pointerEvents = 'auto';
-                    hoverArea.style.backgroundColor = 'transparent';
-                    
-                    // Add to grid
-                    gridContainer.appendChild(hoverArea);
-                    
-                    // Add event listeners
-                    hoverArea.addEventListener('mouseenter', () => {
-                        resetAllProjectStates();
-                        
-                        const state = projectHoverStates[project.previewId] || {
-                            isHovering: false,
-                            hoverTimeout: null
-                        };
-                        projectHoverStates[project.previewId] = state;
-                        
-                        project.cells.forEach(c => c.classList.add('group-hover'));
-                        
-                        if (!state.isHovering) {
-                            state.isHovering = true;
-                            currentHoveringProject = project.previewId;
-                            start(project.previewId);
-                        }
-                    });
-                    
-                    hoverArea.addEventListener('mouseleave', () => {
-                        const state = projectHoverStates[project.previewId];
-                        if (state) {
-                            state.hoverTimeout = setTimeout(() => {
-                                const stillHovering = Array.from(project.cells).some(c => c.matches(':hover')) ||
-                                                    hoverArea.matches(':hover');
-                                if (!stillHovering) {
-                                    project.cells.forEach(c => c.classList.remove('group-hover'));
-                                    state.isHovering = false;
-                                    if (currentHoveringProject === project.previewId) {
-                                        stop();
-                                        currentHoveringProject = null;
-                                    }
-                                }
-                                state.hoverTimeout = null;
-                            }, 50);
-                        }
-                    });
-                    
-                    // Add click handler
-                    hoverArea.addEventListener('click', (e) => {
-                        const projectLink = project.cells[0].querySelector('.catalog-link');
-                        if (projectLink) {
-                            e.preventDefault();
-                            const projectName = projectLink.textContent.trim();
-                            const desc = projectLink.getAttribute('data-description');
-                            
-                            const contentLeft = document.querySelector('.content-left');
-                            const rightText = document.querySelector('.text-content');
-                            
-                            contentLeft.style.display = 'none';
-                            if (desc) {
-                                rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }
-                            
-                            if (projectName === 'Angry Masseur') {
-                                loadAngryMasseurImages();
-                            } else if (projectName === 'Type O\'clock') {
-                                loadTypeOclockImages();
-                            }
-                            
-                            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
-                            allLinks.forEach(l=>l.classList.remove('dimmed'));
-                            allLinks.forEach(l=>l.classList.add('dimmed'));
-                            
-                            activePreviewId = projectName.toLowerCase().replace(' ', '-');
-                        }
-                    });
-                }
-            });
-        }
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Create hover areas for project rows (handles all hover logic)
-            createProjectRowHoverAreas();
+            // Handle Angry Masseur with simple logic
+            document.querySelectorAll('.cell[data-preview="angry-masseur"]').forEach(cell => {
+                cell.addEventListener('mouseenter', () => {
+                    resetAllProjectStates();
+                    start('angry-masseur');
+                });
+                cell.addEventListener('mouseleave', () => {
+                    setTimeout(() => {
+                        const stillHovering = document.querySelectorAll('.cell[data-preview="angry-masseur"]').some(c => c.matches(':hover'));
+                        if (!stillHovering) {
+                            stop();
+                        }
+                    }, 150);
+                });
+            });
+
+            // Handle Type O'clock with simple logic
+            document.querySelectorAll('.cell[data-preview="type-oclock"]').forEach(cell => {
+                cell.addEventListener('mouseenter', () => {
+                    resetAllProjectStates();
+                    start('type-oclock');
+                });
+                cell.addEventListener('mouseleave', () => {
+                    setTimeout(() => {
+                        const stillHovering = document.querySelectorAll('.cell[data-preview="type-oclock"]').some(c => c.matches(':hover'));
+                        if (!stillHovering) {
+                            stop();
+                        }
+                    }, 150);
+                });
+            });
 
 
             // Handle Commerce catalog clicks - show project gallery
