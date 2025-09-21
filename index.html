@@ -1420,23 +1420,25 @@
             document.querySelectorAll('.cell[data-preview]').forEach(cell => {
                 const previewId = cell.dataset.preview;
                 if (!previewGroups[previewId]) {
-                    previewGroups[previewId] = [];
+                    previewGroups[previewId] = {
+                        cells: [],
+                        hoverTimeout: null,
+                        isHovered: false
+                    };
                 }
-                previewGroups[previewId].push(cell);
+                previewGroups[previewId].cells.push(cell);
             });
             
             // Add event listeners to each group
             Object.keys(previewGroups).forEach(previewId => {
-                const cells = previewGroups[previewId];
-                let hoverTimeout = null;
-                let isHovered = false;
+                const group = previewGroups[previewId];
                 
                 const mouseEnterHandler = () => {
-                    clearTimeout(hoverTimeout);
-                    if (!isHovered) {
-                        isHovered = true;
+                    clearTimeout(group.hoverTimeout);
+                    if (!group.isHovered) {
+                        group.isHovered = true;
                         // Add hover class to all cells with same data-preview
-                        cells.forEach(cell => {
+                        group.cells.forEach(cell => {
                             cell.classList.add('hovered');
                         });
                         start(previewId);
@@ -1444,10 +1446,10 @@
                 };
                 
                 const mouseLeaveHandler = () => {
-                    hoverTimeout = setTimeout(() => {
-                        isHovered = false;
+                    group.hoverTimeout = setTimeout(() => {
+                        group.isHovered = false;
                         // Remove hover class from all cells with same data-preview
-                        cells.forEach(cell => {
+                        group.cells.forEach(cell => {
                             cell.classList.remove('hovered');
                         });
                         stop();
@@ -1455,7 +1457,7 @@
                 };
                 
                 // Add listeners to all cells in the group
-                cells.forEach(cell => {
+                group.cells.forEach(cell => {
                     cell._commerceMouseEnter = mouseEnterHandler;
                     cell._commerceMouseLeave = mouseLeaveHandler;
                     
@@ -1857,23 +1859,25 @@
             document.querySelectorAll('.cell[data-preview]').forEach(cell => {
                 const previewId = cell.dataset.preview;
                 if (!previewGroups[previewId]) {
-                    previewGroups[previewId] = [];
+                    previewGroups[previewId] = {
+                        cells: [],
+                        hoverTimeout: null,
+                        isHovered: false
+                    };
                 }
-                previewGroups[previewId].push(cell);
+                previewGroups[previewId].cells.push(cell);
             });
             
             // Add event listeners to each group
             Object.keys(previewGroups).forEach(previewId => {
-                const cells = previewGroups[previewId];
-                let hoverTimeout = null;
-                let isHovered = false;
+                const group = previewGroups[previewId];
                 
                 const mouseEnterHandler = () => {
-                    clearTimeout(hoverTimeout);
-                    if (!isHovered) {
-                        isHovered = true;
+                    clearTimeout(group.hoverTimeout);
+                    if (!group.isHovered) {
+                        group.isHovered = true;
                         // Add hover class to all cells with same data-preview
-                        cells.forEach(cell => {
+                        group.cells.forEach(cell => {
                             cell.classList.add('hovered');
                         });
                         start(previewId);
@@ -1881,10 +1885,10 @@
                 };
                 
                 const mouseLeaveHandler = () => {
-                    hoverTimeout = setTimeout(() => {
-                        isHovered = false;
+                    group.hoverTimeout = setTimeout(() => {
+                        group.isHovered = false;
                         // Remove hover class from all cells with same data-preview
-                        cells.forEach(cell => {
+                        group.cells.forEach(cell => {
                             cell.classList.remove('hovered');
                         });
                         stop();
@@ -1892,7 +1896,7 @@
                 };
                 
                 // Add listeners to all cells in the group
-                cells.forEach(cell => {
+                group.cells.forEach(cell => {
                     cell._aboutMeMouseEnter = mouseEnterHandler;
                     cell._aboutMeMouseLeave = mouseLeaveHandler;
                     
@@ -2105,22 +2109,24 @@
                 
                 const previewId = cell.dataset.preview;
                 if (!previewGroups[previewId]) {
-                    previewGroups[previewId] = [];
+                    previewGroups[previewId] = {
+                        items: [],
+                        hoverTimeout: null,
+                        isHovered: false
+                    };
                 }
-                previewGroups[previewId].push({ link, cell });
+                previewGroups[previewId].items.push({ link, cell });
             });
             
             // Add event listeners to each group
             Object.keys(previewGroups).forEach(previewId => {
-                const items = previewGroups[previewId];
-                const cells = items.map(item => item.cell);
-                let hoverTimeout = null;
-                let isHovered = false;
+                const group = previewGroups[previewId];
+                const cells = group.items.map(item => item.cell);
                 
                 const mouseEnterHandler = () => {
-                    clearTimeout(hoverTimeout);
-                    if (!isHovered) {
-                        isHovered = true;
+                    clearTimeout(group.hoverTimeout);
+                    if (!group.isHovered) {
+                        group.isHovered = true;
                         // Add hover class to all cells with same data-preview
                         cells.forEach(cell => {
                             cell.classList.add('hovered');
@@ -2130,8 +2136,8 @@
                 };
                 
                 const mouseLeaveHandler = () => {
-                    hoverTimeout = setTimeout(() => {
-                        isHovered = false;
+                    group.hoverTimeout = setTimeout(() => {
+                        group.isHovered = false;
                         // Remove hover class from all cells with same data-preview
                         cells.forEach(cell => {
                             cell.classList.remove('hovered');
@@ -2141,7 +2147,7 @@
                 };
                 
                 // Add listeners to all links in the group
-                items.forEach(item => {
+                group.items.forEach(item => {
                     item.link._mindMouseEnter = mouseEnterHandler;
                     item.link._mindMouseLeave = mouseLeaveHandler;
                     
