@@ -1513,7 +1513,7 @@
                                 }
                             }
                             state.hoverTimeout = null;
-                        }, 100); // Increased delay for better stability
+                        }, 200); // Increased delay to prevent interruption between columns
                     });
                 });
             }
@@ -1560,7 +1560,7 @@
                                 }
                             }
                             state.hoverTimeout = null;
-                        }, 100); // Increased delay for better stability
+                        }, 200); // Increased delay to prevent interruption between columns
                     });
                 });
             }
@@ -2330,6 +2330,9 @@
             
             // Create and load the first image
             function loadCurrentImage() {
+                // Check if this is the first image or a change
+                const isFirstImage = !rect.imageElement;
+                
                 // Create new image element first
                 const img = document.createElement('img');
                 img.className = 'preview-image'; // Add class for fade effects
@@ -2381,7 +2384,7 @@
                     img.style.objectFit = 'contain'; // Use contain to preserve aspect ratio
                     img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
-                    img.style.transition = 'opacity 0.15s ease-in-out'; // Enable fade transitions
+                    img.style.transition = 'none'; // No transition for image changes
                     
                     // Remove old image only after new one is ready
                     if (rect.imageElement) {
@@ -2391,10 +2394,13 @@
                     document.body.appendChild(img);
                     rect.imageElement = img;
                     
-                    // Add fade-in effect after a short delay
-                    setTimeout(() => {
-                        img.classList.add('fade-in');
-                    }, 50);
+                    // Add fade-in effect only for the first image (not for image changes)
+                    if (isFirstImage) {
+                        setTimeout(() => {
+                            img.style.transition = 'opacity 0.15s ease-in-out';
+                            img.classList.add('fade-in');
+                        }, 50);
+                    }
                 };
                 
                 // If image fails to load, use fallback dimensions
