@@ -1415,32 +1415,53 @@
                 cell.removeEventListener('mouseleave', cell._commerceMouseLeave);
             });
             
-            // Trigger preview on all cells with data-preview attribute
-            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                const mouseEnterHandler = ()=>{
-                    // Add hover class to all cells with same data-preview
-                    const previewId = cell.dataset.preview;
-                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
-                        siblingCell.classList.add('hovered');
-                    });
-                    start(previewId);
+            // Group cells by preview ID to handle row-based hover
+            const previewGroups = {};
+            document.querySelectorAll('.cell[data-preview]').forEach(cell => {
+                const previewId = cell.dataset.preview;
+                if (!previewGroups[previewId]) {
+                    previewGroups[previewId] = [];
+                }
+                previewGroups[previewId].push(cell);
+            });
+            
+            // Add event listeners to each group
+            Object.keys(previewGroups).forEach(previewId => {
+                const cells = previewGroups[previewId];
+                let hoverTimeout = null;
+                let isHovered = false;
+                
+                const mouseEnterHandler = () => {
+                    clearTimeout(hoverTimeout);
+                    if (!isHovered) {
+                        isHovered = true;
+                        // Add hover class to all cells with same data-preview
+                        cells.forEach(cell => {
+                            cell.classList.add('hovered');
+                        });
+                        start(previewId);
+                    }
                 };
                 
-                const mouseLeaveHandler = ()=>{
-                    // Remove hover class from all cells with same data-preview
-                    const previewId = cell.dataset.preview;
-                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
-                        siblingCell.classList.remove('hovered');
-                    });
-                    stop();
+                const mouseLeaveHandler = () => {
+                    hoverTimeout = setTimeout(() => {
+                        isHovered = false;
+                        // Remove hover class from all cells with same data-preview
+                        cells.forEach(cell => {
+                            cell.classList.remove('hovered');
+                        });
+                        stop();
+                    }, 50); // Small delay to prevent flickering when moving between cells
                 };
                 
-                // Store handlers for later removal
-                cell._commerceMouseEnter = mouseEnterHandler;
-                cell._commerceMouseLeave = mouseLeaveHandler;
-                
-                cell.addEventListener('mouseenter', mouseEnterHandler);
-                cell.addEventListener('mouseleave', mouseLeaveHandler);
+                // Add listeners to all cells in the group
+                cells.forEach(cell => {
+                    cell._commerceMouseEnter = mouseEnterHandler;
+                    cell._commerceMouseLeave = mouseLeaveHandler;
+                    
+                    cell.addEventListener('mouseenter', mouseEnterHandler);
+                    cell.addEventListener('mouseleave', mouseLeaveHandler);
+                });
             });
 
             // Handle Commerce catalog clicks - show project gallery
@@ -1831,32 +1852,53 @@
                 cell.removeEventListener('mouseleave', cell._aboutMeMouseLeave);
             });
             
-            // Trigger preview on all cells with data-preview attribute
-            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                const mouseEnterHandler = ()=>{
-                    // Add hover class to all cells with same data-preview
-                    const previewId = cell.dataset.preview;
-                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
-                        siblingCell.classList.add('hovered');
-                    });
-                    start(previewId);
+            // Group cells by preview ID to handle row-based hover
+            const previewGroups = {};
+            document.querySelectorAll('.cell[data-preview]').forEach(cell => {
+                const previewId = cell.dataset.preview;
+                if (!previewGroups[previewId]) {
+                    previewGroups[previewId] = [];
+                }
+                previewGroups[previewId].push(cell);
+            });
+            
+            // Add event listeners to each group
+            Object.keys(previewGroups).forEach(previewId => {
+                const cells = previewGroups[previewId];
+                let hoverTimeout = null;
+                let isHovered = false;
+                
+                const mouseEnterHandler = () => {
+                    clearTimeout(hoverTimeout);
+                    if (!isHovered) {
+                        isHovered = true;
+                        // Add hover class to all cells with same data-preview
+                        cells.forEach(cell => {
+                            cell.classList.add('hovered');
+                        });
+                        start(previewId);
+                    }
                 };
                 
-                const mouseLeaveHandler = ()=>{
-                    // Remove hover class from all cells with same data-preview
-                    const previewId = cell.dataset.preview;
-                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
-                        siblingCell.classList.remove('hovered');
-                    });
-                    stop();
+                const mouseLeaveHandler = () => {
+                    hoverTimeout = setTimeout(() => {
+                        isHovered = false;
+                        // Remove hover class from all cells with same data-preview
+                        cells.forEach(cell => {
+                            cell.classList.remove('hovered');
+                        });
+                        stop();
+                    }, 50); // Small delay to prevent flickering when moving between cells
                 };
                 
-                // Store handlers for later removal
-                cell._aboutMeMouseEnter = mouseEnterHandler;
-                cell._aboutMeMouseLeave = mouseLeaveHandler;
-                
-                cell.addEventListener('mouseenter', mouseEnterHandler);
-                cell.addEventListener('mouseleave', mouseLeaveHandler);
+                // Add listeners to all cells in the group
+                cells.forEach(cell => {
+                    cell._aboutMeMouseEnter = mouseEnterHandler;
+                    cell._aboutMeMouseLeave = mouseLeaveHandler;
+                    
+                    cell.addEventListener('mouseenter', mouseEnterHandler);
+                    cell.addEventListener('mouseleave', mouseLeaveHandler);
+                });
             });
 
             // Handle About me catalog clicks - show project galleries with 12-column grid
@@ -2055,35 +2097,57 @@
                 link.removeEventListener('mouseleave', link._mindMouseLeave);
             });
             
-            // Trigger preview only on catalog links, not empty cells
-            document.querySelectorAll('.catalog-link').forEach(link=>{
+            // Group cells by preview ID to handle row-based hover
+            const previewGroups = {};
+            document.querySelectorAll('.catalog-link').forEach(link => {
                 const cell = link.closest('.cell');
                 if (!cell) return;
                 
-                const mouseEnterHandler = ()=>{
-                    // Add hover class to all cells with same data-preview
-                    const previewId = cell.dataset.preview;
-                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
-                        siblingCell.classList.add('hovered');
-                    });
-                    start(previewId);
+                const previewId = cell.dataset.preview;
+                if (!previewGroups[previewId]) {
+                    previewGroups[previewId] = [];
+                }
+                previewGroups[previewId].push({ link, cell });
+            });
+            
+            // Add event listeners to each group
+            Object.keys(previewGroups).forEach(previewId => {
+                const items = previewGroups[previewId];
+                const cells = items.map(item => item.cell);
+                let hoverTimeout = null;
+                let isHovered = false;
+                
+                const mouseEnterHandler = () => {
+                    clearTimeout(hoverTimeout);
+                    if (!isHovered) {
+                        isHovered = true;
+                        // Add hover class to all cells with same data-preview
+                        cells.forEach(cell => {
+                            cell.classList.add('hovered');
+                        });
+                        start(previewId);
+                    }
                 };
                 
-                const mouseLeaveHandler = ()=>{
-                    // Remove hover class from all cells with same data-preview
-                    const previewId = cell.dataset.preview;
-                    document.querySelectorAll(`.cell[data-preview="${previewId}"]`).forEach(siblingCell => {
-                        siblingCell.classList.remove('hovered');
-                    });
-                    stop();
+                const mouseLeaveHandler = () => {
+                    hoverTimeout = setTimeout(() => {
+                        isHovered = false;
+                        // Remove hover class from all cells with same data-preview
+                        cells.forEach(cell => {
+                            cell.classList.remove('hovered');
+                        });
+                        stop();
+                    }, 50); // Small delay to prevent flickering when moving between cells
                 };
                 
-                // Store handlers for later removal
-                link._mindMouseEnter = mouseEnterHandler;
-                link._mindMouseLeave = mouseLeaveHandler;
-                
-                link.addEventListener('mouseenter', mouseEnterHandler);
-                link.addEventListener('mouseleave', mouseLeaveHandler);
+                // Add listeners to all links in the group
+                items.forEach(item => {
+                    item.link._mindMouseEnter = mouseEnterHandler;
+                    item.link._mindMouseLeave = mouseLeaveHandler;
+                    
+                    item.link.addEventListener('mouseenter', mouseEnterHandler);
+                    item.link.addEventListener('mouseleave', mouseLeaveHandler);
+                });
             });
 
             // Handle Mind catalog clicks - show project galleries with 12-column grid
