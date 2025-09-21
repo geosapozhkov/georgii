@@ -744,6 +744,55 @@
                         type: 'video'
                     };
                 });
+            } else if (previewId === 'type-oclock') {
+                // Create preview for Type O'clock project
+                const imageFiles = [
+                    'cover_01.png',
+                    'cover_1920_1080_0600.png'
+                ];
+                
+                // Clear existing preview images
+                document.querySelectorAll('.preview-image').forEach(img => img.remove());
+                
+                rects = new Array(2).fill(0).map((_, i) => {
+                    const imageFile = imageFiles[i];
+                    
+                    // Create actual image element for preview
+                    const img = document.createElement('img');
+                    img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/CoFo/${imageFile}`;
+                    img.className = 'preview-image';
+                    img.style.position = 'fixed';
+                    img.style.zIndex = '1007';
+                    img.style.pointerEvents = 'none';
+                    img.style.border = 'none';
+                    img.style.borderRadius = '0';
+                    img.style.objectFit = 'contain';
+                    
+                    // Random width, let image determine its own height based on original proportions
+                    const w = rnd(300, 500);
+                    const h = 'auto'; // Let image maintain its original aspect ratio
+                    
+                    const x = rnd(0, window.innerWidth - w);
+                    const y = rnd(0, window.innerHeight - 400); // Use max expected height
+                    
+                    img.style.width = w + 'px';
+                    img.style.height = h;
+                    img.style.left = x + 'px';
+                    img.style.top = y + 'px';
+                    
+                    document.body.appendChild(img);
+                    
+                    return {
+                        x: x,
+                        y: y,
+                        w: w,
+                        h: 400, // Use estimated height for collision detection
+                        vx: rnd(-0.5, 0.5) || 0.3,
+                        vy: rnd(-0.5, 0.5) || -0.2,
+                        imageElement: img,
+                        type: 'image'
+                    };
+                });
             } else {
                 // Default rectangles for other previews
                 createRects();
@@ -1348,10 +1397,40 @@
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Trigger preview on all cells with data-preview attribute
+            // Group cells by preview ID to handle them as single units
+            const previewGroups = {};
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                cell.addEventListener('mouseleave', stop);
+                const previewId = cell.dataset.preview;
+                if (!previewGroups[previewId]) {
+                    previewGroups[previewId] = [];
+                }
+                previewGroups[previewId].push(cell);
+            });
+
+            // Add event listeners to each group
+            Object.keys(previewGroups).forEach(previewId => {
+                const cells = previewGroups[previewId];
+                let isHovering = false;
+
+                cells.forEach(cell => {
+                    cell.addEventListener('mouseenter', () => {
+                        if (!isHovering) {
+                            isHovering = true;
+                            start(previewId);
+                        }
+                    });
+
+                    cell.addEventListener('mouseleave', () => {
+                        // Check if mouse left all cells in this group
+                        setTimeout(() => {
+                            const stillHovering = cells.some(c => c.matches(':hover'));
+                            if (!stillHovering) {
+                                isHovering = false;
+                                stop();
+                            }
+                        }, 10);
+                    });
+                });
             });
 
             // Handle Commerce catalog clicks - show project gallery
@@ -1378,6 +1457,20 @@
                         
                         // Load project gallery with 12-column grid
                         loadAngryMasseurImages();
+                    } else if (projectName === 'Type O\'clock') {
+                        // Hide catalog and show project gallery
+                        const contentLeft = document.querySelector('.content-left');
+                        contentLeft.style.display = 'none';
+                        
+                        // Show project description
+                        const desc = a.getAttribute('data-description');
+                        if (desc) {
+                            rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                        
+                        // Load project gallery with 12-column grid
+                        loadTypeOclockImages();
                     }
                     
                     // dim only clicked catalog name to 25% opacity; reset others to 100%
@@ -1614,6 +1707,25 @@
             loadProjectGallery('Angry Masseur', projectData);
         }
 
+        // Function to load Type O'clock project (Commerce)
+        function loadTypeOclockImages() {
+            const projectData = {
+                files: [
+                    'typoclock_1920_1080.mp4',
+                    'cover_01.png',
+                    'cover_1920_1080_0600.png'
+                ],
+                layouts: [
+                    { colSpan: 8, startCol: 1 }, // Large video - main content
+                    { colSpan: 4, startCol: 9 }, // Medium image - minimum size
+                    { colSpan: 4, startCol: 1 } // Medium image - minimum size
+                ],
+                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/CoFo/'
+            };
+            
+            loadProjectGallery('Type O\'clock', projectData);
+        }
+
         // Function to load Area 117 project (Mind)
         function loadArea117Images() {
             const projectData = {
@@ -1703,10 +1815,40 @@
 
         // Function to attach event listeners for About me catalog
         function attachAboutMeEventListeners() {
-            // Trigger preview on all cells with data-preview attribute
+            // Group cells by preview ID to handle them as single units
+            const previewGroups = {};
             document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
-                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                cell.addEventListener('mouseleave', stop);
+                const previewId = cell.dataset.preview;
+                if (!previewGroups[previewId]) {
+                    previewGroups[previewId] = [];
+                }
+                previewGroups[previewId].push(cell);
+            });
+
+            // Add event listeners to each group
+            Object.keys(previewGroups).forEach(previewId => {
+                const cells = previewGroups[previewId];
+                let isHovering = false;
+
+                cells.forEach(cell => {
+                    cell.addEventListener('mouseenter', () => {
+                        if (!isHovering) {
+                            isHovering = true;
+                            start(previewId);
+                        }
+                    });
+
+                    cell.addEventListener('mouseleave', () => {
+                        // Check if mouse left all cells in this group
+                        setTimeout(() => {
+                            const stillHovering = cells.some(c => c.matches(':hover'));
+                            if (!stillHovering) {
+                                isHovering = false;
+                                stop();
+                            }
+                        }, 10);
+                    });
+                });
             });
 
             // Handle About me catalog clicks - show project galleries with 12-column grid
@@ -1899,12 +2041,40 @@
 
         // Function to attach event listeners for Mind catalog
         function attachMindEventListeners() {
-            // Trigger preview only on catalog links, not empty cells
-            document.querySelectorAll('.catalog-link').forEach(link=>{
-                const cell = link.closest('.cell');
-                if (!cell) return;
-                link.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
-                link.addEventListener('mouseleave', stop);
+            // Group cells by preview ID to handle them as single units
+            const previewGroups = {};
+            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
+                const previewId = cell.dataset.preview;
+                if (!previewGroups[previewId]) {
+                    previewGroups[previewId] = [];
+                }
+                previewGroups[previewId].push(cell);
+            });
+
+            // Add event listeners to each group
+            Object.keys(previewGroups).forEach(previewId => {
+                const cells = previewGroups[previewId];
+                let isHovering = false;
+
+                cells.forEach(cell => {
+                    cell.addEventListener('mouseenter', () => {
+                        if (!isHovering) {
+                            isHovering = true;
+                            start(previewId);
+                        }
+                    });
+
+                    cell.addEventListener('mouseleave', () => {
+                        // Check if mouse left all cells in this group
+                        setTimeout(() => {
+                            const stillHovering = cells.some(c => c.matches(':hover'));
+                            if (!stillHovering) {
+                                isHovering = false;
+                                stop();
+                            }
+                        }, 10);
+                    });
+                });
             });
 
             // Handle Mind catalog clicks - show project galleries with 12-column grid
