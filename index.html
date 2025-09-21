@@ -572,7 +572,8 @@
             cursor: pointer !important;
         }
 
-        .cell[data-preview]:hover {
+        /* Group hover effect for project rows */
+        .cell[data-preview].group-hover {
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
@@ -1411,19 +1412,30 @@
             if (angryMasseurCells.length > 0) {
                 let isHovering = false;
                 let hoverTimeout = null;
+                let enterTimeout = null;
 
                 angryMasseurCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
-                        // Clear any pending stop timeout
+                        // Clear any pending timeouts
                         if (hoverTimeout) {
                             clearTimeout(hoverTimeout);
                             hoverTimeout = null;
                         }
-                        
-                        if (!isHovering) {
-                            isHovering = true;
-                            start('angry-masseur');
+                        if (enterTimeout) {
+                            clearTimeout(enterTimeout);
+                            enterTimeout = null;
                         }
+                        
+                        // Add group hover effect to all cells in this project
+                        angryMasseurCells.forEach(c => c.classList.add('group-hover'));
+                        
+                        // Start animation with small delay to prevent flicker
+                        enterTimeout = setTimeout(() => {
+                            if (!isHovering) {
+                                isHovering = true;
+                                start('angry-masseur');
+                            }
+                        }, 10);
                     });
 
                     cell.addEventListener('mouseleave', () => {
@@ -1431,11 +1443,13 @@
                         hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(angryMasseurCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
+                                // Remove group hover effect from all cells
+                                angryMasseurCells.forEach(c => c.classList.remove('group-hover'));
                                 isHovering = false;
                                 stop();
                             }
                             hoverTimeout = null;
-                        }, 50); // Increased delay to 50ms
+                        }, 100); // Increased delay to 100ms
                     });
                 });
             }
@@ -1445,19 +1459,30 @@
             if (typeOclockCells.length > 0) {
                 let isHovering = false;
                 let hoverTimeout = null;
+                let enterTimeout = null;
 
                 typeOclockCells.forEach(cell => {
                     cell.addEventListener('mouseenter', () => {
-                        // Clear any pending stop timeout
+                        // Clear any pending timeouts
                         if (hoverTimeout) {
                             clearTimeout(hoverTimeout);
                             hoverTimeout = null;
                         }
-                        
-                        if (!isHovering) {
-                            isHovering = true;
-                            start('type-oclock');
+                        if (enterTimeout) {
+                            clearTimeout(enterTimeout);
+                            enterTimeout = null;
                         }
+                        
+                        // Add group hover effect to all cells in this project
+                        typeOclockCells.forEach(c => c.classList.add('group-hover'));
+                        
+                        // Start animation with small delay to prevent flicker
+                        enterTimeout = setTimeout(() => {
+                            if (!isHovering) {
+                                isHovering = true;
+                                start('type-oclock');
+                            }
+                        }, 10);
                     });
 
                     cell.addEventListener('mouseleave', () => {
@@ -1465,11 +1490,13 @@
                         hoverTimeout = setTimeout(() => {
                             const stillHovering = Array.from(typeOclockCells).some(c => c.matches(':hover'));
                             if (!stillHovering) {
+                                // Remove group hover effect from all cells
+                                typeOclockCells.forEach(c => c.classList.remove('group-hover'));
                                 isHovering = false;
                                 stop();
                             }
                             hoverTimeout = null;
-                        }, 50); // Increased delay to 50ms
+                        }, 100); // Increased delay to 100ms
                     });
                 });
             }
