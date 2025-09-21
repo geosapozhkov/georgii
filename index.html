@@ -579,6 +579,7 @@
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
+
     </style>
 </head>
 <body>
@@ -1885,6 +1886,55 @@
             loadProjectGallery('Process', projectData);
         }
 
+        // Function to load project gallery with 12-column grid layout
+        function loadProjectGallery(projectName, projectData) {
+            // Remove existing project gallery
+            const existingGallery = document.querySelector('.project-gallery');
+            if (existingGallery) {
+                existingGallery.remove();
+            }
+            
+            // Create project gallery container
+            const projectGallery = document.createElement('div');
+            projectGallery.className = 'project-gallery';
+            projectGallery.innerHTML = `
+                <div class="project-header">
+                    <h2 class="project-title">${projectName}</h2>
+                    <button class="back-button" onclick="showCommercePage()">← Back to Projects</button>
+                </div>
+                <div class="project-grid">
+                    ${projectData.files.map((file, index) => {
+                        const layout = projectData.layouts[index] || { colSpan: Math.max(4, projectData.layouts[index]?.colSpan || 4), startCol: 1 };
+                        const isVideo = file.toLowerCase().endsWith('.mp4');
+                        const elementType = isVideo ? 'video' : 'img';
+                        
+                        return `
+                            <div class="project-item" style="grid-column: ${layout.startCol} / ${layout.startCol + layout.colSpan};">
+                                <${elementType} 
+                                    src="${projectData.basePath}${file}"
+                                    ${isVideo ? 'muted loop controls' : ''}
+                                    class="project-media"
+                                    loading="lazy"
+                                ></${elementType}>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            
+            // Add to content area
+            const contentLeft = document.querySelector('.content-left');
+            contentLeft.appendChild(projectGallery);
+            contentLeft.style.display = 'block';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Function to show Commerce page (for back button)
+        function showCommercePage() {
+            updateCommerceContent();
+        }
 
         // Function to restore Mind content
         function updateMindContent() {
