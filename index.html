@@ -1128,6 +1128,9 @@
             // Stop any active preview animations
             stop();
             
+            // Clear spiral images when going to home page
+            clearSpiralImages();
+            
             // Disable drawing mode when leaving home page
             if (window.disableDrawingMode) {
                 window.disableDrawingMode();
@@ -1182,6 +1185,11 @@
         function switchTab(tabName) {
             // Stop any active preview animations
             stop();
+            
+            // Clear spiral images when leaving About me
+            if (tabName !== 'About me') {
+                clearSpiralImages();
+            }
             
             // Disable drawing mode when switching tabs
             if (window.disableDrawingMode) {
@@ -1839,11 +1847,94 @@
             loadProjectGallery('Ruins', projectData);
         }
 
+        // Function to load spiral images for About me
+        function loadSpiralImages() {
+            // Clear existing spiral images
+            document.querySelectorAll('.spiral-image').forEach(img => img.remove());
+            
+            const images = [
+                'IMG_0406 4.jpg',
+                'image 538.jpg'
+            ];
+            
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            let animationId = null;
+            
+            // Create image elements
+            const imageElements = images.map((filename, index) => {
+                const img = document.createElement('img');
+                img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/about/spiral/${filename}`;
+                img.className = 'spiral-image';
+                img.style.position = 'fixed';
+                img.style.width = '200px';
+                img.style.height = 'auto';
+                img.style.maxWidth = '200px';
+                img.style.zIndex = '100';
+                img.style.pointerEvents = 'none';
+                img.style.opacity = '0.8';
+                img.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                
+                // Initial position
+                img.style.left = centerX + 'px';
+                img.style.top = centerY + 'px';
+                img.style.transform = 'translate(-50%, -50%)';
+                
+                document.body.appendChild(img);
+                
+                return {
+                    element: img,
+                    angle: index * Math.PI, // Start at different angles
+                    radius: 150 + (index * 50), // Different spiral radii
+                    speed: 0.005 + (index * 0.002), // Different speeds
+                    time: 0
+                };
+            });
+            
+            // Animation function
+            function animateSpiral() {
+                imageElements.forEach(imgData => {
+                    imgData.time += imgData.speed;
+                    
+                    // Calculate spiral position
+                    const x = centerX + Math.cos(imgData.time) * imgData.radius * (1 + imgData.time * 0.1);
+                    const y = centerY + Math.sin(imgData.time) * imgData.radius * (1 + imgData.time * 0.1);
+                    
+                    // Update position
+                    imgData.element.style.left = x + 'px';
+                    imgData.element.style.top = y + 'px';
+                    
+                    // Add slight rotation
+                    imgData.element.style.transform = `translate(-50%, -50%) rotate(${imgData.time * 10}deg)`;
+                });
+                
+                animationId = requestAnimationFrame(animateSpiral);
+            }
+            
+            // Start animation
+            animateSpiral();
+            
+            // Store animation ID for cleanup
+            window.spiralAnimationId = animationId;
+        }
+        
+        // Function to clear spiral images
+        function clearSpiralImages() {
+            if (window.spiralAnimationId) {
+                cancelAnimationFrame(window.spiralAnimationId);
+                window.spiralAnimationId = null;
+            }
+            document.querySelectorAll('.spiral-image').forEach(img => img.remove());
+        }
+
         // Function to update About me content with projects
         function updateAboutMeContent() {
             const contentLeft = document.querySelector('.content-left');
             contentLeft.innerHTML = '<!-- About me content - no catalog -->';
             contentLeft.style.display = 'none';
+            
+            // Load spiral images for About me
+            loadSpiralImages();
         }
 
         // Function to attach event listeners for About me catalog
