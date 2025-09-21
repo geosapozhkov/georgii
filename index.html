@@ -577,6 +577,17 @@
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
+
+        /* Invisible hover zones for project rows */
+        .project-row-hover-zone {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 60px; /* Adjust based on your row height */
+            background: transparent;
+            pointer-events: auto;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
@@ -1407,99 +1418,94 @@
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Handle Angry Masseur with grouped logic - animation continues across cells
-            const angryMasseurCells = document.querySelectorAll('.cell[data-preview="angry-masseur"]');
-            if (angryMasseurCells.length > 0) {
-                let isHovering = false;
-                let hoverTimeout = null;
-                let enterTimeout = null;
+            // Create hover zones for project rows
+            createProjectRowHoverZones('angry-masseur');
+            createProjectRowHoverZones('type-oclock');
+        }
 
-                angryMasseurCells.forEach(cell => {
-                    cell.addEventListener('mouseenter', () => {
-                        // Clear any pending timeouts
-                        if (hoverTimeout) {
-                            clearTimeout(hoverTimeout);
-                            hoverTimeout = null;
-                        }
-                        if (enterTimeout) {
-                            clearTimeout(enterTimeout);
-                            enterTimeout = null;
-                        }
-                        
-                        // Add group hover effect to all cells in this project
-                        angryMasseurCells.forEach(c => c.classList.add('group-hover'));
-                        
-                        // Start animation with small delay to prevent flicker
-                        enterTimeout = setTimeout(() => {
-                            if (!isHovering) {
-                                isHovering = true;
-                                start('angry-masseur');
-                            }
-                        }, 10);
-                    });
+        // Function to create hover zones for project rows
+        function createProjectRowHoverZones(previewId) {
+            const projectCells = document.querySelectorAll(`.cell[data-preview="${previewId}"]`);
+            if (projectCells.length === 0) return;
 
-                    cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group with longer delay
-                        hoverTimeout = setTimeout(() => {
-                            const stillHovering = Array.from(angryMasseurCells).some(c => c.matches(':hover'));
-                            if (!stillHovering) {
-                                // Remove group hover effect from all cells
-                                angryMasseurCells.forEach(c => c.classList.remove('group-hover'));
-                                isHovering = false;
-                                stop();
-                            }
-                            hoverTimeout = null;
-                        }, 100); // Increased delay to 100ms
-                    });
+            let isHovering = false;
+            let hoverTimeout = null;
+
+            // Find the first cell to position the hover zone
+            const firstCell = projectCells[0];
+            const catalogGrid = firstCell.closest('.catalog-grid');
+            
+            // Create invisible hover zone
+            const hoverZone = document.createElement('div');
+            hoverZone.className = 'project-row-hover-zone';
+            hoverZone.style.top = firstCell.offsetTop + 'px';
+            
+            // Insert hover zone into catalog grid
+            catalogGrid.insertBefore(hoverZone, firstCell);
+
+            // Add event listeners to hover zone
+            hoverZone.addEventListener('mouseenter', () => {
+                // Clear any pending stop timeout
+                if (hoverTimeout) {
+                    clearTimeout(hoverTimeout);
+                    hoverTimeout = null;
+                }
+                
+                // Add group hover effect to all cells in this project
+                projectCells.forEach(c => c.classList.add('group-hover'));
+                
+                if (!isHovering) {
+                    isHovering = true;
+                    start(previewId);
+                }
+            });
+
+            hoverZone.addEventListener('mouseleave', () => {
+                // Check if mouse left the hover zone with delay
+                hoverTimeout = setTimeout(() => {
+                    // Remove group hover effect from all cells
+                    projectCells.forEach(c => c.classList.remove('group-hover'));
+                    isHovering = false;
+                    stop();
+                    hoverTimeout = null;
+                }, 100);
+            });
+
+            // Also keep individual cell listeners for clicks
+            projectCells.forEach(cell => {
+                cell.addEventListener('mouseenter', () => {
+                    // Clear any pending stop timeout
+                    if (hoverTimeout) {
+                        clearTimeout(hoverTimeout);
+                        hoverTimeout = null;
+                    }
+                    
+                    // Add group hover effect to all cells in this project
+                    projectCells.forEach(c => c.classList.add('group-hover'));
+                    
+                    if (!isHovering) {
+                        isHovering = true;
+                        start(previewId);
+                    }
                 });
-            }
 
-            // Handle Type O'clock with grouped logic
-            const typeOclockCells = document.querySelectorAll('.cell[data-preview="type-oclock"]');
-            if (typeOclockCells.length > 0) {
-                let isHovering = false;
-                let hoverTimeout = null;
-                let enterTimeout = null;
-
-                typeOclockCells.forEach(cell => {
-                    cell.addEventListener('mouseenter', () => {
-                        // Clear any pending timeouts
-                        if (hoverTimeout) {
-                            clearTimeout(hoverTimeout);
-                            hoverTimeout = null;
+                cell.addEventListener('mouseleave', () => {
+                    // Check if mouse left all cells and hover zone
+                    hoverTimeout = setTimeout(() => {
+                        const stillHovering = Array.from(projectCells).some(c => c.matches(':hover')) || 
+                                            hoverZone.matches(':hover');
+                        if (!stillHovering) {
+                            // Remove group hover effect from all cells
+                            projectCells.forEach(c => c.classList.remove('group-hover'));
+                            isHovering = false;
+                            stop();
                         }
-                        if (enterTimeout) {
-                            clearTimeout(enterTimeout);
-                            enterTimeout = null;
-                        }
-                        
-                        // Add group hover effect to all cells in this project
-                        typeOclockCells.forEach(c => c.classList.add('group-hover'));
-                        
-                        // Start animation with small delay to prevent flicker
-                        enterTimeout = setTimeout(() => {
-                            if (!isHovering) {
-                                isHovering = true;
-                                start('type-oclock');
-                            }
-                        }, 10);
-                    });
-
-                    cell.addEventListener('mouseleave', () => {
-                        // Check if mouse left all cells in this group with longer delay
-                        hoverTimeout = setTimeout(() => {
-                            const stillHovering = Array.from(typeOclockCells).some(c => c.matches(':hover'));
-                            if (!stillHovering) {
-                                // Remove group hover effect from all cells
-                                typeOclockCells.forEach(c => c.classList.remove('group-hover'));
-                                isHovering = false;
-                                stop();
-                            }
-                            hoverTimeout = null;
-                        }, 100); // Increased delay to 100ms
-                    });
+                        hoverTimeout = null;
+                    }, 100);
                 });
-            }
+            });
+        }
+
 
             // Handle Commerce catalog clicks - show project gallery
             const rightText = document.querySelector('.text-content');
@@ -1580,6 +1586,10 @@
             // Remove old video containers (for backward compatibility)
             const videoContainers = document.querySelectorAll('.video-container');
             videoContainers.forEach(container => container.remove());
+            
+            // Remove hover zones
+            const hoverZones = document.querySelectorAll('.project-row-hover-zone');
+            hoverZones.forEach(zone => zone.remove());
             
             // Show catalog again
             const contentLeft = document.querySelector('.content-left');
