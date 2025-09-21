@@ -566,31 +566,6 @@
             background-color: #ffffff;
             border: 2px solid #000000;
         }
-
-        /* Make catalog cells with data-preview clickable */
-        .cell[data-preview] {
-            cursor: pointer !important;
-        }
-
-        /* Group hover effect for project rows */
-        .cell[data-preview].group-hover {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-        /* Project row containers */
-        .project-row {
-            display: contents; /* Makes the row transparent to grid layout */
-        }
-
-        .project-row:hover .cell {
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
-        }
-
-
-
-
     </style>
 </head>
 <body>
@@ -769,54 +744,6 @@
                         type: 'video'
                     };
                 });
-            } else if (previewId === 'type-oclock') {
-                // Create preview for Type O'clock project - single video like other projects
-                const videoFile = 'typoclock_1920_1080.mp4';
-                
-                // Clear existing preview videos
-                document.querySelectorAll('.preview-video').forEach(video => video.remove());
-                
-                rects = new Array(1).fill(0).map((_, i) => {
-                    // Create actual video element for preview
-                    const video = document.createElement('video');
-                    video.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/CoFo/${videoFile}`;
-                    video.className = 'preview-video';
-                    video.muted = true;
-                    video.loop = true;
-                    video.autoplay = true;
-                    video.preload = 'auto';
-                    video.style.position = 'fixed';
-                    video.style.zIndex = '1007';
-                    video.style.pointerEvents = 'none';
-                    video.style.border = 'none';
-                    video.style.borderRadius = '0';
-                    video.style.objectFit = 'contain';
-                    
-                    // Random dimensions
-                    const w = rnd(400, 600);
-                    const h = Math.round(w * 0.5625); // 16:9 aspect ratio
-                    
-                    const x = rnd(0, window.innerWidth - w);
-                    const y = rnd(0, window.innerHeight - h);
-                    
-                    video.style.width = w + 'px';
-                    video.style.height = h + 'px';
-                    video.style.left = x + 'px';
-                    video.style.top = y + 'px';
-                    
-                    document.body.appendChild(video);
-                    
-                    return {
-                        x: x,
-                        y: y,
-                        w: w,
-                        h: h,
-                        vx: rnd(-0.7, 0.7) || 0.5,
-                        vy: rnd(-0.7, 0.7) || -0.4,
-                        videoElement: video,
-                        type: 'video'
-                    };
-                });
             } else {
                 // Default rectangles for other previews
                 createRects();
@@ -985,12 +912,16 @@
             canvas.style.display = 'none';
             cancelAnimationFrame(animationId);
             
-            // Remove all preview elements immediately
+            // Remove all preview video elements
             const previewVideos = document.querySelectorAll('.preview-video');
-            const previewImages = document.querySelectorAll('.preview-image');
-            
             previewVideos.forEach(video => video.remove());
-            previewImages.forEach(img => img.remove());
+            
+            // Remove all preview images
+            document.querySelectorAll('img[style*="position: fixed"]').forEach(img => {
+                if (img.style.zIndex === '1007' && img.style.pointerEvents === 'none') {
+                    img.remove();
+                }
+            });
             
             // Clear rects array
             rects = [];
@@ -1291,28 +1222,14 @@
                     <div class="col-header">Client</div>
                     <div class="col-header">Year</div>
 
-                    <div class="project-row" data-preview="angry-masseur">
-                        <div class="cell">
-                            <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-client">Poool</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-year">2023</span>
-                        </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
                     </div>
-
-                    <div class="project-row" data-preview="type-oclock">
-                        <div class="cell">
-                            <a href="#type-oclock" class="catalog-link" data-description="Type O'clock - A typography-focused project exploring the intersection of time and design. This project showcases innovative approaches to type design and visual communication through the lens of temporal aesthetics.">Type O'clock</a>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-client">Contrast Foundry</span>
-                        </div>
-                        <div class="cell">
-                            <span class="catalog-year">2022</span>
-                        </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-client">Poool</span>
+                    </div>
+                    <div class="cell" data-preview="angry-masseur">
+                        <span class="catalog-year">2023</span>
                     </div>
 
                     <div class="cell">
@@ -1419,80 +1336,48 @@
             attachCommerceEventListeners();
         }
 
-        // Global state for project hover management
-        let currentHoveringProject = null;
-        let projectHoverStates = {};
-
-        // Function to reset all project hover states
-        function resetAllProjectStates() {
-            // Stop any active animations
-            stop();
-            
-            // Remove all hover effects
-            document.querySelectorAll('.cell[data-preview]').forEach(c => c.classList.remove('group-hover'));
-            
-            // Reset all project states
-            Object.keys(projectHoverStates).forEach(projectId => {
-                if (projectHoverStates[projectId].hoverTimeout) {
-                    clearTimeout(projectHoverStates[projectId].hoverTimeout);
-                }
-                projectHoverStates[projectId].isHovering = false;
-                projectHoverStates[projectId].hoverTimeout = null;
-            });
-            
-            currentHoveringProject = null;
-        }
-
-
-
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Handle project rows - entire row is hoverable
-            document.querySelectorAll('.project-row[data-preview]').forEach(row => {
-                const previewId = row.dataset.preview;
-                
-                row.addEventListener('mouseenter', () => {
-                    resetAllProjectStates();
-                    start(previewId);
-                });
-                
-                row.addEventListener('mouseleave', () => {
-                    stop();
-                });
-                
-                // Add click handler for the entire row
-                row.addEventListener('click', (e) => {
-                    const projectLink = row.querySelector('.catalog-link');
-                    if (projectLink) {
-                        e.preventDefault();
-                        const projectName = projectLink.textContent.trim();
-                        const desc = projectLink.getAttribute('data-description');
-                        
+            // Trigger preview on all cells with data-preview attribute
+            document.querySelectorAll('.cell[data-preview]').forEach(cell=>{
+                cell.addEventListener('mouseenter', ()=>start(cell.dataset.preview));
+                cell.addEventListener('mouseleave', stop);
+            });
+
+            // Handle Commerce catalog clicks - show project gallery
+            const rightText = document.querySelector('.text-content');
+            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+            
+            allLinks.forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    
+                    const projectName = a.textContent.trim();
+                    
+                    if (projectName === 'Angry Masseur') {
+                        // Hide catalog and show project gallery
                         const contentLeft = document.querySelector('.content-left');
-                        const rightText = document.querySelector('.text-content');
-                        
                         contentLeft.style.display = 'none';
+                        
+                        // Show project description
+                        const desc = a.getAttribute('data-description');
                         if (desc) {
                             rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                         
-                        if (projectName === 'Angry Masseur') {
-                            loadAngryMasseurImages();
-                        } else if (projectName === 'Type O\'clock') {
-                            loadTypeOclockImages();
-                        }
-                        
-                        const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
-                        allLinks.forEach(l=>l.classList.remove('dimmed'));
-                        allLinks.forEach(l=>l.classList.add('dimmed'));
-                        
-                        activePreviewId = projectName.toLowerCase().replace(' ', '-');
+                        // Load project gallery with 12-column grid
+                        loadAngryMasseurImages();
                     }
+                    
+                    // dim only clicked catalog name to 25% opacity; reset others to 100%
+                    allLinks.forEach(l=>l.classList.remove('dimmed'));
+                    a.classList.add('dimmed');
+                    // mark this preview as active to disable its animated hover
+                    const parentCell = a.closest('.cell');
+                    if (parentCell) activePreviewId = parentCell.dataset.preview || null;
                 });
             });
-
-
         }
 
         // Function to clear Commerce project elements
@@ -1717,25 +1602,6 @@
             };
             
             loadProjectGallery('Angry Masseur', projectData);
-        }
-
-        // Function to load Type O'clock project (Commerce)
-        function loadTypeOclockImages() {
-            const projectData = {
-                files: [
-                    'typoclock_1920_1080.mp4',
-                    'cover_01.png',
-                    'cover_1920_1080_0600.png'
-                ],
-                layouts: [
-                    { colSpan: 8, startCol: 1 }, // Large video - main content
-                    { colSpan: 4, startCol: 9 }, // Medium image - minimum size
-                    { colSpan: 4, startCol: 1 } // Medium image - minimum size
-                ],
-                basePath: 'https://raw.githubusercontent.com/geosapozhkov/georgii/main/commerce/CoFo/'
-            };
-            
-            loadProjectGallery('Type O\'clock', projectData);
         }
 
         // Function to load Area 117 project (Mind)
@@ -2196,7 +2062,6 @@
             function loadCurrentImage() {
                 // Create new image element first
                 const img = document.createElement('img');
-                img.className = 'preview-image'; // Add class for fade effects
                 img.src = `https://raw.githubusercontent.com/geosapozhkov/georgii/main/RND/${rndImages[rect.currentImageIndex]}`;
                 
                 // Wait for image to load to get its natural dimensions
@@ -2245,14 +2110,13 @@
                     img.style.objectFit = 'contain'; // Use contain to preserve aspect ratio
                     img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
-                    img.style.transition = 'none';
+                    img.style.transition = 'none'; // Disable transitions to prevent flicker
                     
-                    // Remove old image if it exists
+                    // Remove old image only after new one is ready
                     if (rect.imageElement) {
                         rect.imageElement.remove();
                     }
                     
-                    // Add new image to DOM
                     document.body.appendChild(img);
                     rect.imageElement = img;
                 };
@@ -2351,9 +2215,6 @@
             }
         });
 
-            // Initialize drawing mode
-            window.isDrawingMode = window.isDrawingMode || false;
-            
             // Custom cursor tracking
             document.addEventListener('mousemove', (e) => {
                 const cursor = document.getElementById('customCursor');
