@@ -578,19 +578,16 @@
             transition: opacity 0.2s ease;
         }
 
-        /* Smooth fade-in/out for preview elements */
-        .preview-video, .preview-image {
-            opacity: 0;
-            transition: opacity 0.15s ease-in-out;
+        /* Project row containers */
+        .project-row {
+            display: contents; /* Makes the row transparent to grid layout */
         }
 
-        .preview-video.fade-in, .preview-image.fade-in {
-            opacity: 1;
+        .project-row:hover .cell {
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
         }
 
-        .preview-video.fade-out, .preview-image.fade-out {
-            opacity: 0;
-        }
 
 
 
@@ -761,11 +758,6 @@
                     
                     document.body.appendChild(video);
                     
-                    // Add fade-in effect after a short delay
-                    setTimeout(() => {
-                        video.classList.add('fade-in');
-                    }, 50);
-                    
                     return {
                         x: x,
                         y: y,
@@ -813,11 +805,6 @@
                     video.style.top = y + 'px';
                     
                     document.body.appendChild(video);
-                    
-                    // Add fade-in effect after a short delay
-                    setTimeout(() => {
-                        video.classList.add('fade-in');
-                    }, 50);
                     
                     return {
                         x: x,
@@ -998,29 +985,12 @@
             canvas.style.display = 'none';
             cancelAnimationFrame(animationId);
             
-            // Add fade-out effect to all preview elements
+            // Remove all preview elements immediately
             const previewVideos = document.querySelectorAll('.preview-video');
             const previewImages = document.querySelectorAll('.preview-image');
             
-            // Add fade-out class to videos
-            previewVideos.forEach(video => {
-                video.classList.remove('fade-in');
-                video.classList.add('fade-out');
-            });
-            
-            // Add fade-out class to images
-            previewImages.forEach(img => {
-                // Temporarily enable transition for fade-out
-                img.style.transition = 'opacity 0.15s ease-in-out';
-                img.classList.remove('fade-in');
-                img.classList.add('fade-out');
-            });
-            
-            // Remove elements after fade-out transition completes
-            setTimeout(() => {
-                previewVideos.forEach(video => video.remove());
-                previewImages.forEach(img => img.remove());
-            }, 150); // Match the CSS transition duration
+            previewVideos.forEach(video => video.remove());
+            previewImages.forEach(img => img.remove());
             
             // Clear rects array
             rects = [];
@@ -1321,24 +1291,28 @@
                     <div class="col-header">Client</div>
                     <div class="col-header">Year</div>
 
-                    <div class="cell" data-preview="angry-masseur">
-                        <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
-                    </div>
-                    <div class="cell" data-preview="angry-masseur">
-                        <span class="catalog-client">Poool</span>
-                    </div>
-                    <div class="cell" data-preview="angry-masseur">
-                        <span class="catalog-year">2023</span>
+                    <div class="project-row" data-preview="angry-masseur">
+                        <div class="cell">
+                            <a href="#angry-masseur" class="catalog-link" data-description="Angry Masseur - A comprehensive visual project showcasing character development, dual-screen experiences, and innovative storytelling techniques. This project explores the intersection of digital media and narrative design.">Angry Masseur</a>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-client">Poool</span>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-year">2023</span>
+                        </div>
                     </div>
 
-                    <div class="cell" data-preview="type-oclock">
-                        <a href="#type-oclock" class="catalog-link" data-description="Type O'clock - A typography-focused project exploring the intersection of time and design. This project showcases innovative approaches to type design and visual communication through the lens of temporal aesthetics.">Type O'clock</a>
-                    </div>
-                    <div class="cell" data-preview="type-oclock">
-                        <span class="catalog-client">Contrast Foundry</span>
-                    </div>
-                    <div class="cell" data-preview="type-oclock">
-                        <span class="catalog-year">2022</span>
+                    <div class="project-row" data-preview="type-oclock">
+                        <div class="cell">
+                            <a href="#type-oclock" class="catalog-link" data-description="Type O'clock - A typography-focused project exploring the intersection of time and design. This project showcases innovative approaches to type design and visual communication through the lens of temporal aesthetics.">Type O'clock</a>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-client">Contrast Foundry</span>
+                        </div>
+                        <div class="cell">
+                            <span class="catalog-year">2022</span>
+                        </div>
                     </div>
 
                     <div class="cell">
@@ -1473,102 +1447,52 @@
 
         // Function to attach event listeners for Commerce catalog
         function attachCommerceEventListeners() {
-            // Handle Angry Masseur with simple logic
-            document.querySelectorAll('.cell[data-preview="angry-masseur"]').forEach(cell => {
-                cell.addEventListener('mouseenter', () => {
+            // Handle project rows - entire row is hoverable
+            document.querySelectorAll('.project-row[data-preview]').forEach(row => {
+                const previewId = row.dataset.preview;
+                
+                row.addEventListener('mouseenter', () => {
                     resetAllProjectStates();
-                    start('angry-masseur');
+                    start(previewId);
                 });
-                cell.addEventListener('mouseleave', () => {
-                    setTimeout(() => {
-                        const stillHovering = document.querySelectorAll('.cell[data-preview="angry-masseur"]').some(c => c.matches(':hover'));
-                        if (!stillHovering) {
-                            stop();
-                        }
-                    }, 150);
-                });
-            });
-
-            // Handle Type O'clock with simple logic
-            document.querySelectorAll('.cell[data-preview="type-oclock"]').forEach(cell => {
-                cell.addEventListener('mouseenter', () => {
-                    resetAllProjectStates();
-                    start('type-oclock');
-                });
-                cell.addEventListener('mouseleave', () => {
-                    setTimeout(() => {
-                        const stillHovering = document.querySelectorAll('.cell[data-preview="type-oclock"]').some(c => c.matches(':hover'));
-                        if (!stillHovering) {
-                            stop();
-                        }
-                    }, 150);
-                });
-            });
-
-
-            // Handle Commerce catalog clicks - show project gallery
-            const rightText = document.querySelector('.text-content');
-            
-            // Function to handle project click
-            function handleProjectClick(projectName, description) {
-                // Hide catalog and show project gallery
-                const contentLeft = document.querySelector('.content-left');
-                contentLeft.style.display = 'none';
                 
-                // Show project description
-                if (description) {
-                    rightText.innerHTML = '<p>'+description.replace(/\n/g,'</p><p>')+'</p>';
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-                
-                // Load appropriate project gallery
-                if (projectName === 'Angry Masseur') {
-                    loadAngryMasseurImages();
-                } else if (projectName === 'Type O\'clock') {
-                    loadTypeOclockImages();
-                }
-                
-                // dim all catalog links to 25% opacity; reset others to 100%
-                const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
-                allLinks.forEach(l=>l.classList.remove('dimmed'));
-                allLinks.forEach(l=>l.classList.add('dimmed'));
-                
-                // mark this preview as active to disable its animated hover
-                activePreviewId = projectName.toLowerCase().replace(' ', '-');
-            }
-            
-            // Handle clicks on catalog links (project names)
-            const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
-            allLinks.forEach(a=>{
-                a.addEventListener('click', (e)=>{
-                    e.preventDefault();
-                    
-                    const projectName = a.textContent.trim();
-                    const desc = a.getAttribute('data-description');
-                    
-                    handleProjectClick(projectName, desc);
+                row.addEventListener('mouseleave', () => {
+                    stop();
                 });
-            });
-            
-            // Handle clicks on all project cells (client, year, etc.)
-            document.querySelectorAll('.cell[data-preview]').forEach(cell => {
-                cell.addEventListener('click', (e) => {
-                    const previewId = cell.dataset.preview;
-                    
-                    // Find the project link in the same project row
-                    const catalogGrid = cell.closest('.catalog-grid');
-                    const projectLink = catalogGrid.querySelector(`.cell[data-preview="${previewId}"] .catalog-link`);
-                    
+                
+                // Add click handler for the entire row
+                row.addEventListener('click', (e) => {
+                    const projectLink = row.querySelector('.catalog-link');
                     if (projectLink) {
                         e.preventDefault();
-                        
                         const projectName = projectLink.textContent.trim();
                         const desc = projectLink.getAttribute('data-description');
                         
-                        handleProjectClick(projectName, desc);
+                        const contentLeft = document.querySelector('.content-left');
+                        const rightText = document.querySelector('.text-content');
+                        
+                        contentLeft.style.display = 'none';
+                        if (desc) {
+                            rightText.innerHTML = '<p>'+desc.replace(/\n/g,'</p><p>')+'</p>';
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                        
+                        if (projectName === 'Angry Masseur') {
+                            loadAngryMasseurImages();
+                        } else if (projectName === 'Type O\'clock') {
+                            loadTypeOclockImages();
+                        }
+                        
+                        const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
+                        allLinks.forEach(l=>l.classList.remove('dimmed'));
+                        allLinks.forEach(l=>l.classList.add('dimmed'));
+                        
+                        activePreviewId = projectName.toLowerCase().replace(' ', '-');
                     }
                 });
             });
+
+
         }
 
         // Function to clear Commerce project elements
@@ -2270,9 +2194,6 @@
             
             // Create and load the first image
             function loadCurrentImage() {
-                // Check if this is the first image or a change
-                const isFirstImage = !rect.imageElement;
-                
                 // Create new image element first
                 const img = document.createElement('img');
                 img.className = 'preview-image'; // Add class for fade effects
@@ -2324,27 +2245,16 @@
                     img.style.objectFit = 'contain'; // Use contain to preserve aspect ratio
                     img.style.zIndex = '1007';
                     img.style.pointerEvents = 'none';
-                    img.style.transition = 'none'; // No transition for image changes
+                    img.style.transition = 'none';
                     
-                    // Store reference to old image
-                    const oldImage = rect.imageElement;
+                    // Remove old image if it exists
+                    if (rect.imageElement) {
+                        rect.imageElement.remove();
+                    }
                     
                     // Add new image to DOM
                     document.body.appendChild(img);
                     rect.imageElement = img;
-                    
-                    // Remove old image only after new one is positioned
-                    if (oldImage) {
-                        oldImage.remove();
-                    }
-                    
-                    // Add fade-in effect only for the first image (not for image changes)
-                    if (isFirstImage) {
-                        setTimeout(() => {
-                            img.style.transition = 'opacity 0.15s ease-in-out';
-                            img.classList.add('fade-in');
-                        }, 50);
-                    }
                 };
                 
                 // If image fails to load, use fallback dimensions
