@@ -100,25 +100,31 @@
             opacity: 0.7;
         }
 
-        /* Navigation in grid */
+        /* Navigation in header content */
         .navigation {
-            grid-column: 6 / 13; /* Spans 7 columns, starts from column 6 */
             display: flex;
             gap: 40px;
-            justify-content: flex-end;
             align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* Description and Navigation container */
+        .header-content {
+            grid-column: 6 / 13; /* Spans 7 columns from column 6 to edge */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 40px;
         }
 
         /* Description in header grid */
         .header-description {
-            grid-column: 6 / 9; /* Spans 3 columns, moved to column 6 */
+            flex: 1;
             font-size: 15px;
             line-height: 1.2;
             color: #3C3C3C;
             padding: 0;
             margin: 0;
-            display: flex;
-            align-items: center;
         }
 
         .nav-link {
@@ -148,7 +154,7 @@
         }
 
         /* Left Content - Catalog grid */
-        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 120px; }
+        .content-left { flex: 0 0 auto; padding-left: 17px; margin-top: 170px; }
 
         .catalog-grid {
             display: grid;
@@ -399,13 +405,9 @@
                 font-size: 60px;
             }
             
-            .header-description {
-                grid-column: 4 / 7; /* Adjust description area */
-            }
-            
-            .navigation {
-                grid-column: 7 / 13; /* Adjust navigation area */
-                gap: 25px;
+            .header-content {
+                grid-column: 4 / 13; /* Adjust content area */
+                gap: 30px;
             }
             
             .footer-grid {
@@ -427,16 +429,19 @@
                 font-size: 48px;
             }
             
+            .header-content {
+                grid-column: 6 / 13; /* Expand content area */
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
             .header-description {
-                grid-column: 6 / 13; /* Expand description area */
                 font-size: 14px;
             }
             
             .navigation {
-                grid-column: 1 / 13; /* Full width navigation below */
-                justify-content: center;
                 gap: 20px;
-                margin-top: 20px;
             }
             
             .nav-link {
@@ -464,14 +469,17 @@
                 text-align: center;
             }
             
-            .header-description {
+            .header-content {
                 grid-column: 1;
-                font-size: 13px;
+                align-items: center;
                 text-align: center;
             }
             
+            .header-description {
+                font-size: 13px;
+            }
+            
             .navigation {
-                grid-column: 1;
                 justify-content: center;
                 flex-wrap: wrap;
                 gap: 15px;
@@ -553,17 +561,19 @@
     <div class="drawing-cursor" id="drawingCursor"></div>
     <div class="header-grid">
         <a href="#" class="logo" id="logo">Georgii</a>
-        <div class="header-description">
-            <div class="text-content">
-                <p>Life and design explorer, pictures with meaning and quality creator.<br>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+        <div class="header-content">
+            <div class="header-description">
+                <div class="text-content">
+                    <p>Life and design explorer, pictures with meaning and quality creator.<br>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
+                </div>
             </div>
+            <nav class="navigation">
+                <a href="#" class="nav-link">Lots of Letters</a>
+                <a href="#" class="nav-link">Mind</a>
+                <a href="#" class="nav-link">Commerce</a>
+                <a href="#" class="nav-link">About me</a>
+            </nav>
         </div>
-        <nav class="navigation">
-            <a href="#" class="nav-link">Lots of Letters</a>
-            <a href="#" class="nav-link">Mind</a>
-            <a href="#" class="nav-link">Commerce</a>
-            <a href="#" class="nav-link">About me</a>
-        </nav>
     </div>
     <section class="content-left" style="display: none;">
         <!-- Content will be dynamically loaded here -->
