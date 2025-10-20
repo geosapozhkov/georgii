@@ -585,6 +585,96 @@
             opacity: 0.7;
             transition: opacity 0.2s ease;
         }
+
+        /* Project Gallery 12-Column Grid System */
+        .project-gallery {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            padding: 100px 17px 20px 17px; /* Top padding to account for header */
+            max-width: 100vw;
+            box-sizing: border-box;
+        }
+
+        /* Media container grid positioning */
+        .media-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .media-container:hover {
+            border-color: #ccc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Grid column spans */
+        .gallery-col-1 { grid-column: span 1; }
+        .gallery-col-2 { grid-column: span 2; }
+        .gallery-col-3 { grid-column: span 3; }
+        .gallery-col-4 { grid-column: span 4; }
+        .gallery-col-5 { grid-column: span 5; }
+        .gallery-col-6 { grid-column: span 6; }
+        .gallery-col-7 { grid-column: span 7; }
+        .gallery-col-8 { grid-column: span 8; }
+        .gallery-col-9 { grid-column: span 9; }
+        .gallery-col-10 { grid-column: span 10; }
+        .gallery-col-11 { grid-column: span 11; }
+        .gallery-col-12 { grid-column: span 12; }
+
+        /* Grid start positions */
+        .gallery-start-1 { grid-column-start: 1; }
+        .gallery-start-2 { grid-column-start: 2; }
+        .gallery-start-3 { grid-column-start: 3; }
+        .gallery-start-4 { grid-column-start: 4; }
+        .gallery-start-5 { grid-column-start: 5; }
+        .gallery-start-6 { grid-column-start: 6; }
+        .gallery-start-7 { grid-column-start: 7; }
+        .gallery-start-8 { grid-column-start: 8; }
+        .gallery-start-9 { grid-column-start: 9; }
+        .gallery-start-10 { grid-column-start: 10; }
+        .gallery-start-11 { grid-column-start: 11; }
+        .gallery-start-12 { grid-column-start: 12; }
+
+        /* Project media styling */
+        .project-media {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Edit mode styling for catalog elements */
+        .edit-mode .catalog-link[contenteditable="true"],
+        .edit-mode .catalog-client[contenteditable="true"],
+        .edit-mode .catalog-year[contenteditable="true"],
+        .edit-mode .catalog-placeholder[contenteditable="true"] {
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 1px dashed rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+            padding: 2px 4px;
+            cursor: text;
+            transition: all 0.2s ease;
+        }
+
+        .edit-mode .catalog-link[contenteditable="true"]:hover,
+        .edit-mode .catalog-client[contenteditable="true"]:hover,
+        .edit-mode .catalog-year[contenteditable="true"]:hover,
+        .edit-mode .catalog-placeholder[contenteditable="true"]:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .edit-mode .catalog-link[contenteditable="true"]:focus,
+        .edit-mode .catalog-client[contenteditable="true"]:focus,
+        .edit-mode .catalog-year[contenteditable="true"]:focus,
+        .edit-mode .catalog-placeholder[contenteditable="true"]:focus {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.6);
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -1625,6 +1715,12 @@
 
         // Global edit mode
         window.isEditMode = false;
+        
+        // Check if we're inside a project (project gallery is visible)
+        function isInsideProject() {
+            const projectGallery = document.querySelector('.project-gallery');
+            return projectGallery && projectGallery.style.display !== 'none';
+        }
         function enableEditMode(){
             window.isEditMode = true;
             document.body.classList.add('edit-mode');
@@ -1637,8 +1733,10 @@
             if (window.disableDrawingMode) {
                 window.disableDrawingMode();
             }
-            // Show drop indicator
-            showDropIndicator();
+            // Show drop indicator only if we're inside a project
+            if (isInsideProject()) {
+                showDropIndicator();
+            }
         }
         function disableEditMode(){
             window.isEditMode = false;
@@ -1744,12 +1842,159 @@
             const dt = e.dataTransfer;
             const files = dt.files;
             
-            if (files.length > 0) {
-                console.log('Files dropped:', files.length);
-                // TODO: Process dropped files
-                // For now, just show an alert
-                alert(`Dropped ${files.length} file(s). Drag-and-drop functionality is working!`);
+            if (files.length > 0 && isInsideProject()) {
+                console.log('Files dropped in project:', files.length);
+                processDroppedFiles(files);
             }
+        }
+        
+        // Process dropped files and add them to project
+        async function processDroppedFiles(files) {
+            const projectGallery = document.querySelector('.project-gallery');
+            if (!projectGallery) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Validate file type
+                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                    console.warn('Skipping non-media file:', file.name);
+                    continue;
+                }
+                
+                // Create file URL
+                const fileUrl = URL.createObjectURL(file);
+                
+                // Determine aspect ratio and calculate grid position
+                const aspectRatio = await getAspectRatio(fileUrl, file.type);
+                const gridPosition = calculateGridPosition(aspectRatio, projectGallery);
+                
+                // Create media container
+                const container = createMediaContainer(fileUrl, file.type, file.name, gridPosition);
+                
+                // Add to project gallery
+                projectGallery.appendChild(container);
+                
+                // Save to IndexedDB if available
+                if (window.portfolioDB && window.currentProjectContext?.projectId) {
+                    try {
+                        await window.portfolioDB.addMedia(window.currentProjectContext.projectId, {
+                            filename: file.name,
+                            fileUrl: fileUrl,
+                            aspectRatio: aspectRatio,
+                            layout: gridPosition
+                        });
+                    } catch (error) {
+                        console.error('Failed to save media to database:', error);
+                    }
+                }
+            }
+            
+            console.log(`Added ${files.length} media files to project`);
+        }
+        
+        // Get aspect ratio of image/video
+        function getAspectRatio(fileUrl, fileType) {
+            return new Promise((resolve) => {
+                if (fileType.startsWith('image/')) {
+                    const img = new Image();
+                    img.onload = () => {
+                        resolve(img.naturalWidth / img.naturalHeight);
+                    };
+                    img.src = fileUrl;
+                } else if (fileType.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.onloadedmetadata = () => {
+                        resolve(video.videoWidth / video.videoHeight);
+                    };
+                    video.src = fileUrl;
+                } else {
+                    resolve(16/9); // Default aspect ratio
+                }
+            });
+        }
+        
+        // Calculate grid position based on aspect ratio
+        function calculateGridPosition(aspectRatio, gallery) {
+            // Find next available position
+            const existingContainers = gallery.querySelectorAll('.media-container');
+            let nextRow = Math.floor(existingContainers.length / 3); // 3 columns per row
+            
+            // Determine column span based on aspect ratio
+            let colSpan = 4; // Default
+            if (aspectRatio > 1.5) {
+                colSpan = 6; // Wide images/videos
+            } else if (aspectRatio < 0.8) {
+                colSpan = 3; // Tall images/videos
+            }
+            
+            // Calculate start column (center the item)
+            const startCol = Math.floor((12 - colSpan) / 2) + 1;
+            
+            return {
+                colSpan: colSpan,
+                startCol: startCol,
+                row: nextRow
+            };
+        }
+        
+        // Create media container element
+        function createMediaContainer(fileUrl, fileType, fileName, gridPosition) {
+            const container = document.createElement('div');
+            container.className = `media-container gallery-col-${gridPosition.colSpan} gallery-start-${gridPosition.startCol}`;
+            container.style.cssText = `
+                cursor: pointer;
+                border: none;
+                border-radius: 0;
+                overflow: hidden;
+                position: relative;
+                min-height: 300px;
+                margin-bottom: 20px;
+            `;
+            
+            if (fileType.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = fileUrl;
+                img.className = 'project-media';
+                img.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                `;
+                container.appendChild(img);
+                
+                // Click to open in modal
+                container.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const modal = document.getElementById('imageModal');
+                    const modalImg = document.getElementById('modalImage');
+                    modalImg.src = img.src;
+                    modalImg.style.display = 'block';
+                    modal.classList.add('active');
+                });
+                
+            } else if (fileType.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.src = fileUrl;
+                video.className = 'project-media';
+                video.muted = true;
+                video.loop = true;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                `;
+                container.appendChild(video);
+                
+                // Try to play video
+                setTimeout(() => {
+                    video.play().catch(e => console.log('Video autoplay prevented:', e));
+                }, 100);
+            }
+            
+            return container;
         }
 
         document.addEventListener('keydown', function(e){
@@ -1976,7 +2221,13 @@
             allLinks.forEach(a=>{
                 a.addEventListener('click', (e)=>{
                     e.preventDefault();
-                    if (window.isEditMode) return; // in edit mode, clicking does not navigate
+                    
+                    // In edit mode, allow editing but don't navigate
+                    if (window.isEditMode) {
+                        // Focus the element for editing
+                        a.focus();
+                        return;
+                    }
                     
                     const projectName = a.textContent.trim();
                     
@@ -2102,6 +2353,9 @@
             // Remove old video containers (for backward compatibility)
             const videoContainers = document.querySelectorAll('.video-container');
             videoContainers.forEach(container => container.remove());
+            
+            // Hide drop indicator when leaving project
+            hideDropIndicator();
             
             // Show catalog again
             const contentLeft = document.querySelector('.content-left');
@@ -2291,6 +2545,11 @@
             console.log('Loaded', files.length, `${projectName} project media in 12-column grid layout`);
             // Set project context so description saves to project
             window.currentProjectContext = { type: 'project', projectId: (projectData && projectData.projectId) || null };
+            
+            // Show drop indicator if we're in edit mode
+            if (window.isEditMode) {
+                showDropIndicator();
+            }
         }
 
         // Function to load Angry Masseur project (Commerce)
