@@ -627,6 +627,339 @@
     
 </body>
 <script>
+    // Password overlay for protected saves
+    (function(){
+        if (document.getElementById('passwordOverlay')) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'passwordOverlay';
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'rgba(255,255,255,0.7)';
+        overlay.style.display = 'none';
+        overlay.style.zIndex = '2000';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.fontFamily = 'BookletSans, sans-serif';
+        const box = document.createElement('div');
+        box.style.background = '#fff';
+        box.style.border = '1px solid #ccc';
+        box.style.padding = '20px';
+        box.style.borderRadius = '6px';
+        box.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        box.style.display = 'flex';
+        box.style.flexDirection = 'column';
+        box.style.gap = '10px';
+        const label = document.createElement('div');
+        label.textContent = 'Enter password to save:';
+        label.style.fontSize = '15px';
+        const input = document.createElement('input');
+        input.type = 'password';
+        input.placeholder = 'Password';
+        input.style.fontSize = '15px';
+        input.style.padding = '8px 10px';
+        input.style.border = '1px solid #ccc';
+        input.style.borderRadius = '4px';
+        const error = document.createElement('div');
+        error.style.color = '#c00';
+        error.style.fontSize = '13px';
+        error.style.display = 'none';
+        const btn = document.createElement('button');
+        btn.textContent = 'Save';
+        btn.style.all = 'unset';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '15px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.padding = '8px 12px';
+        btn.style.borderRadius = '4px';
+        btn.style.textAlign = 'center';
+        btn.style.background = '#f5f5f5';
+        btn.addEventListener('mouseenter', ()=> btn.style.opacity = '0.8');
+        btn.addEventListener('mouseleave', ()=> btn.style.opacity = '1');
+        box.appendChild(label); box.appendChild(input); box.appendChild(error); box.appendChild(btn);
+        overlay.appendChild(box);
+        overlay.style.display = 'none';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.display = 'none';
+        overlay.addEventListener('click', (e)=>{ if (e.target === overlay){ overlay.style.display = 'none'; error.style.display='none'; input.value=''; } });
+        document.body.appendChild(overlay);
+
+        let pendingSave = null; // { type: 'tab'|'project', key|projectId, value }
+        async function confirmAndSave(){
+            const pass = input.value;
+            if (pass !== 'GeorgiiWeb2023!'){
+                error.textContent = 'Wrong password';
+                error.style.display = 'block';
+                return;
+            }
+            error.style.display = 'none';
+            overlay.style.display = 'none';
+            input.value = '';
+            if (pendingSave){
+                if (pendingSave.type === 'tab'){
+                    try { localStorage.setItem('desc:tab:' + pendingSave.key, pendingSave.value); } catch(_){}
+                } else if (pendingSave.type === 'project' && window.portfolioDB){
+                    await window.portfolioDB.updateProject(pendingSave.projectId, { description: pendingSave.value });
+                }
+                pendingSave = null;
+            }
+        }
+        btn.addEventListener('click', confirmAndSave);
+        input.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') confirmAndSave(); });
+
+        window.requestProtectedSave = function(payload){
+            pendingSave = payload; // { type, key|projectId, value }
+            overlay.style.display = 'flex';
+            setTimeout(()=> input.focus(), 0);
+        };
+    })();
+    // IndexedDB: Portfolio storage (projects, media, layouts)
+    (function(){
+        const DB_NAME = 'georgii_portfolio';
+        const DB_VERSION = 1;
+        const STORE_PROJECTS = 'projects';
+        const STORE_MEDIA = 'media';
+        const STORE_LAYOUTS = 'layouts';
+
+        function generateId(prefix){
+            try { return (prefix||'id') + '_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)); }
+            catch(_) { return (prefix||'id') + '_' + Math.random().toString(36).slice(2); }
+        }
+
+        function slugify(text){
+            return String(text||'')
+                .toLowerCase()
+                .normalize('NFKD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 80);
+        }
+
+        function openDB(){
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = function(e){
+                    const db = req.result;
+                    if (!db.objectStoreNames.contains(STORE_PROJECTS)) {
+                        const store = db.createObjectStore(STORE_PROJECTS, { keyPath: 'id' });
+                        store.createIndex('by_tab', 'tab', { unique: false });
+                        store.createIndex('by_slug', 'slug', { unique: true });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_MEDIA)) {
+                        const store = db.createObjectStore(STORE_MEDIA, { keyPath: 'id' });
+                        store.createIndex('by_projectId', 'projectId', { unique: false });
+                        store.createIndex('by_projectId_order', ['projectId','createdAt'], { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_LAYOUTS)) {
+                        const store = db.createObjectStore(STORE_LAYOUTS, { keyPath: 'id' });
+                        store.createIndex('by_projectId_order', ['projectId','order'], { unique: false });
+                        store.createIndex('by_projectId', 'projectId', { unique: false });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function withStore(storeName, mode, fn){
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, mode);
+                const store = tx.objectStore(storeName);
+                const res = fn(store, tx);
+                tx.oncomplete = () => resolve(res);
+                tx.onerror = () => reject(tx.error);
+                tx.onabort = () => reject(tx.error);
+            });
+        }
+
+        // Projects
+        async function createProject({ title, client, year, tab, description }){
+            const id = generateId('prj');
+            const slug = slugify(title || id);
+            const project = { id, slug, title: title||'Untitled', client: client||'', year: year||'', tab: tab||'Commerce', description: description||'', createdAt: Date.now(), updatedAt: Date.now() };
+            await withStore(STORE_PROJECTS, 'readwrite', (store)=> store.add(project));
+            return project;
+        }
+
+        async function updateProject(id, changes){
+            return withStore(STORE_PROJECTS, 'readwrite', (store)=>{
+                const getReq = store.get(id);
+                getReq.onsuccess = () => {
+                    const cur = getReq.result;
+                    if (!cur) return;
+                    const next = { ...cur, ...changes, updatedAt: Date.now() };
+                    if (changes && typeof changes.title === 'string') next.slug = slugify(changes.title);
+                    store.put(next);
+                };
+            });
+        }
+
+        async function getProjectBySlug(slug){
+            return withStore(STORE_PROJECTS, 'readonly', (store)=>{
+                return new Promise((resolve)=>{
+                    const idx = store.index('by_slug');
+                    const req = idx.get(slug);
+                    req.onsuccess = () => resolve(req.result||null);
+                    req.onerror = () => resolve(null);
+                });
+            });
+        }
+
+        async function listProjects(tab){
+            return withStore(STORE_PROJECTS, 'readonly', (store)=>{
+                return new Promise((resolve)=>{
+                    const results = [];
+                    const source = tab ? store.index('by_tab').openCursor(IDBKeyRange.only(tab)) : store.openCursor();
+                    source.onsuccess = (e)=>{
+                        const cur = e.target.result;
+                        if (cur){ results.push(cur.value); cur.continue(); } else { resolve(results.sort((a,b)=> (b.createdAt||0)-(a.createdAt||0))); }
+                    };
+                    source.onerror = ()=> resolve(results);
+                });
+            });
+        }
+
+        async function deleteProjectCascade(projectId){
+            await withStore(STORE_PROJECTS, 'readwrite', (store)=> store.delete(projectId));
+            await withStore(STORE_MEDIA, 'readwrite', (store)=>{
+                const idx = store.index('by_projectId');
+                const req = idx.openCursor(IDBKeyRange.only(projectId));
+                req.onsuccess = (e)=>{ const c = e.target.result; if (c){ store.delete(c.primaryKey); c.continue(); } };
+            });
+            await withStore(STORE_LAYOUTS, 'readwrite', (store)=>{
+                const idx = store.index('by_projectId');
+                const req = idx.openCursor(IDBKeyRange.only(projectId));
+                req.onsuccess = (e)=>{ const c = e.target.result; if (c){ store.delete(c.primaryKey); c.continue(); } };
+            });
+        }
+
+        // Media
+        async function addMedia({ projectId, blob, type, aspect, mime }){
+            const id = generateId('med');
+            const record = { id, projectId, type, aspect, mime: mime||blob?.type||'', createdAt: Date.now(), blob };
+            await withStore(STORE_MEDIA, 'readwrite', (store)=> store.add(record));
+            return record;
+        }
+
+        async function listMedia(projectId){
+            return withStore(STORE_MEDIA, 'readonly', (store)=>{
+                return new Promise((resolve)=>{
+                    const out = [];
+                    const idx = store.index('by_projectId_order');
+                    const lower = [projectId, 0];
+                    const upper = [projectId, Number.MAX_SAFE_INTEGER];
+                    const range = IDBKeyRange.bound(lower, upper);
+                    const req = idx.openCursor(range);
+                    req.onsuccess = (e)=>{ const c = e.target.result; if (c){ out.push(c.value); c.continue(); } else { resolve(out); } };
+                    req.onerror = ()=> resolve(out);
+                });
+            });
+        }
+
+        async function deleteMedia(mediaId){
+            await withStore(STORE_MEDIA, 'readwrite', (store)=> store.delete(mediaId));
+            // remove from layouts if present
+            await withStore(STORE_LAYOUTS, 'readwrite', (store)=>{
+                const req = store.openCursor();
+                req.onsuccess = (e)=>{ const c = e.target.result; if (!c) return; const v = c.value; if (v.mediaId === mediaId){ store.delete(v.id); } c.continue(); };
+            });
+        }
+
+        // Layouts
+        async function upsertLayoutItem({ id, projectId, mediaId, order, colSpan, startCol }){
+            const item = { id: id || generateId('lay'), projectId, mediaId, order: order|0, colSpan: Math.min(12, Math.max(1, colSpan|0)), startCol: Math.min(12, Math.max(1, startCol|0)) };
+            await withStore(STORE_LAYOUTS, 'readwrite', (store)=> store.put(item));
+            return item;
+        }
+
+        async function listLayout(projectId){
+            return withStore(STORE_LAYOUTS, 'readonly', (store)=>{
+                return new Promise((resolve)=>{
+                    const out = [];
+                    const idx = store.index('by_projectId_order');
+                    const lower = [projectId, 0];
+                    const upper = [projectId, Number.MAX_SAFE_INTEGER];
+                    const range = IDBKeyRange.bound(lower, upper);
+                    const req = idx.openCursor(range);
+                    req.onsuccess = (e)=>{ const c = e.target.result; if (c){ out.push(c.value); c.continue(); } else { resolve(out); } };
+                    req.onerror = ()=> resolve(out);
+                });
+            });
+        }
+
+        // Export/Import
+        async function exportAll(){
+            const [commerce, mind] = await Promise.all([listProjects('Commerce'), listProjects('Mind')]);
+            const allProjects = [...commerce, ...mind];
+            const mediaByProject = await Promise.all(allProjects.map(p=> listMedia(p.id)));
+            const layoutsByProject = await Promise.all(allProjects.map(p=> listLayout(p.id)));
+            // Convert blobs to base64 for portability
+            async function blobToBase64(b){ return new Promise((resolve)=>{ const fr = new FileReader(); fr.onload = ()=> resolve(fr.result); fr.readAsDataURL(b); }); }
+            const mediaSerialized = await Promise.all(mediaByProject.map(async arr => Promise.all(arr.map(async m => ({...m, blob: m.blob ? await blobToBase64(m.blob) : null })) )));
+            return {
+                version: 1,
+                exportedAt: Date.now(),
+                projects: allProjects,
+                media: mediaSerialized,
+                layouts: layoutsByProject
+            };
+        }
+
+        async function importAll(snapshot){
+            if (!snapshot || snapshot.version !== 1) throw new Error('Unsupported snapshot');
+            const { projects, media, layouts } = snapshot;
+            // Clear existing
+            const db = await openDB();
+            await new Promise((resolve, reject)=>{
+                const tx = db.transaction([STORE_PROJECTS, STORE_MEDIA, STORE_LAYOUTS], 'readwrite');
+                tx.objectStore(STORE_PROJECTS).clear();
+                tx.objectStore(STORE_MEDIA).clear();
+                tx.objectStore(STORE_LAYOUTS).clear();
+                tx.oncomplete = resolve; tx.onerror = ()=> reject(tx.error);
+            });
+            // Restore
+            for (const p of projects) await withStore(STORE_PROJECTS, 'readwrite', (s)=> s.add(p));
+            // Restore media (dataURL back to Blob)
+            function dataURLToBlob(dataURL){
+                if (!dataURL) return null;
+                const parts = dataURL.split(',');
+                const mime = (parts[0].match(/:(.*?);/)||[])[1] || 'application/octet-stream';
+                const bstr = atob(parts[1]);
+                let n = bstr.length; const u8arr = new Uint8Array(n);
+                while(n--) u8arr[n] = bstr.charCodeAt(n);
+                return new Blob([u8arr], { type: mime });
+            }
+            for (let i=0;i<projects.length;i++){
+                const projectId = projects[i].id;
+                const mediaArr = media[i] || [];
+                for (const m of mediaArr){
+                    const rec = { ...m, blob: dataURLToBlob(m.blob) };
+                    await withStore(STORE_MEDIA, 'readwrite', (s)=> s.add(rec));
+                }
+                const layoutArr = (layouts[i]||[]);
+                for (const lay of layoutArr){ await withStore(STORE_LAYOUTS, 'readwrite', (s)=> s.add(lay)); }
+            }
+        }
+
+        window.portfolioDB = {
+            openDB,
+            createProject,
+            updateProject,
+            getProjectBySlug,
+            listProjects,
+            deleteProjectCascade,
+            addMedia,
+            listMedia,
+            deleteMedia,
+            upsertLayoutItem,
+            listLayout,
+            exportAll,
+            importAll,
+            utils: { generateId, slugify }
+        };
+    })();
     (function(){
         const canvas = document.getElementById('previewCanvas');
         const ctx = canvas.getContext('2d');
@@ -1725,6 +2058,8 @@
             
             document.body.appendChild(gallery);
             console.log('Loaded', files.length, `${projectName} project media in 12-column grid layout`);
+            // Set project context so description saves to project
+            window.currentProjectContext = { type: 'project', projectId: (projectData && projectData.projectId) || null };
         }
 
         // Function to load Angry Masseur project (Commerce)
@@ -2255,26 +2590,60 @@
         // Function to update text content based on active tab
         function updateTextContent(tabName) {
             const textContent = document.querySelector('.text-content');
+            // Load saved description for tab if exists
+            try {
+                const saved = localStorage.getItem('desc:tab:' + tabName);
+                if (saved) {
+                    textContent.innerHTML = saved;
+                    window.currentProjectContext = { type: 'tab', key: tabName };
+                    return;
+                }
+            } catch (_) {}
             
             switch(tabName) {
                 case 'Lots of Letters':
                     textContent.innerHTML = '';
+                    window.currentProjectContext = { type: 'tab', key: tabName };
                     break;
                 case 'Commerce':
                     textContent.innerHTML = 'Here you can see my commercial projects and collaborations with various clients. Each project represents a unique challenge and creative solution tailored to specific brand needs and market requirements. I work closely with clients to understand their vision and translate it into compelling visual narratives that resonate with their target audience.';
+                    window.currentProjectContext = { type: 'tab', key: tabName };
                     break;
                 case 'About me':
                     textContent.innerHTML = 'As a child, I dreamed of becoming an engineer and building big things. Now I\'ve grown up and create images that can contain anything. Fascinated by how a thought can turn into a real object that conveys not only style but also meaning. I think that\'s why I love photography — it helps me discover something new in everything, every day. By thinking and feeling, I try to make the world around me a better place.';
+                    window.currentProjectContext = { type: 'tab', key: tabName };
                     break;
                 case 'Mind':
                     textContent.innerHTML = 'A conceptual exploration of the tension between rational and irrational forces through visual narratives. This ongoing project examines themes of control, freedom, and human nature through the lens of architectural and environmental storytelling. Each piece represents a moment of reflection on our relationship with systems, structures, and the boundaries that define our existence.';
+                    window.currentProjectContext = { type: 'tab', key: tabName };
                     break;
                 default:
                     // Home page content (same as About me)
                     textContent.innerHTML = 'Life and design explorer, pictures with meaning and quality creator.<br>Interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world.<br>I\'m open to working with studios, designers, and anyone passionate about creating images that tell their own story.';
+                    window.currentProjectContext = { type: 'tab', key: 'Home' };
                     break;
             }
         }
+
+        // Make header description editable with Enter-to-save + password
+        (function(){
+            const container = document.querySelector('.text-content');
+            if (!container) return;
+            container.setAttribute('contenteditable', 'true');
+            container.setAttribute('spellcheck', 'false');
+            container.addEventListener('keydown', (e)=>{
+                if (e.key === 'Enter'){
+                    e.preventDefault();
+                    const html = container.innerHTML.trim();
+                    const ctx = window.currentProjectContext || { type: 'tab', key: localStorage.getItem('activeTab') || 'Home' };
+                    if (ctx.type === 'project' && ctx.projectId){
+                        window.requestProtectedSave({ type: 'project', projectId: ctx.projectId, value: html });
+                    } else {
+                        window.requestProtectedSave({ type: 'tab', key: ctx.key || (localStorage.getItem('activeTab')||'Home'), value: html });
+                    }
+                }
+            });
+        })();
 
         // Modal handlers
         imageModal.addEventListener('click', () => {
