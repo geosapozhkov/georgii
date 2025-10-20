@@ -270,6 +270,12 @@
             align-items: flex-start;
         }
 
+        /* Remove focus outline/border when editing description */
+        .text-content:focus, .text-content:focus-visible {
+            outline: none;
+            border: none;
+        }
+
         .text-content p {
             margin-bottom: 0;
         }
@@ -627,7 +633,7 @@
     
 </body>
 <script>
-    // Password overlay for protected saves
+    // Password overlay for protected saves and edit auth
     (function(){
         if (document.getElementById('passwordOverlay')) return;
         const overlay = document.createElement('div');
@@ -685,6 +691,7 @@
         document.body.appendChild(overlay);
 
         let pendingSave = null; // { type: 'tab'|'project', key|projectId, value }
+        let pendingAuth = null; // { onSuccess: Function }
         async function confirmAndSave(){
             const pass = input.value;
             if (pass !== 'GeorgiiWeb2023!'){
@@ -695,6 +702,12 @@
             error.style.display = 'none';
             overlay.style.display = 'none';
             input.value = '';
+            if (pendingAuth){
+                const fn = pendingAuth.onSuccess;
+                pendingAuth = null;
+                if (typeof fn === 'function') fn();
+                return;
+            }
             if (pendingSave){
                 if (pendingSave.type === 'tab'){
                     try { localStorage.setItem('desc:tab:' + pendingSave.key, pendingSave.value); } catch(_){}
@@ -709,6 +722,12 @@
 
         window.requestProtectedSave = function(payload){
             pendingSave = payload; // { type, key|projectId, value }
+            overlay.style.display = 'flex';
+            setTimeout(()=> input.focus(), 0);
+        };
+
+        window.requestEditAuth = function(onSuccess){
+            pendingAuth = { onSuccess };
             overlay.style.display = 'flex';
             setTimeout(()=> input.focus(), 0);
         };
@@ -1599,6 +1618,37 @@
             });
         }
 
+        // Global edit mode
+        window.isEditMode = false;
+        function enableEditMode(){
+            window.isEditMode = true;
+            document.body.classList.add('edit-mode');
+            // Make header description editable
+            const tc = document.querySelector('.text-content');
+            if (tc){ tc.setAttribute('contenteditable','true'); tc.setAttribute('spellcheck','false'); }
+            // Disable hover previews
+            stop();
+        }
+        function disableEditMode(){
+            window.isEditMode = false;
+            document.body.classList.remove('edit-mode');
+            // Blur editable fields to prevent accidental edits
+            document.activeElement && document.activeElement.blur && document.activeElement.blur();
+        }
+
+        document.addEventListener('keydown', function(e){
+            if (e.ctrlKey && (e.key === 'e' || e.key === 'E')){
+                e.preventDefault();
+                if (!window.isEditMode){
+                    window.requestEditAuth(()=>{
+                        enableEditMode();
+                    });
+                } else {
+                    disableEditMode();
+                }
+            }
+        });
+
         // Restore saved tab on page load
         document.addEventListener('DOMContentLoaded', function() {
             preloadImages(); // Start preloading critical images
@@ -1770,31 +1820,27 @@
                 previewGroups[previewId].cells.push(cell);
             });
             
-            // Add event listeners to each group
+            // Add event listeners to each group (disabled in edit mode)
             Object.keys(previewGroups).forEach(previewId => {
                 const group = previewGroups[previewId];
                 
                 const mouseEnterHandler = () => {
+                    if (window.isEditMode) return;
                     clearTimeout(group.hoverTimeout);
                     if (!group.isHovered) {
                         group.isHovered = true;
-                        // Add hover class to all cells with same data-preview
-                        group.cells.forEach(cell => {
-                            cell.classList.add('hovered');
-                        });
+                        group.cells.forEach(cell => { cell.classList.add('hovered'); });
                         start(previewId);
                     }
                 };
                 
                 const mouseLeaveHandler = () => {
+                    if (window.isEditMode) return;
                     group.hoverTimeout = setTimeout(() => {
                         group.isHovered = false;
-                        // Remove hover class from all cells with same data-preview
-                        group.cells.forEach(cell => {
-                            cell.classList.remove('hovered');
-                        });
+                        group.cells.forEach(cell => { cell.classList.remove('hovered'); });
                         stop();
-                    }, 50); // Small delay to prevent flickering when moving between cells
+                    }, 50);
                 };
                 
                 // Add listeners to all cells in the group
@@ -1807,13 +1853,14 @@
                 });
             });
 
-            // Handle Commerce catalog clicks - show project gallery
+            // Handle Commerce catalog clicks - show project gallery or prevent when editing
             const rightText = document.querySelector('.text-content');
             const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             
             allLinks.forEach(a=>{
                 a.addEventListener('click', (e)=>{
                     e.preventDefault();
+                    if (window.isEditMode) return; // in edit mode, clicking does not navigate
                     
                     const projectName = a.textContent.trim();
                     
@@ -1855,6 +1902,52 @@
                     if (parentCell) activePreviewId = parentCell.dataset.preview || null;
                 });
             });
+
+            // Enable inline editing of client/year/title in edit mode
+            const contentLeft = document.querySelector('.content-left');
+            if (contentLeft){
+                contentLeft.querySelectorAll('.cell[data-preview] .catalog-client, .cell[data-preview] .catalog-year, .cell[data-preview] .catalog-link').forEach(el => {
+                    if (window.isEditMode){
+                        if (el.classList.contains('catalog-link')){
+                            el.setAttribute('contenteditable','true');
+                            el.setAttribute('spellcheck','false');
+                        } else {
+                            el.setAttribute('contenteditable','true');
+                            el.setAttribute('spellcheck','false');
+                        }
+                    } else {
+                        el.removeAttribute('contenteditable');
+                    }
+                    el.addEventListener('keydown', async (e)=>{
+                        if (e.key === 'Enter'){
+                            e.preventDefault();
+                            if (!window.isEditMode) return;
+                            const cell = e.target.closest('.cell');
+                            const rowPreview = cell && cell.getAttribute('data-preview');
+                            const rowGroup = Array.from(document.querySelectorAll(`.cell[data-preview="${rowPreview}"]`));
+                            // Determine field and project id via row content
+                            const titleEl = rowGroup.find(n => n.querySelector('.catalog-link'))?.querySelector('.catalog-link');
+                            const clientEl = rowGroup.find(n => n.querySelector('.catalog-client'))?.querySelector('.catalog-client');
+                            const yearEl = rowGroup.find(n => n.querySelector('.catalog-year'))?.querySelector('.catalog-year');
+                            // Find project by title+tab (fallback to slug search if DB available)
+                            const activeTab = localStorage.getItem('activeTab') || 'Commerce';
+                            let project = null;
+                            if (window.portfolioDB){
+                                const list = await window.portfolioDB.listProjects(activeTab);
+                                project = list.find(p => p.title === (titleEl?.textContent||'').trim()) || null;
+                            }
+                            if (project){
+                                await window.portfolioDB.updateProject(project.id, {
+                                    title: (titleEl?.textContent||'').trim(),
+                                    client: (clientEl?.textContent||'').trim(),
+                                    year: (yearEl?.textContent||'').trim()
+                                });
+                            }
+                            e.target.blur();
+                        }
+                    });
+                });
+            }
         }
 
         // Function to clear Commerce project elements
@@ -2508,32 +2601,28 @@
                 previewGroups[previewId].items.push({ link, cell });
             });
             
-            // Add event listeners to each group
+            // Add event listeners to each group (disabled in edit mode)
             Object.keys(previewGroups).forEach(previewId => {
                 const group = previewGroups[previewId];
                 const cells = group.items.map(item => item.cell);
                 
                 const mouseEnterHandler = () => {
+                    if (window.isEditMode) return;
                     clearTimeout(group.hoverTimeout);
                     if (!group.isHovered) {
                         group.isHovered = true;
-                        // Add hover class to all cells with same data-preview
-                        cells.forEach(cell => {
-                            cell.classList.add('hovered');
-                        });
+                        cells.forEach(cell => { cell.classList.add('hovered'); });
                         start(previewId);
                     }
                 };
                 
                 const mouseLeaveHandler = () => {
+                    if (window.isEditMode) return;
                     group.hoverTimeout = setTimeout(() => {
                         group.isHovered = false;
-                        // Remove hover class from all cells with same data-preview
-                        cells.forEach(cell => {
-                            cell.classList.remove('hovered');
-                        });
+                        cells.forEach(cell => { cell.classList.remove('hovered'); });
                         stop();
-                    }, 50); // Small delay to prevent flickering when moving between cells
+                    }, 50);
                 };
                 
                 // Add listeners to all links in the group
@@ -2546,12 +2635,13 @@
                 });
             });
 
-            // Handle Mind catalog clicks - show project galleries with 12-column grid
+            // Handle Mind catalog clicks - show project galleries with 12-column grid or prevent when editing
             const rightText = document.querySelector('.text-content');
             const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             allLinks.forEach(a=>{
                 a.addEventListener('click', (e)=>{
                     e.preventDefault();
+                    if (window.isEditMode) return; // disable navigation in edit mode
                     
                     const projectName = a.textContent.trim();
                     
@@ -2585,6 +2675,45 @@
                     if (parentCell) activePreviewId = parentCell.dataset.preview || null;
                 });
             });
+
+            // Enable inline editing in edit mode (title/client/year) similar to Commerce
+            const contentLeft = document.querySelector('.content-left');
+            if (contentLeft){
+                contentLeft.querySelectorAll('.cell[data-preview] .catalog-client, .cell[data-preview] .catalog-year, .cell[data-preview] .catalog-link').forEach(el => {
+                    if (window.isEditMode){
+                        el.setAttribute('contenteditable','true');
+                        el.setAttribute('spellcheck','false');
+                    } else {
+                        el.removeAttribute('contenteditable');
+                    }
+                    el.addEventListener('keydown', async (e)=>{
+                        if (e.key === 'Enter'){
+                            e.preventDefault();
+                            if (!window.isEditMode) return;
+                            const cell = e.target.closest('.cell');
+                            const rowPreview = cell && cell.getAttribute('data-preview');
+                            const rowGroup = Array.from(document.querySelectorAll(`.cell[data-preview="${rowPreview}"]`));
+                            const titleEl = rowGroup.find(n => n.querySelector('.catalog-link'))?.querySelector('.catalog-link');
+                            const clientEl = rowGroup.find(n => n.querySelector('.catalog-client'))?.querySelector('.catalog-client');
+                            const yearEl = rowGroup.find(n => n.querySelector('.catalog-year'))?.querySelector('.catalog-year');
+                            const activeTab = localStorage.getItem('activeTab') || 'Mind';
+                            let project = null;
+                            if (window.portfolioDB){
+                                const list = await window.portfolioDB.listProjects(activeTab);
+                                project = list.find(p => p.title === (titleEl?.textContent||'').trim()) || null;
+                            }
+                            if (project){
+                                await window.portfolioDB.updateProject(project.id, {
+                                    title: (titleEl?.textContent||'').trim(),
+                                    client: (clientEl?.textContent||'').trim(),
+                                    year: (yearEl?.textContent||'').trim()
+                                });
+                            }
+                            e.target.blur();
+                        }
+                    });
+                });
+            }
         }
 
         // Function to update text content based on active tab
@@ -2631,15 +2760,25 @@
             if (!container) return;
             container.setAttribute('contenteditable', 'true');
             container.setAttribute('spellcheck', 'false');
-            container.addEventListener('keydown', (e)=>{
+            container.addEventListener('keydown', async (e)=>{
                 if (e.key === 'Enter'){
                     e.preventDefault();
                     const html = container.innerHTML.trim();
                     const ctx = window.currentProjectContext || { type: 'tab', key: localStorage.getItem('activeTab') || 'Home' };
-                    if (ctx.type === 'project' && ctx.projectId){
-                        window.requestProtectedSave({ type: 'project', projectId: ctx.projectId, value: html });
+                    if (window.isEditMode){
+                        // Save immediately in edit mode (already authenticated)
+                        if (ctx.type === 'project' && ctx.projectId && window.portfolioDB){
+                            await window.portfolioDB.updateProject(ctx.projectId, { description: html });
+                        } else {
+                            try { localStorage.setItem('desc:tab:' + (ctx.key || (localStorage.getItem('activeTab')||'Home')), html); } catch(_){}
+                        }
                     } else {
-                        window.requestProtectedSave({ type: 'tab', key: ctx.key || (localStorage.getItem('activeTab')||'Home'), value: html });
+                        // Require password outside edit mode
+                        if (ctx.type === 'project' && ctx.projectId){
+                            window.requestProtectedSave({ type: 'project', projectId: ctx.projectId, value: html });
+                        } else {
+                            window.requestProtectedSave({ type: 'tab', key: ctx.key || (localStorage.getItem('activeTab')||'Home'), value: html });
+                        }
                     }
                 }
             });
