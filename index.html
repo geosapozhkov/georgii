@@ -523,6 +523,11 @@
             line-height: 1;
         }
 
+        .catalog-placeholder.filled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Custom cursor */
         * {
             cursor: none !important;
@@ -1628,12 +1633,123 @@
             if (tc){ tc.setAttribute('contenteditable','true'); tc.setAttribute('spellcheck','false'); }
             // Disable hover previews
             stop();
+            // Disable drawing if active
+            if (window.disableDrawingMode) {
+                window.disableDrawingMode();
+            }
+            // Show drop indicator
+            showDropIndicator();
         }
         function disableEditMode(){
             window.isEditMode = false;
             document.body.classList.remove('edit-mode');
             // Blur editable fields to prevent accidental edits
             document.activeElement && document.activeElement.blur && document.activeElement.blur();
+            // Hide drop indicator
+            hideDropIndicator();
+        }
+        
+        // Drop indicator functions
+        function showDropIndicator() {
+            // Remove existing indicator if any
+            hideDropIndicator();
+            
+            const indicator = document.createElement('div');
+            indicator.id = 'drop-indicator';
+            indicator.innerHTML = 'Drop here';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 8px;
+                font-size: 18px;
+                font-weight: 500;
+                z-index: 1000;
+                pointer-events: none;
+                opacity: 0.9;
+                border: 2px dashed rgba(255, 255, 255, 0.5);
+            `;
+            document.body.appendChild(indicator);
+            
+            // Add drag and drop event listeners
+            setupDragAndDrop();
+        }
+        
+        function hideDropIndicator() {
+            const indicator = document.getElementById('drop-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+            // Remove drag and drop event listeners
+            removeDragAndDrop();
+        }
+        
+        // Drag and drop functionality
+        function setupDragAndDrop() {
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                document.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                document.addEventListener(eventName, unhighlight, false);
+            });
+            
+            // Handle dropped files
+            document.addEventListener('drop', handleDrop, false);
+        }
+        
+        function removeDragAndDrop() {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                document.removeEventListener(eventName, preventDefaults, false);
+                document.removeEventListener(eventName, highlight, false);
+                document.removeEventListener(eventName, unhighlight, false);
+            });
+            document.removeEventListener('drop', handleDrop, false);
+        }
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight(e) {
+            const indicator = document.getElementById('drop-indicator');
+            if (indicator) {
+                indicator.style.opacity = '1';
+                indicator.style.transform = 'translate(-50%, -50%) scale(1.05)';
+                indicator.style.borderColor = 'rgba(255, 255, 255, 1)';
+            }
+        }
+        
+        function unhighlight(e) {
+            const indicator = document.getElementById('drop-indicator');
+            if (indicator) {
+                indicator.style.opacity = '0.9';
+                indicator.style.transform = 'translate(-50%, -50%) scale(1)';
+                indicator.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            }
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                console.log('Files dropped:', files.length);
+                // TODO: Process dropped files
+                // For now, just show an alert
+                alert(`Dropped ${files.length} file(s). Drag-and-drop functionality is working!`);
+            }
         }
 
         document.addEventListener('keydown', function(e){
@@ -1903,10 +2019,10 @@
                 });
             });
 
-            // Enable inline editing of client/year/title in edit mode
+            // Enable inline editing of client/year/title and placeholders in edit mode
             const contentLeft = document.querySelector('.content-left');
             if (contentLeft){
-                contentLeft.querySelectorAll('.cell[data-preview] .catalog-client, .cell[data-preview] .catalog-year, .cell[data-preview] .catalog-link').forEach(el => {
+                contentLeft.querySelectorAll('.cell[data-preview] .catalog-client, .cell[data-preview] .catalog-year, .cell[data-preview] .catalog-link, .cell .catalog-placeholder').forEach(el => {
                     if (window.isEditMode){
                         if (el.classList.contains('catalog-link')){
                             el.setAttribute('contenteditable','true');
@@ -1915,8 +2031,17 @@
                             el.setAttribute('contenteditable','true');
                             el.setAttribute('spellcheck','false');
                         }
+                        if (el.classList.contains('catalog-placeholder')){
+                            el.classList.add('filled');
+                        }
                     } else {
                         el.removeAttribute('contenteditable');
+                        if (el.classList.contains('catalog-placeholder')){
+                            if (!el.textContent.trim()){
+                                el.textContent = 'No Data';
+                            }
+                            el.classList.remove('filled');
+                        }
                     }
                     el.addEventListener('keydown', async (e)=>{
                         if (e.key === 'Enter'){
@@ -1925,11 +2050,9 @@
                             const cell = e.target.closest('.cell');
                             const rowPreview = cell && cell.getAttribute('data-preview');
                             const rowGroup = Array.from(document.querySelectorAll(`.cell[data-preview="${rowPreview}"]`));
-                            // Determine field and project id via row content
                             const titleEl = rowGroup.find(n => n.querySelector('.catalog-link'))?.querySelector('.catalog-link');
                             const clientEl = rowGroup.find(n => n.querySelector('.catalog-client'))?.querySelector('.catalog-client');
                             const yearEl = rowGroup.find(n => n.querySelector('.catalog-year'))?.querySelector('.catalog-year');
-                            // Find project by title+tab (fallback to slug search if DB available)
                             const activeTab = localStorage.getItem('activeTab') || 'Commerce';
                             let project = null;
                             if (window.portfolioDB){
@@ -1942,10 +2065,25 @@
                                     client: (clientEl?.textContent||'').trim(),
                                     year: (yearEl?.textContent||'').trim()
                                 });
+                            } else {
+                                // If editing placeholder text where no project yet, persist locally per cell
+                                if (e.target.classList.contains('catalog-placeholder')){
+                                    const key = `placeholder:${activeTab}:${rowPreview}:${Array.from(cell.parentElement.children).indexOf(cell)}`;
+                                    try { localStorage.setItem(key, e.target.textContent.trim()); } catch(_){}
+                                }
                             }
                             e.target.blur();
                         }
                     });
+                });
+                // Restore placeholder custom texts
+                contentLeft.querySelectorAll('.cell .catalog-placeholder').forEach(ph => {
+                    const cell = ph.closest('.cell');
+                    const rowPreview = cell && cell.getAttribute('data-preview');
+                    const activeTab = localStorage.getItem('activeTab') || 'Commerce';
+                    const key = `placeholder:${activeTab}:${rowPreview}:${Array.from(cell.parentElement.children).indexOf(cell)}`;
+                    const saved = localStorage.getItem(key);
+                    if (saved){ ph.textContent = saved; ph.classList.add('filled'); }
                 });
             }
         }
