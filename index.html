@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Georgii</title>
+  <title>Test Portfolio Preview</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     @font-face {
@@ -17,29 +17,30 @@
       font-family: 'Booklet', sans-serif;
       color: #1f1f1f;
     }
+    /* Этот стиль папки теперь не используется, но можно оставить для возможного оформления */
     .folder-icon {
       position: relative;
       width: 100%;
-      height: 96px;
+      height: 80px;
+      background-color: #e5e5e5;
       border-radius: 8px;
-      background-color: #e5e7eb; /* основное тело */
+      overflow: hidden;
     }
-    .folder-icon::before {
+    .folder-icon::after {
       content: '';
       position: absolute;
       top: 0;
-      left: 10%;
-      width: 40%;
-      height: 22px;
-      background-color: #d1d5db; /* вкладка */
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
+      right: 0;
+      width: 28%;
+      height: 30%;
+      background-color: #bcbcbc;
+      border-bottom-left-radius: 8px;
     }
   </style>
 </head>
 <body class="p-6">
   <header class="max-w-6xl mx-auto mb-10 text-center">
-    <h1 class="text-4xl font-bold mb-2 tracking-tight">Georgii</h1>
+    <h1 class="text-4xl font-bold mb-2 tracking-tight">Test Portfolio</h1>
   </header>
 
   <main class="max-w-6xl mx-auto">
@@ -48,170 +49,154 @@
     <div id="loading" class="text-center text-gray-400 mt-10">Loading...</div>
   </main>
 
-  <!-- Модальное окно для предпросмотра -->
-  <div id="previewModal" class="fixed inset-0 hidden items-center justify-center preview-backdrop z-50">
-    <div class="bg-white rounded-2xl p-4 max-w-5xl w-full max-h-[90vh] overflow-auto relative">
-      <button id="closePreview" class="absolute top-2 right-2 px-3 py-1 border rounded bg-white">Закрыть</button>
-      <div id="previewContent" class="flex justify-center items-center"></div>
-      <div id="previewTitle" class="text-center mt-2 font-semibold text-gray-700"></div>
-    </div>
+  <!-- Полноэкранный просмотр -->
+  <div id="viewerOverlay" class="fixed inset-0 hidden bg-white flex items-center justify-center z-50">
+    <div id="viewerContent" class="flex items-center justify-center max-w-full max-h-full"></div>
   </div>
 
   <script>
     const publicKey = 'https://disk.yandex.ru/d/n0510qzdIEj3TA';
     const grid = document.getElementById('file-grid');
     const loading = document.getElementById('loading');
-    const breadcrumb = document.getElementById('breadcrumb');
-    const modal = document.getElementById('previewModal');
-    const previewContent = document.getElementById('previewContent');
-    const previewTitle = document.getElementById('previewTitle');
-    const closePreview = document.getElementById('closePreview');
 
-    closePreview.onclick = () => {
-      modal.classList.add('hidden');
-      previewContent.innerHTML = '';
-    };
+    // Переменные для полноэкранного просмотра
+    const viewerOverlay = document.getElementById('viewerOverlay');
+    const viewerContent = document.getElementById('viewerContent');
+    let currentItems = [];
+    let currentIndex = 0;
 
-    let currentPath = '';
-
-    function isImage(mimeType, name) {
-      const ext = name.toLowerCase();
-      return (mimeType && mimeType.startsWith('image/')) ||
-             ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some(suf => ext.endsWith(suf));
+    // Отрисовывает текущий элемент во вьюере
+    function renderViewer() {
+      const item = currentItems[currentIndex];
+      if (!item) return;
+      viewerContent.innerHTML = '';
+      if (item.type === 'image') {
+        const imgEl = document.createElement('img');
+        imgEl.src = item.href;
+        imgEl.className = 'max-h-full max-w-full object-contain';
+        viewerContent.appendChild(imgEl);
+      } else {
+        const videoEl = document.createElement('video');
+        videoEl.controls = true;
+        videoEl.className = 'max-h-full max-w-full';
+        const sourceEl = document.createElement('source');
+        sourceEl.src = item.href;
+        sourceEl.type = item.mime;
+        videoEl.appendChild(sourceEl);
+        viewerContent.appendChild(videoEl);
+      }
     }
-    function isVideo(mimeType, name) {
+
+    // Открыть вьюер
+    function openViewer(index) {
+      currentIndex = index;
+      viewerOverlay.classList.remove('hidden');
+      renderViewer();
+      document.addEventListener('keydown', handleViewerKey);
+    }
+    // Закрыть вьюер
+    function closeViewer() {
+      viewerOverlay.classList.add('hidden');
+      viewerContent.innerHTML = '';
+      document.removeEventListener('keydown', handleViewerKey);
+    }
+    // Навигация клавишами
+    function handleViewerKey(event) {
+      if (event.key === 'Escape') {
+        closeViewer();
+      } else if (event.key === 'ArrowRight' && currentIndex < currentItems.length - 1) {
+        currentIndex++;
+        renderViewer();
+      } else if (event.key === 'ArrowLeft' && currentIndex > 0) {
+        currentIndex--;
+        renderViewer();
+      }
+    }
+    // Закрытие по клику на фон
+    viewerOverlay.addEventListener('click', (e) => {
+      if (e.target === viewerOverlay) closeViewer();
+    });
+
+    // Проверяем тип файла
+    function isImage(mime, name) {
       const ext = name.toLowerCase();
-      return (mimeType && mimeType.startsWith('video/')) ||
-             ['.mp4', '.mov', '.avi', '.mkv', '.webm'].some(suf => ext.endsWith(suf));
+      return (mime && mime.startsWith('image/')) || ['.jpg','.jpeg','.png','.gif','.webp'].some(suf => ext.endsWith(suf));
+    }
+    function isVideo(mime, name) {
+      const ext = name.toLowerCase();
+      return (mime && mime.startsWith('video/')) || ['.mp4','.mov','.avi','.mkv','.webm'].some(suf => ext.endsWith(suf));
     }
 
+    // Загрузка данных каталога
     async function fetchFolder(path = '') {
       loading.style.display = 'block';
       grid.innerHTML = '';
-
       const metaUrl =
-        `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(publicKey)}`
-        + (path ? `&path=${encodeURIComponent(path)}` : '')
-        + '&preview_size=XL&preview_crop=true&limit=1000';
-
+        `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(publicKey)}` +
+        (path ? `&path=${encodeURIComponent(path)}` : '') +
+        '&preview_size=XL&preview_crop=true&limit=1000';
       const res = await fetch(metaUrl);
       const data = await res.json();
-
       if (!data || data.error) {
         loading.textContent = 'Ошибка загрузки данных.';
         return;
       }
-
-      currentPath = data.path;
-      renderBreadcrumb(data.path);
       const items = data._embedded?.items || [];
-
       if (!items.length) {
         grid.innerHTML = '<div class="col-span-full text-center text-gray-400 border border-dashed rounded-lg p-6">Пусто</div>';
         loading.style.display = 'none';
         return;
       }
-
+      currentItems = [];
       for (const item of items) {
-        // Папки
+        // Папка — просто серая плитка
         if (item.type === 'dir') {
           const folderElem = document.createElement('div');
           folderElem.className = 'cursor-pointer';
-          folderElem.innerHTML =
-            '<div class="folder-icon"></div>';
+          folderElem.innerHTML = '<div class="w-full h-48 bg-gray-200"></div>';
           folderElem.onclick = () => fetchFolder(item.path);
           grid.appendChild(folderElem);
           continue;
         }
-
-        // Фильтруем по изображениям и видео
+        // Показываем только картинки, GIF и видео
         const img = isImage(item.mime_type, item.name);
         const vid = isVideo(item.mime_type, item.name);
         if (!img && !vid) continue;
-
-        // Получаем ссылку на файл через download API
         const dlUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(publicKey)}&path=${encodeURIComponent(item.path)}`;
         const dlRes = await fetch(dlUrl);
         const dlData = await dlRes.json();
         const href = dlData.href;
-
-        // создаём плитку
+        currentItems.push({ href, type: img ? 'image' : 'video', mime: item.mime_type || 'video/mp4' });
+        const index = currentItems.length - 1;
         const fileElem = document.createElement('div');
         fileElem.className = 'cursor-pointer';
-
-        // определяем превью
-        let previewSrc = item.preview || href;
-
-        // изображения / GIF
+        const previewSrc = item.preview || href;
         if (img) {
-          fileElem.innerHTML =
-            `<img src="${previewSrc}" alt="" class="w-full h-48 object-cover rounded-lg">`;
-        }
-        // видео: статичное превью или заглушка
-        else if (vid) {
+          fileElem.innerHTML = `<img src="${previewSrc}" alt="" class="w-full h-48 object-cover">`;
+        } else {
           if (item.preview) {
-            fileElem.innerHTML = `
-              <div class="relative">
-                <img src="${previewSrc}" alt="" class="w-full h-48 object-cover rounded-lg">
+            fileElem.innerHTML = `<div class="relative">
+                <img src="${previewSrc}" alt="" class="w-full h-48 object-cover">
                 <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
               </div>`;
           } else {
-            fileElem.innerHTML = `
-              <div class="relative bg-gray-200 rounded-lg w-full h-48 flex items-center justify-center">
+            fileElem.innerHTML = `<div class="relative bg-gray-200 w-full h-48 flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </div>`;
           }
         }
-
         fileElem.onclick = (e) => {
           e.stopPropagation();
-          modal.classList.remove('hidden');
-          previewTitle.textContent = '';
-          if (img) {
-            previewContent.innerHTML =
-              `<img src="${href}" class="max-h-[80vh] object-contain rounded">`;
-          } else if (vid) {
-            // Без autoplay: пользователь сам запускает проигрывание
-            previewContent.innerHTML =
-              `<video controls class="max-h-[80vh] rounded">
-                 <source src="${href}" type="${item.mime_type || 'video/mp4'}">
-                 Ваш браузер не поддерживает видео.
-               </video>`;
-          }
+          openViewer(index);
         };
-
         grid.appendChild(fileElem);
       }
-
       loading.style.display = 'none';
     }
 
-    function renderBreadcrumb(path) {
-      breadcrumb.innerHTML = '';
-      const parts = path.replace('disk:/', '').split('/').filter(Boolean);
-      const crumbs = [{ name: 'Home', path: '' }];
-      let cumulative = '';
-      for (const part of parts) {
-        cumulative += '/' + part;
-        crumbs.push({ name: capitalize(part), path: cumulative });
-      }
-      crumbs.forEach((c, i) => {
-        const link = document.createElement('button');
-        link.className = 'hover:underline';
-        link.textContent = c.name;
-        link.onclick = () => fetchFolder(c.path);
-        breadcrumb.appendChild(link);
-        if (i < crumbs.length - 1) breadcrumb.append(' / ');
-      });
-    }
-
-    function capitalize(text) {
-      return text.charAt(0).toUpperCase() + text.slice(1);
-    }
-
-    // Загружаем корневую папку при старте
+    // Загружаем корневую папку
     fetchFolder();
   </script>
 </body>
