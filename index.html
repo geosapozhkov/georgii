@@ -17,8 +17,24 @@
       font-family: 'Booklet', sans-serif;
       color: #1f1f1f;
     }
-    .file-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .preview-backdrop { background: rgba(0,0,0,0.6); }
+    .folder-icon {
+      position: relative;
+      width: 100%;
+      height: 96px;
+      border-radius: 8px;
+      background-color: #e5e7eb; /* основное тело */
+    }
+    .folder-icon::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      width: 40%;
+      height: 22px;
+      background-color: #d1d5db; /* вкладка */
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
   </style>
 </head>
 <body class="p-6">
@@ -51,18 +67,33 @@
     const previewTitle = document.getElementById('previewTitle');
     const closePreview = document.getElementById('closePreview');
 
-    let currentPath = '';
-
     closePreview.onclick = () => {
       modal.classList.add('hidden');
       previewContent.innerHTML = '';
     };
 
+    let currentPath = '';
+
+    function isImage(mimeType, name) {
+      const ext = name.toLowerCase();
+      return (mimeType && mimeType.startsWith('image/')) ||
+             ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some(suf => ext.endsWith(suf));
+    }
+    function isVideo(mimeType, name) {
+      const ext = name.toLowerCase();
+      return (mimeType && mimeType.startsWith('video/')) ||
+             ['.mp4', '.mov', '.avi', '.mkv', '.webm'].some(suf => ext.endsWith(suf));
+    }
+
     async function fetchFolder(path = '') {
       loading.style.display = 'block';
       grid.innerHTML = '';
 
-      const metaUrl = `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(publicKey)}${path ? `&path=${encodeURIComponent(path)}` : ''}`;
+      const metaUrl =
+        `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(publicKey)}`
+        + (path ? `&path=${encodeURIComponent(path)}` : '')
+        + '&preview_size=XL&preview_crop=true&limit=1000';
+
       const res = await fetch(metaUrl);
       const data = await res.json();
 
@@ -74,7 +105,6 @@
       currentPath = data.path;
       renderBreadcrumb(data.path);
       const items = data._embedded?.items || [];
-      grid.innerHTML = '';
 
       if (!items.length) {
         grid.innerHTML = '<div class="col-span-full text-center text-gray-400 border border-dashed rounded-lg p-6">Пусто</div>';
@@ -83,51 +113,76 @@
       }
 
       for (const item of items) {
-        const card = document.createElement('div');
-        card.className = 'file-card bg-white rounded-xl p-4 border flex flex-col cursor-pointer transition hover:scale-[1.02]';
-
+        // Папки
         if (item.type === 'dir') {
-          card.innerHTML = `
-            <div class="text-lg font-semibold mb-1">${capitalize(item.name)}</div>
-            <div class="text-xs text-gray-400">Папка</div>
-          `;
-          card.onclick = () => fetchFolder(item.path);
-        } else {
-          const dlUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(publicKey)}&path=${encodeURIComponent(item.path)}`;
-          const dlRes = await fetch(dlUrl);
-          const dlData = await dlRes.json();
-          const href = dlData.href;
-
-          const isImage = item.mime_type && item.mime_type.startsWith('image/');
-          const isVideo = item.mime_type && item.mime_type.startsWith('video/');
-          const thumb = item.preview || '';
-
-          card.innerHTML = `
-            <div class="font-semibold truncate mb-2">${capitalize(item.name)}</div>
-            ${thumb ? `<img src="${thumb}" alt="${item.name}" class="rounded object-cover w-full h-48 mb-2">` : ''}
-            <button class="px-3 py-1 border rounded hover:bg-gray-50 w-fit">Открыть</button>
-          `;
-
-          const openBtn = card.querySelector('button');
-          openBtn.onclick = (e) => {
-            e.stopPropagation();
-            modal.classList.remove('hidden');
-            previewTitle.textContent = capitalize(item.name);
-            if (isImage) {
-              previewContent.innerHTML = `<img src="${href}" class="max-h-[80vh] object-contain rounded">`;
-            } else if (isVideo) {
-              previewContent.innerHTML = `
-                <video controls autoplay class="max-h-[80vh] rounded">
-                  <source src="${href}" type="${item.mime_type}">
-                  Ваш браузер не поддерживает видео.
-                </video>
-              `;
-            } else {
-              previewContent.innerHTML = `<a href="${href}" target="_blank" class="text-blue-600 underline">Открыть файл</a>`;
-            }
-          };
+          const folderElem = document.createElement('div');
+          folderElem.className = 'cursor-pointer';
+          folderElem.innerHTML =
+            '<div class="folder-icon"></div>';
+          folderElem.onclick = () => fetchFolder(item.path);
+          grid.appendChild(folderElem);
+          continue;
         }
-        grid.appendChild(card);
+
+        // Фильтруем по изображениям и видео
+        const img = isImage(item.mime_type, item.name);
+        const vid = isVideo(item.mime_type, item.name);
+        if (!img && !vid) continue;
+
+        // Получаем ссылку на файл через download API
+        const dlUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(publicKey)}&path=${encodeURIComponent(item.path)}`;
+        const dlRes = await fetch(dlUrl);
+        const dlData = await dlRes.json();
+        const href = dlData.href;
+
+        // создаём плитку
+        const fileElem = document.createElement('div');
+        fileElem.className = 'cursor-pointer';
+
+        // определяем превью
+        let previewSrc = item.preview || href;
+
+        // изображения / GIF
+        if (img) {
+          fileElem.innerHTML =
+            `<img src="${previewSrc}" alt="" class="w-full h-48 object-cover rounded-lg">`;
+        }
+        // видео: статичное превью или заглушка
+        else if (vid) {
+          if (item.preview) {
+            fileElem.innerHTML = `
+              <div class="relative">
+                <img src="${previewSrc}" alt="" class="w-full h-48 object-cover rounded-lg">
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>`;
+          } else {
+            fileElem.innerHTML = `
+              <div class="relative bg-gray-200 rounded-lg w-full h-48 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>`;
+          }
+        }
+
+        fileElem.onclick = (e) => {
+          e.stopPropagation();
+          modal.classList.remove('hidden');
+          previewTitle.textContent = '';
+          if (img) {
+            previewContent.innerHTML =
+              `<img src="${href}" class="max-h-[80vh] object-contain rounded">`;
+          } else if (vid) {
+            // Без autoplay: пользователь сам запускает проигрывание
+            previewContent.innerHTML =
+              `<video controls class="max-h-[80vh] rounded">
+                 <source src="${href}" type="${item.mime_type || 'video/mp4'}">
+                 Ваш браузер не поддерживает видео.
+               </video>`;
+          }
+        };
+
+        grid.appendChild(fileElem);
       }
 
       loading.style.display = 'none';
@@ -156,6 +211,7 @@
       return text.charAt(0).toUpperCase() + text.slice(1);
     }
 
+    // Загружаем корневую папку при старте
     fetchFolder();
   </script>
 </body>
