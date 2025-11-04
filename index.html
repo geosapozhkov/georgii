@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Portfolio Preview</title>
+  <!-- Site title changed from 'Test Portfolio Preview' to 'Georgii' as requested -->
+  <title>Georgii</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     @font-face {
       font-family: 'Booklet';
-      src: url('https://raw.githubusercontent.com/geosapozhkov/georgii/main/BookletSans-regular-trial.otf') format('opentype');
+      /* Use the full BookletSans Regular font (WOFF) instead of the trial OTF to ensure characters like apostrophes and underscores display properly. */
+      src: url('https://raw.githubusercontent.com/geosapozhkov/georgii/main/BookletSans-regular.woff') format('woff');
       font-weight: normal;
       font-style: normal;
     }
@@ -17,30 +19,15 @@
       font-family: 'Booklet', sans-serif;
       color: #1f1f1f;
     }
-    /* Этот стиль папки теперь не используется, но можно оставить для возможного оформления */
-    .folder-icon {
-      position: relative;
-      width: 100%;
-      height: 80px;
-      background-color: #e5e5e5;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .folder-icon::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 28%;
-      height: 30%;
-      background-color: #bcbcbc;
-      border-bottom-left-radius: 8px;
+    /* No folder icon styling needed: folders are rendered as simple gray tiles with text. */
+    .preview-backdrop {
+      background: rgba(0,0,0,0.6);
     }
   </style>
 </head>
 <body class="p-6">
   <header class="max-w-6xl mx-auto mb-10 text-center">
-    <h1 class="text-4xl font-bold mb-2 tracking-tight">Test Portfolio</h1>
+    <h1 class="text-4xl font-bold mb-2 tracking-tight">Georgii</h1>
   </header>
 
   <main class="max-w-6xl mx-auto">
@@ -49,131 +36,238 @@
     <div id="loading" class="text-center text-gray-400 mt-10">Loading...</div>
   </main>
 
-  <!-- Полноэкранный просмотр -->
+  <!-- Viewer overlay: covers the entire viewport with a white background and displays the selected file.
+       This replaces the old modal with a dark backdrop and close button. -->
   <div id="viewerOverlay" class="fixed inset-0 hidden bg-white flex items-center justify-center z-50">
-    <div id="viewerContent" class="flex items-center justify-center max-w-full max-h-full"></div>
+    <!-- Content container for the selected image or video; fill the overlay so media always appears at full size -->
+    <div id="viewerContent" class="flex items-center justify-center max-w-full max-h-full w-full h-full"></div>
   </div>
 
   <script>
     const publicKey = 'https://disk.yandex.ru/d/n0510qzdIEj3TA';
     const grid = document.getElementById('file-grid');
     const loading = document.getElementById('loading');
-
-    // Переменные для полноэкранного просмотра
+    const breadcrumb = document.getElementById('breadcrumb');
+    // Fullscreen viewer overlay and content elements
     const viewerOverlay = document.getElementById('viewerOverlay');
     const viewerContent = document.getElementById('viewerContent');
+
+    // Array of currently displayed media items and index for keyboard navigation
     let currentItems = [];
     let currentIndex = 0;
 
-    // Отрисовывает текущий элемент во вьюере
+    // Keep track of the current folder path for breadcrumb navigation
+    let currentPath = '';
+
+    /**
+     * Render the breadcrumb navigation based on the current path.
+     * Each part of the path becomes a clickable button that navigates to that folder.
+     * @param {string} path
+     */
+    function renderBreadcrumb(path) {
+      breadcrumb.innerHTML = '';
+      // Remove the leading 'disk:/' part and split into segments
+      const parts = path.replace('disk:/', '').split('/').filter(Boolean);
+      // Start with the root crumb
+      const crumbs = [{ name: 'Home', path: '' }];
+      let cumulative = '';
+      for (const part of parts) {
+        cumulative += '/' + part;
+        // Use the raw part of the path as the display name to preserve underscores and casing
+        crumbs.push({ name: part, path: cumulative });
+      }
+      // Create buttons for each crumb
+      crumbs.forEach((c, i) => {
+        const link = document.createElement('button');
+        link.className = 'hover:underline';
+        link.textContent = c.name;
+        link.onclick = () => fetchFolder(c.path);
+        breadcrumb.appendChild(link);
+        if (i < crumbs.length - 1) breadcrumb.append(' / ');
+      });
+    }
+
+    /**
+     * Capitalize the first letter of a string.
+     * @param {string} text
+     * @returns {string}
+     */
+    function capitalize(text) {
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    /**
+     * Render the current item inside the viewer overlay based on currentIndex.
+     */
     function renderViewer() {
       const item = currentItems[currentIndex];
       if (!item) return;
+      // Clear previous content
       viewerContent.innerHTML = '';
       if (item.type === 'image') {
         const imgEl = document.createElement('img');
         imgEl.src = item.href;
-        imgEl.className = 'max-h-full max-w-full object-contain';
+        // Constrain the media to 70% of the viewport dimensions so it doesn't cover the entire screen
+        imgEl.style.maxWidth = '70%';
+        imgEl.style.maxHeight = '70%';
+        imgEl.style.objectFit = 'contain';
         viewerContent.appendChild(imgEl);
-      } else {
+      } else if (item.type === 'video') {
         const videoEl = document.createElement('video');
+        // Show native controls so users can pause, seek, etc.
         videoEl.controls = true;
-        videoEl.className = 'max-h-full max-w-full';
-        const sourceEl = document.createElement('source');
-        sourceEl.src = item.href;
-        sourceEl.type = item.mime;
-        videoEl.appendChild(sourceEl);
+        // Automatically start playback when the video is loaded
+        videoEl.autoplay = true;
+        // Constrain the video to 70% of the viewport dimensions and preserve aspect ratio.
+        // Set both width and height to 70% to prevent the default tiny video size before metadata loads.
+        videoEl.style.width = '70%';
+        videoEl.style.height = '70%';
+        videoEl.style.objectFit = 'contain';
+        // Set the video source directly to improve compatibility
+        videoEl.src = item.href;
+        // Allow cross-origin requests (helpful for videos from another domain)
+        videoEl.setAttribute('crossorigin', 'anonymous');
         viewerContent.appendChild(videoEl);
+        // Ensure playback starts as soon as possible after the metadata is loaded
+        videoEl.addEventListener('loadedmetadata', () => {
+          try {
+            videoEl.play().catch(() => { /* ignore play errors */ });
+          } catch {
+            // ignore errors; controls are visible so user can play manually
+          }
+        });
       }
     }
 
-    // Открыть вьюер
+    /**
+     * Open the fullscreen viewer overlay for a specific item index.
+     * @param {number} index
+     */
     function openViewer(index) {
       currentIndex = index;
       viewerOverlay.classList.remove('hidden');
       renderViewer();
+      // Listen for keyboard events when viewer is active
       document.addEventListener('keydown', handleViewerKey);
     }
-    // Закрыть вьюер
+
+    /**
+     * Close the viewer overlay and remove event listeners.
+     */
     function closeViewer() {
       viewerOverlay.classList.add('hidden');
       viewerContent.innerHTML = '';
       document.removeEventListener('keydown', handleViewerKey);
     }
-    // Навигация клавишами
+
+    /**
+     * Handle keyboard navigation in the viewer (ESC to close, arrows to navigate).
+     * @param {KeyboardEvent} event
+     */
     function handleViewerKey(event) {
       if (event.key === 'Escape') {
         closeViewer();
-      } else if (event.key === 'ArrowRight' && currentIndex < currentItems.length - 1) {
-        currentIndex++;
-        renderViewer();
-      } else if (event.key === 'ArrowLeft' && currentIndex > 0) {
-        currentIndex--;
-        renderViewer();
+      } else if (event.key === 'ArrowRight') {
+        // move to next item if exists
+        if (currentIndex < currentItems.length - 1) {
+          currentIndex += 1;
+          renderViewer();
+        }
+      } else if (event.key === 'ArrowLeft') {
+        // move to previous item if exists
+        if (currentIndex > 0) {
+          currentIndex -= 1;
+          renderViewer();
+        }
       }
     }
-    // Закрытие по клику на фон
+
+    // Close viewer when clicking outside the content area (similar to Yandex Disk)
     viewerOverlay.addEventListener('click', (e) => {
-      if (e.target === viewerOverlay) closeViewer();
+      // Only close if clicked directly on the overlay, not on content
+      if (e.target === viewerOverlay) {
+        closeViewer();
+      }
     });
 
-    // Проверяем тип файла
-    function isImage(mime, name) {
+    function isImage(mimeType, name) {
       const ext = name.toLowerCase();
-      return (mime && mime.startsWith('image/')) || ['.jpg','.jpeg','.png','.gif','.webp'].some(suf => ext.endsWith(suf));
+      return (mimeType && mimeType.startsWith('image/')) ||
+             ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some(suf => ext.endsWith(suf));
     }
-    function isVideo(mime, name) {
+    function isVideo(mimeType, name) {
       const ext = name.toLowerCase();
-      return (mime && mime.startsWith('video/')) || ['.mp4','.mov','.avi','.mkv','.webm'].some(suf => ext.endsWith(suf));
+      return (mimeType && mimeType.startsWith('video/')) ||
+             ['.mp4', '.mov', '.avi', '.mkv', '.webm'].some(suf => ext.endsWith(suf));
     }
 
-    // Загрузка данных каталога
     async function fetchFolder(path = '') {
       loading.style.display = 'block';
       grid.innerHTML = '';
+
       const metaUrl =
-        `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(publicKey)}` +
-        (path ? `&path=${encodeURIComponent(path)}` : '') +
-        '&preview_size=XL&preview_crop=true&limit=1000';
+        `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(publicKey)}`
+        + (path ? `&path=${encodeURIComponent(path)}` : '')
+        + '&preview_size=XL&preview_crop=true&limit=1000';
+
       const res = await fetch(metaUrl);
       const data = await res.json();
+
       if (!data || data.error) {
         loading.textContent = 'Ошибка загрузки данных.';
         return;
       }
+
+      // Save the current path and render the breadcrumb navigation
+      currentPath = data.path;
+      renderBreadcrumb(data.path);
       const items = data._embedded?.items || [];
       if (!items.length) {
         grid.innerHTML = '<div class="col-span-full text-center text-gray-400 border border-dashed rounded-lg p-6">Пусто</div>';
         loading.style.display = 'none';
         return;
       }
+
+      // Reset the list of currentItems for new folder
       currentItems = [];
       for (const item of items) {
-        // Папка — просто серая плитка
+        // Render folders as simple white cards with rounded corners and the name centered.
         if (item.type === 'dir') {
           const folderElem = document.createElement('div');
           folderElem.className = 'cursor-pointer';
-          folderElem.innerHTML = '<div class="w-full h-48 bg-gray-200"></div>';
+          // Create a card: white background, rounded corners, centered text with no border
+          const card = document.createElement('div');
+          card.className = 'w-full h-48 bg-white rounded-lg flex items-center justify-center';
+          // Create a span for the folder name. Use the raw name to preserve underscores
+          const span = document.createElement('span');
+          span.className = 'px-2 text-center text-gray-800';
+          span.textContent = item.name;
+          card.appendChild(span);
+          folderElem.appendChild(card);
           folderElem.onclick = () => fetchFolder(item.path);
           grid.appendChild(folderElem);
           continue;
         }
-        // Показываем только картинки, GIF и видео
+        // Determine if item is image or video based on MIME type or extension
         const img = isImage(item.mime_type, item.name);
         const vid = isVideo(item.mime_type, item.name);
         if (!img && !vid) continue;
+        // Fetch download link for actual file
         const dlUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(publicKey)}&path=${encodeURIComponent(item.path)}`;
         const dlRes = await fetch(dlUrl);
         const dlData = await dlRes.json();
         const href = dlData.href;
+        // Add this item to the list of currentItems for navigation
         currentItems.push({ href, type: img ? 'image' : 'video', mime: item.mime_type || 'video/mp4' });
         const index = currentItems.length - 1;
+        // Create grid element for image or video preview
         const fileElem = document.createElement('div');
         fileElem.className = 'cursor-pointer';
         const previewSrc = item.preview || href;
         if (img) {
+          // Display static preview for image/GIF without rounded corners
           fileElem.innerHTML = `<img src="${previewSrc}" alt="" class="w-full h-48 object-cover">`;
-        } else {
+        } else if (vid) {
           if (item.preview) {
             fileElem.innerHTML = `<div class="relative">
                 <img src="${previewSrc}" alt="" class="w-full h-48 object-cover">
@@ -187,6 +281,7 @@
               </div>`;
           }
         }
+        // When clicked, open the viewer overlay at the appropriate index
         fileElem.onclick = (e) => {
           e.stopPropagation();
           openViewer(index);
@@ -196,7 +291,6 @@
       loading.style.display = 'none';
     }
 
-    // Загружаем корневую папку
     fetchFolder();
   </script>
 </body>
