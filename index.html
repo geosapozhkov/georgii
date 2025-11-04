@@ -3,798 +3,297 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Site title changed from 'Test Portfolio Preview' to 'Georgii' as requested -->
+  <meta name="referrer" content="no-referrer">
   <title>Georgii</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    @font-face {
-      font-family: 'Booklet';
-      /* Use the full BookletSans Regular font (WOFF) instead of the trial OTF to ensure characters like apostrophes and underscores display properly. */
-      src: url('https://raw.githubusercontent.com/geosapozhkov/georgii/main/BookletSans-regular.woff') format('woff');
-      font-weight: normal;
-      font-style: normal;
+    @font-face{
+      font-family:'Booklet';
+      src:url('https://raw.githubusercontent.com/geosapozhkov/georgii/main/BookletSans-regular.woff') format('woff');
+      font-weight:normal;font-style:normal;
     }
-    body {
-      background: #fafafa;
-      font-family: 'Booklet', sans-serif;
-      color: #1f1f1f;
-    }
-    /* No folder icon styling needed: folders are rendered as simple gray tiles with text. */
-    .preview-backdrop {
-      background: rgba(0,0,0,0.6);
-    }
-
-    /*
-     * Animation placeholder for logo hover effect.
-     * The original implementation used a continuous rotation (spinAnim),
-     * but the latest design removes rotation entirely. We leave this
-     * definition here commented out for reference. Should you need
-     * rotation again in the future, you can uncomment it and apply
-     * it to the image elements.
-     */
-    /*
-    @keyframes spinAnim {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    */
+    body{background:#fafafa;font-family:'Booklet',sans-serif;color:#1f1f1f}
   </style>
 </head>
-<!-- Reduce overall page padding (top, right, bottom, left) to be 1.5× smaller than before.  
-     Previously it was p-6 (1.5rem); p-4 reduces it to ~1rem. -->
-<!-- Reduce page padding further; previously p-4 (1rem). Now use p-3 (0.75rem) to bring the content closer to the edges. -->
-<!-- Reduce the padding further so the logo, description and folders sit closer to the page edges.  -->
-<!-- Reduce overall padding even further; use Tailwind's p-1.5 (0.375rem) to bring the content
-     closer to the edges by roughly another 1.5× compared to p-2. -->
 <body class="p-1.5">
-  <!-- Header now contains the logo, biography, and navigation links laid out horizontally.
-       The logo is aligned to the left with equal top and left margins. The biography sits to the
-       right of the logo and grows to fill available space. Navigation links are aligned to the
-       right of the header. Both the biography and navigation are shown only on the home page. -->
-  <!--
-    Header layout: the logo is aligned to the top‑left corner of the page with equal
-    spacing from the top and left edges (inherited from the body padding).
-    On the home page the biography sits just to the right of the logo and the navigation
-    links are flush to the right. In subfolders the biography and navigation are hidden.
-  -->
-  <!-- Adjust side padding on the header to match the reduced body padding.  
-       Previously the header used px-6; now use px-4 to maintain equal spacing. -->
-  <!-- Adjust header horizontal padding to match the reduced page padding. Using px-3 (0.75rem) for left/right spacing. -->
-<!-- Adjust the header spacing: use a smaller bottom margin and smaller side padding to bring the logo and text closer to the edges. -->
-<!-- Use smaller margins and paddings on the header as well to align with the reduced
-     body padding. We shrink the bottom margin and side padding proportionally. -->
-<!--
-  Header container: wrap the header content in a max-w container that is
-  centered horizontally. Using mx-auto keeps the logo, navigation and
-  breadcrumb within the same width as the projects listing. This prevents
-  the navigation from flying off to the far right of the viewport and
-  aligns the left edges of all elements. The reduced bottom margin
-  (mb-4) brings the navigation closer to the folder names below.
--->
-    <!-- Increase the bottom margin on the header to provide more vertical space
-         between the logo/navigation and the breadcrumb/folder names below.  This
-         helps separate the header from the main content and prevents them from
-         appearing "glued" together.  The margin has been increased from
-         mb-6 (~1.5rem) to mb-12 (~3rem), roughly tripling the spacing. -->
-<header class="flex items-start mb-12 px-1.5">
+  <header class="flex items-start mb-12 px-1.5">
     <h1 id="logo" class="text-4xl font-bold tracking-tight mr-4">Georgii</h1>
-    <!-- Biography text with an even tighter line height. The line-height is set to 1
-         to reduce the vertical spacing by roughly 1.5× compared to the previous setting. -->
-    <!-- Biography paragraph. Initially visible, but its display is controlled via
-         JavaScript based on the current section.  The 'hidden' class has been
-         removed so that style.display can override visibility. -->
-    <p id="bio" class="text-gray-600" style="line-height:1; flex-basis:50%; flex-shrink:1; display:none;">
+    <p id="bio" class="text-gray-600" style="line-height:1;flex-basis:50%;flex-shrink:1;display:none;">
       As a child, I dreamed of becoming an engineer and building big things. Now I’ve grown up and
       create images that can contain anything. I’m fascinated by how a thought can turn into a
       real object that conveys not only style but also meaning. I think that’s why I love
-      photography — it helps me discover something new in everything, every day. By thinking and
+      photography — it helps me discover something new in everything, every day. By thinking and
       feeling, I try to make the world around me a better place.
     </p>
-    <!-- Navigation: removed 'Lots of Letters' link. The navigation is always visible and sits above the project list when needed. -->
-    <!-- Navigation links appear smaller (text-xs) to match the technical info style. -->
-    <!-- Navigation bar: match the text size and colour of the technical info
-         and biography. Removing ml-auto in favour of flex-grow on the
-         biography allows the nav to naturally align to the right within
-         the same container width. The navigation will always stay in
-         the upper‑right corner of the max‑width container. -->
     <nav id="top-nav" class="ml-auto flex space-x-4 whitespace-nowrap flex-shrink-0 text-base text-gray-600">
       <button id="nav-projects" class="hover:opacity-50 cursor-pointer">Projects</button>
       <button id="nav-about" class="hover:opacity-50 cursor-pointer">About me</button>
     </nav>
   </header>
 
-  <!-- Align the breadcrumb and folder grid with the left edge by removing mx-auto.  Keeping max-w-6xl prevents the content from stretching too wide on large screens. -->
-  <!-- Main container: no max‑width container so that content aligns to the page margins
-       defined by the body padding.  This provides equal margins on left and right
-       edges and allows the bouncing overlay to use the full content width. -->
   <main>
-    <!-- Increase bottom margin on breadcrumb to provide more vertical space between breadcrumb and folder names -->
     <nav id="breadcrumb" class="mb-6 text-sm text-gray-500 flex flex-wrap gap-2"></nav>
-    <!-- The file-grid shows folders and files for non-root folders. It is hidden on the home page. -->
     <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
-    <!-- Projects list: appears on the Projects root page as large folder names. Hidden by default. -->
     <div id="projects-list" class="hidden"></div>
     <div id="loading" class="text-center text-gray-400 mt-10">Loading...</div>
   </main>
 
-  <!-- Viewer overlay: covers the entire viewport with a white background and displays the selected file.
-       This replaces the old modal with a dark backdrop and close button. -->
+  <!-- Фулл-скрин просмотр -->
   <div id="viewerOverlay" class="fixed inset-0 hidden bg-white flex items-center justify-center z-50">
-    <!-- Content container for the selected image or video; fill the overlay so media always appears at full size -->
     <div id="viewerContent" class="flex items-center justify-center max-w-full max-h-full w-full h-full"></div>
   </div>
 
   <script>
-    // Define public keys for different sections. The main key corresponds to the portfolio root
-    // which contains the folders About me and Projects. The projects key
-    // points to a separate Yandex Disk link whose root contains the individual project folders.
-    const mainPublicKey = 'https://disk.yandex.ru/d/n0510qzdIEj3TA';
-    const projectsPublicKey = 'https://disk.yandex.ru/d/6BSFzJ_ydmMtOw';
-    // Path to the folder that contains images used for the logo hover animation.  The
-    // images will be preloaded from this folder only (relative to the main
-    // public key) and used in the animated overlay on the home page.
-    const logoContentPath = '/Logocontent';
-    // The current key determines which disk link to query when fetching folders.
-    let currentKey = mainPublicKey;
-    // Track which section the user is in: 'home', 'projects', 'about'
+    // Один ключ на всё
+    const MAIN_KEY = 'https://disk.yandex.ru/d/n0510qzdIEj3TA';
+    const LOGO_CONTENT_PATH = '/Logocontent';
+
     let currentSection = 'home';
+    let currentPath = '';
+    let galleryImages = [];
+
     const grid = document.getElementById('file-grid');
     const loading = document.getElementById('loading');
     const breadcrumb = document.getElementById('breadcrumb');
-    // Fullscreen viewer overlay and content elements
     const viewerOverlay = document.getElementById('viewerOverlay');
     const viewerContent = document.getElementById('viewerContent');
 
-    // Array of currently displayed media items and index for keyboard navigation
+    // Текущие элементы в папке (храним тип и PATH, а не download.href!)
     let currentItems = [];
     let currentIndex = 0;
 
-    // Collect preview images across folders for the logo hover animation
-    let galleryImages = [];
+    // =============== ВСПОМОГАТЕЛЬНОЕ ===============
+    const isImage = (mt, n) => (mt && mt.startsWith('image/')) || /\.(jpe?g|png|gif|webp)$/i.test(n);
+    const isVideo = (mt, n) => (mt && mt.startsWith('video/')) || /\.(mp4|mov|avi|mkv|webm)$/i.test(n);
 
-    // Overlay and timers for the logo animation
-    let logoOverlay = null;
-    // Previous implementation used timers to stagger image creation and a continuous rotation.
-    // The current design uses a bouncing DVD-like animation, so we store
-    // a list of objects (with position, velocity, and element) and a single
-    // requestAnimationFrame handle. See startLogoAnimation() for details.
-    let logoTimers = [];
-    let bounceObjects = [];
-    let logoAnimRAF = null;
-
-    // Interval handle used to change the image source in the logo animation
-    let logoInterval = null;
-
-    // Flag to control whether the root folder displays the home introduction (logo, bio, nav) or the project grid.
-    // When true, the root path behaves as the home page and hides the file grid. When false, the root path shows
-    // the project folders and files. This variable is toggled by the navigation buttons.
-    let showHomeIntro = true;
-
-    // Keep track of the current folder path for breadcrumb navigation
-    let currentPath = '';
-
-    /**
-     * Render the breadcrumb navigation based on the current path.
-     * Each part of the path becomes a clickable button that navigates to that folder.
-     * @param {string} path
-     */
     function renderBreadcrumb(path) {
-      // Clear existing breadcrumb
       breadcrumb.innerHTML = '';
-      // Prepare the list of crumbs. Always start with a Home crumb that navigates back to the main
-      // portfolio root and shows the bio. Depending on the current section, insert an additional
-      // crumb (Projects) to represent the top-level of that section.
-      const crumbs = [];
-      // Always include Home
-      crumbs.push({ name: 'Home', section: 'home' });
-      // Insert a second crumb based on the currentSection
+      const crumbs = [{ name:'Home', on: () => { currentSection='home'; fetchFolder(''); } }];
       if (currentSection === 'projects') {
-        crumbs.push({ name: 'Projects', section: 'projects' });
+        crumbs.push({ name:'Projects', on: () => { currentSection='projects'; fetchFolder('/Projects'); } });
       }
-      // Remove the leading 'disk:/' and split into path segments
-      let cleaned = path.replace('disk:/', '').split('/').filter(Boolean);
-      // No special path skipping needed since the Lots of Letters section has been removed.
-      // For other sections, we take all segments (for projects) or skip none (for home)
+      const parts = path.replace('disk:/','').split('/').filter(Boolean);
       let cumulative = '';
-      cleaned.forEach((part) => {
-        cumulative += '/' + part;
-        crumbs.push({ name: part, path: cumulative });
-      });
-      // Render each crumb as a clickable link with appropriate behavior
-      crumbs.forEach((c, i) => {
-        const link = document.createElement('button');
-        link.className = 'hover:underline';
-        link.textContent = c.name;
-        link.onclick = () => {
-          if (c.section === 'home') {
-            // Return to the main portfolio home
-            currentSection = 'home';
-            currentKey = mainPublicKey;
-            showHomeIntro = true;
-            fetchFolder('');
-          } else if (c.section === 'projects') {
-            // Navigate to the root of the Projects section
-            currentSection = 'projects';
-            currentKey = projectsPublicKey;
-            showHomeIntro = false;
-            fetchFolder('');
-          } else {
-            // Navigate to a subfolder within the current section
-            showHomeIntro = false;
-            fetchFolder(c.path);
-          }
-        };
-        breadcrumb.appendChild(link);
-        if (i < crumbs.length - 1) breadcrumb.append(' / ');
+      parts.forEach(p => { cumulative += '/'+p; crumbs.push({ name:p, on: () => fetchFolder(cumulative) }); });
+
+      crumbs.forEach((c,i)=>{
+        const b=document.createElement('button'); b.className='hover:underline'; b.textContent=c.name; b.onclick=c.on;
+        breadcrumb.appendChild(b); if(i<crumbs.length-1) breadcrumb.append(' / ');
       });
     }
 
-    /**
-     * Capitalize the first letter of a string.
-     * @param {string} text
-     * @returns {string}
-     */
-    function capitalize(text) {
-      return text.charAt(0).toUpperCase() + text.slice(1);
-    }
-
-    /**
-     * Render the current item inside the viewer overlay based on currentIndex.
-     */
-    function renderViewer() {
-      const item = currentItems[currentIndex];
-      if (!item) return;
-      // Clear previous content
-      viewerContent.innerHTML = '';
-      if (item.type === 'image') {
-        const imgEl = document.createElement('img');
-        imgEl.src = item.href;
-        // Constrain the media to 70% of the viewport dimensions so it doesn't cover the entire screen
-        imgEl.style.maxWidth = '70%';
-        imgEl.style.maxHeight = '70%';
-        imgEl.style.objectFit = 'contain';
-        viewerContent.appendChild(imgEl);
-      } else if (item.type === 'video') {
-        const videoEl = document.createElement('video');
-        // Show native controls so users can pause, seek, etc.
-        videoEl.controls = true;
-        // Automatically start playback when the video is loaded
-        videoEl.autoplay = true;
-        // Constrain the video to 70% of the viewport dimensions and preserve aspect ratio.
-        // Set both width and height to 70% to prevent the default tiny video size before metadata loads.
-        videoEl.style.width = '70%';
-        videoEl.style.height = '70%';
-        videoEl.style.objectFit = 'contain';
-        // Set the video source directly to improve compatibility
-        videoEl.src = item.href;
-        // Allow cross-origin requests (helpful for videos from another domain)
-        videoEl.setAttribute('crossorigin', 'anonymous');
-        viewerContent.appendChild(videoEl);
-        // Ensure playback starts as soon as possible after the metadata is loaded
-        videoEl.addEventListener('loadedmetadata', () => {
-          try {
-            videoEl.play().catch(() => { /* ignore play errors */ });
-          } catch {
-            // ignore errors; controls are visible so user can play manually
-          }
-        });
+    async function getJson(url, retries=2){
+      for(let i=0;i<=retries;i++){
+        try{
+          const r = await fetch(url, { cache:'no-store' });
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          return await r.json();
+        }catch(e){ if(i===retries) throw e; await new Promise(res=>setTimeout(res, 300*(i+1))); }
       }
     }
 
-    /**
-     * Open the fullscreen viewer overlay for a specific item index.
-     * @param {number} index
-     */
-    function openViewer(index) {
-      currentIndex = index;
-      viewerOverlay.classList.remove('hidden');
-      renderViewer();
-      // Listen for keyboard events when viewer is active
-      document.addEventListener('keydown', handleViewerKey);
+    async function freshDownloadHref(path){
+      const u = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(MAIN_KEY)}&path=${encodeURIComponent(path)}`;
+      const data = await getJson(u);
+      return data.href;
     }
 
-    /**
-     * Close the viewer overlay and remove event listeners.
-     */
-    function closeViewer() {
-      viewerOverlay.classList.add('hidden');
-      viewerContent.innerHTML = '';
-      document.removeEventListener('keydown', handleViewerKey);
-    }
+    // =============== ГРИД ПАПКИ ===============
+    async function fetchFolder(path=''){
+      loading.style.display='block';
+      grid.innerHTML='';
+      currentPath = path;
 
-    /**
-     * Handle keyboard navigation in the viewer (ESC to close, arrows to navigate).
-     * @param {KeyboardEvent} event
-     */
-    function handleViewerKey(event) {
-      if (event.key === 'Escape') {
-        closeViewer();
-      } else if (event.key === 'ArrowRight') {
-        // move to next item if exists
-        if (currentIndex < currentItems.length - 1) {
-          currentIndex += 1;
-          renderViewer();
-        }
-      } else if (event.key === 'ArrowLeft') {
-        // move to previous item if exists
-        if (currentIndex > 0) {
-          currentIndex -= 1;
-          renderViewer();
-        }
-      }
-    }
+      const metaUrl = `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(MAIN_KEY)}${path?`&path=${encodeURIComponent(path)}`:''}&preview_size=XL&preview_crop=true&limit=1000`;
+      const data = await getJson(metaUrl).catch(()=>null);
+      if(!data || data.error){ loading.textContent='Ошибка загрузки данных.'; return; }
 
-    // Close viewer when clicking outside the content area (similar to Yandex Disk)
-    viewerOverlay.addEventListener('click', (e) => {
-      // Only close if clicked directly on the overlay, not on content
-      if (e.target === viewerOverlay) {
-        closeViewer();
-      }
-    });
-
-    function isImage(mimeType, name) {
-      const ext = name.toLowerCase();
-      return (mimeType && mimeType.startsWith('image/')) ||
-             ['.jpg', '.jpeg', '.png', '.gif', '.webp'].some(suf => ext.endsWith(suf));
-    }
-    function isVideo(mimeType, name) {
-      const ext = name.toLowerCase();
-      return (mimeType && mimeType.startsWith('video/')) ||
-             ['.mp4', '.mov', '.avi', '.mkv', '.webm'].some(suf => ext.endsWith(suf));
-    }
-
-    async function fetchFolder(path = '') {
-      loading.style.display = 'block';
-      grid.innerHTML = '';
-
-      const metaUrl =
-        `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(currentKey)}`
-        + (path ? `&path=${encodeURIComponent(path)}` : '')
-        + '&preview_size=XL&preview_crop=true&limit=1000';
-
-      const res = await fetch(metaUrl);
-      const data = await res.json();
-
-      if (!data || data.error) {
-        loading.textContent = 'Ошибка загрузки данных.';
-        return;
-      }
-
-      // Save the current path and render the breadcrumb navigation
-      currentPath = data.path;
       renderBreadcrumb(data.path);
-
-      // Adjust breadcrumb appearance when it is visible.  We reduce its font size
-      // to match the technical information in the footer and bring it closer to
-      // the folder names.  Horizontal positioning is handled by the shared
-      // max‑width container, so no dynamic left offsets are necessary.
-      if (breadcrumb.style.display !== 'none') {
-        breadcrumb.style.position = '';
-        breadcrumb.style.left = '';
-        breadcrumb.style.fontSize = '0.75rem';
-        breadcrumb.style.marginBottom = '0.5rem';
-      } else {
-        // Reset styles when hidden
-        breadcrumb.style.position = '';
-        breadcrumb.style.left = '';
-        breadcrumb.style.fontSize = '';
-        breadcrumb.style.marginBottom = '';
-      }
-      // Determine if we are at the root (home) path. The API returns "disk:/" at the root.
-      const isRootPath = !path || path === '' || data.path === 'disk:/';
-      // Compute whether to treat the current view as the home introduction. We only show
-      // the introduction (bio and nav) when we are on the root path and showHomeIntro is true.
-      const isRoot = isRootPath && showHomeIntro;
-      // Retrieve the bio and navigation elements from the DOM.
-      const bioEl = document.getElementById('bio');
-      const navEl = document.getElementById('top-nav');
-      /*
-       * Show the biography only on the About me section.  Previously, the biography was
-       * shown whenever showHomeIntro was true (covering both the home and about
-       * pages).  Per the latest requirement, the "About me" text should not
-       * appear on the home page.  Therefore, display the bio only when
-       * currentSection is 'about'.
-       */
-      if (bioEl) {
-        bioEl.style.display = (currentSection === 'about' ? 'block' : 'none');
-      }
-      // Always show the navigation; it remains at the top of the page.
-      if (navEl) navEl.style.display = 'flex';
-      // Hide the breadcrumb when we treat the view as the home page (isRoot) or
-      // when viewing the About section.  Otherwise, display it.
-      breadcrumb.style.display = (!isRoot && currentSection !== 'about') ? 'flex' : 'none';
-      grid.style.display = isRoot ? 'none' : 'grid';
-      // When navigating away from the home page, stop the logo animation to prevent lingering images.
-      if (!isRoot) {
-        stopLogoAnimation();
-      }
+      const isRoot = (!path || data.path==='disk:/') && currentSection==='home';
       const items = data._embedded?.items || [];
-      // Always hide the projects list by default and clear its contents.
-      const projectList = document.getElementById('projects-list');
-      if (projectList) {
-        projectList.innerHTML = '';
-        projectList.style.display = 'none';
-        // Reset positioning styles to avoid carrying over offsets when
-        // navigating away from the projects root.  Without clearing these,
-        // subfolders could inherit the left or padding values applied at the
-        // projects root, leading to inconsistent layouts.
-        projectList.style.position = '';
-        projectList.style.left = '';
-        projectList.style.paddingTop = '';
+
+      const bioEl = document.getElementById('bio');
+      if (bioEl) bioEl.style.display = (currentSection==='about' ? 'block' : 'none');
+
+      breadcrumb.style.display = (!isRoot && currentSection!=='about') ? 'flex' : 'none';
+      grid.style.display = isRoot ? 'none' : 'grid';
+
+      if(!items.length){
+        grid.innerHTML='<div class="col-span-full text-center text-gray-400 border border-dashed rounded-lg p-6">Пусто</div>';
+        loading.style.display='none'; return;
       }
 
-      // Special handling for the Projects root is no longer required.  All
-      // directories will be rendered uniformly using the logic below.
-      if (!items.length) {
-        grid.innerHTML = '<div class="col-span-full text-center text-gray-400 border border-dashed rounded-lg p-6">Пусто</div>';
-        loading.style.display = 'none';
-        return;
-      }
-
-      // Reset the list of currentItems for new folder
       currentItems = [];
-      for (const item of items) {
-        // Render folders as simple clickable text links instead of cards.
-        if (item.type === 'dir') {
-          // Skip rendering folder entries on the home page since the grid is hidden there.
-          if (isRoot) {
-            continue;
-          }
-          const folderElem = document.createElement('div');
-          // Render folders as plain text. The element fades to 50% opacity on hover and on active (click).
-          // Add col-span-full so each folder occupies the full row of the grid, preventing overlap when multiple
-          // directories are present.  This ensures all folder names (e.g., Commerce, Poool_Angry_Masseur) are
-          // displayed in the same large style as the root directory and do not flow side‑by‑side.
-          folderElem.className = 'cursor-pointer text-gray-800 hover:opacity-50 col-span-full';
-          // Preserve underscores and other characters in the folder name
-          folderElem.textContent = item.name;
-          // Style the folder name to match the height of the logo's first letter
-          const logoElForSize = document.getElementById('logo');
-          if (logoElForSize) {
-            const computedSize = window.getComputedStyle(logoElForSize).fontSize;
-            folderElem.style.fontSize = computedSize;
-          } else {
-            // Fallback approximate size if logo not found
-            folderElem.style.fontSize = '2.25rem';
-          }
-          folderElem.style.fontWeight = '700';
-          // Reduce the space between folder names to tighten their grouping. Use
-          // a smaller bottom and top margin to compact the list of folders.
-          folderElem.style.marginBottom = '0.25rem';
-          folderElem.style.marginTop = '0.5rem';
-          folderElem.onclick = () => fetchFolder(item.path);
-          grid.appendChild(folderElem);
+      for(const item of items){
+        if(item.type==='dir'){
+          if(isRoot) continue;
+          const folder=document.createElement('div');
+          folder.className='cursor-pointer text-gray-800 hover:opacity-50 col-span-full';
+          folder.style.fontWeight='700';
+          folder.style.marginTop='0.5rem';
+          folder.style.marginBottom='0.25rem';
+          const logoEl=document.getElementById('logo');
+          folder.style.fontSize = logoEl ? getComputedStyle(logoEl).fontSize : '2.25rem';
+          folder.textContent=item.name; // сохраняем подчёркивания
+          folder.onclick=()=>fetchFolder(item.path);
+          grid.appendChild(folder);
           continue;
         }
-        // Determine if item is image or video based on MIME type or extension
-        const img = isImage(item.mime_type, item.name);
-        const vid = isVideo(item.mime_type, item.name);
-        if (!img && !vid) continue;
-        // Fetch download link for actual file
-        const dlUrl = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(currentKey)}&path=${encodeURIComponent(item.path)}`;
-        const dlRes = await fetch(dlUrl);
-        const dlData = await dlRes.json();
-        const href = dlData.href;
-        // Add this item to the list of currentItems for navigation
-        currentItems.push({ href, type: img ? 'image' : 'video', mime: item.mime_type || 'video/mp4' });
-        const index = currentItems.length - 1;
-        // Create grid element for image or video preview
-        const fileElem = document.createElement('div');
-        fileElem.className = 'cursor-pointer';
-        const previewSrc = item.preview || href;
-        // Do not collect preview images here.  Logo hover animation images are
-        // preloaded exclusively from the dedicated Logocontent folder.  Gathering
-        // previews from project folders could introduce unwanted images and
-        // cause inconsistent behavior.  The galleryImages array is now
-        // populated only by preloadGallery().
-        if (img) {
-          // Display static preview for image/GIF while preserving aspect ratio.  Use
-          // max-height instead of a fixed height to avoid cropping tall
-          // thumbnails.  The object-fit property ensures the image is contained
-          // within the bounding box while maintaining its aspect ratio.
-          fileElem.innerHTML = `<img src="${previewSrc}" alt="" style="width:100%; max-height:12rem; object-fit:contain;">`;
-        } else if (vid) {
-          if (item.preview) {
-            fileElem.innerHTML = `<div class="relative">
-                <img src="${previewSrc}" alt="" style="width:100%; max-height:12rem; object-fit:contain;">
+
+        const img = isImage(item.mime_type,item.name);
+        const vid = isVideo(item.mime_type,item.name);
+        if(!img && !vid) continue;
+
+        // Стабильное превью
+        const preview = item.preview || '';
+        const wrap = document.createElement('div');
+        wrap.className='cursor-pointer';
+
+        if(img){
+          wrap.innerHTML = `<img referrerpolicy="no-referrer" src="${preview}" alt="" style="width:100%;max-height:12rem;object-fit:contain;">`;
+        }else if(vid){
+          if(preview){
+            wrap.innerHTML = `
+              <div class="relative">
+                <img referrerpolicy="no-referrer" src="${preview}" alt="" style="width:100%;max-height:12rem;object-fit:contain;">
                 <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
               </div>`;
-          } else {
-            // For videos without a preview, keep the placeholder height consistent with other
-            // thumbnails so the grid remains aligned.  The max-height ensures the
-            // placeholder does not exceed 12rem, and the gray background provides
-            // a neutral backdrop.
-            fileElem.innerHTML = `<div class="relative bg-gray-200 w-full flex items-center justify-center" style="max-height:12rem;">
+          }else{
+            wrap.innerHTML = `
+              <div class="relative bg-gray-200 w-full flex items-center justify-center" style="max-height:12rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </div>`;
           }
         }
-        // When clicked, open the viewer overlay at the appropriate index
-        fileElem.onclick = (e) => {
-          e.stopPropagation();
-          openViewer(index);
-        };
-        grid.appendChild(fileElem);
+
+        // Сохраняем только PATH и тип, без download.href (он протухает)
+        const idx = currentItems.push({ path: item.path, type: img ? 'image' : 'video', mime: item.mime_type || 'video/mp4' }) - 1;
+        wrap.onclick = (e)=>{ e.stopPropagation(); openViewer(idx); };
+        grid.appendChild(wrap);
       }
-      loading.style.display = 'none';
+
+      loading.style.display='none';
     }
 
-    // Initialize: load the root folder
-    fetchFolder();
+    // =============== ПРОСМОТРЩИК ===============
+    async function openViewer(index){
+      currentIndex=index;
+      viewerOverlay.classList.remove('hidden');
+      document.addEventListener('keydown', handleViewerKey);
+      await renderViewer();
+    }
 
-    /**
-     * Start the logo hover animation. When the user hovers over the site logo,
-     * this function creates an overlay and displays a series of randomly selected
-     * preview images from different folders. Each image rotates like a sheet of
-     * paper and fades in/out, layering on top of one another.
-     */
-    function startLogoAnimation() {
-      // The logo animation should only run on the true home page.  Do nothing
-      // if the overlay already exists.  If there are no preloaded images,
-      // attempt to preload them and return; the animation will start on the
-      // next hover once images are available.
-      if (logoOverlay) return;
-      if (currentSection !== 'home') return;
-      if (galleryImages.length === 0) {
-        preloadGallery();
-        return;
+    async function renderViewer(){
+      const item=currentItems[currentIndex]; if(!item) return;
+      viewerContent.innerHTML='';
+
+      // Берём свежий download.href только сейчас
+      let href; try{ href = await freshDownloadHref(item.path); }catch(e){ href=''; }
+
+      if(item.type==='image'){
+        const img=document.createElement('img');
+        img.referrerPolicy='no-referrer';
+        img.src=href;
+        img.style.maxWidth='70%';
+        img.style.maxHeight='70%';
+        img.style.objectFit='contain';
+        viewerContent.appendChild(img);
+      }else{
+        const v=document.createElement('video');
+        v.controls=true; v.autoplay=true;
+        v.src=href; v.type=item.mime; v.crossOrigin='anonymous'; v.referrerPolicy='no-referrer';
+        v.style.width='70%'; v.style.height='70%'; v.style.objectFit='contain';
+        viewerContent.appendChild(v);
       }
-      // Create a fixed overlay below the header.  Use viewport‑relative
-      // dimensions so the animation scales on different screen sizes.  The
-      // overlay is centered horizontally.
-      logoOverlay = document.createElement('div');
-      logoOverlay.style.position = 'fixed';
-      // Determine the bottom of the header so we can position the overlay just
-      // beneath it and compute available vertical space later.  Declare
-      // headerBottom outside of the conditional so it can be used below.
-      let headerBottom = 0;
-      const headerEl = document.querySelector('header');
-      if (headerEl) {
-        headerBottom = headerEl.getBoundingClientRect().bottom;
-        // Position the overlay immediately below the header so that
-        // images can bounce against the exact bottom of the header
-        // rather than an arbitrary margin.  Removing the additional
-        // 20px offset gives the bouncing elements the maximum vertical
-        // travel and prevents them from "hitting" an invisible top
-        // boundary too early.
-        logoOverlay.style.top = `${headerBottom}px`;
-      } else {
-        // If header cannot be found, default to a top offset of 0 so
-        // the overlay begins at the very top of the viewport.
-        headerBottom = 0;
-        logoOverlay.style.top = `0px`;
-      }
-      // Align the overlay to the body margins so it spans the full usable
-      // width of the page (between the left and right paddings).  This
-      // ensures equal margins on both sides and prevents the images from
-      // bouncing off prematurely due to a narrower container.  We compute
-      // the body paddings in JavaScript and set both left and right
-      // properties instead of specifying width and a transform.
-      const bodyStyles = window.getComputedStyle(document.body);
-      const paddingLeft = parseFloat(bodyStyles.paddingLeft) || 0;
-      const paddingRight = parseFloat(bodyStyles.paddingRight) || 0;
-      logoOverlay.style.left = `${paddingLeft}px`;
-      logoOverlay.style.right = `${paddingRight}px`;
-      // When both left and right are specified, width is automatically
-      // calculated by the browser; we clear any previous width or transform.
-      logoOverlay.style.width = '';
-      logoOverlay.style.transform = '';
-      // Compute a dynamic height for the overlay based on available
-      // viewport space.  The images should bounce off the very top
-      // (below the header) and bottom (above the footer) edges.  We
-      // subtract the header height plus a small margin (20px) and the
-      // footer height plus a similar margin from the viewport height.
-      const footerEl = document.querySelector('footer');
-      const footerHeight = footerEl ? footerEl.getBoundingClientRect().height : 0;
-      // Compute the available vertical space: subtract the header height and the
-      // footer height from the viewport height.  This allows images to bounce
-      // from the very bottom of the header down to the top of the footer.
-      const availableHeight = window.innerHeight - headerBottom - footerHeight;
-      if (availableHeight > 0) {
-        logoOverlay.style.height = `${availableHeight}px`;
-      } else {
-        // Fallback to using 40% of viewport height if something goes wrong
-        logoOverlay.style.height = '40vh';
-      }
-      logoOverlay.style.pointerEvents = 'none';
-      logoOverlay.style.zIndex = '9999';
-      logoOverlay.style.overflow = 'hidden';
+    }
+
+    function closeViewer(){
+      viewerOverlay.classList.add('hidden');
+      viewerContent.innerHTML='';
+      document.removeEventListener('keydown', handleViewerKey);
+    }
+    function handleViewerKey(e){
+      if(e.key==='Escape') closeViewer();
+      else if(e.key==='ArrowRight' && currentIndex<currentItems.length-1){ currentIndex++; renderViewer(); }
+      else if(e.key==='ArrowLeft' && currentIndex>0){ currentIndex--; renderViewer(); }
+    }
+    viewerOverlay.addEventListener('click',(e)=>{ if(e.target===viewerOverlay) closeViewer(); });
+
+    // =============== АНИМАЦИЯ ЛОГО (прежняя логика сохранена) ===============
+    let logoOverlay=null, logoAnimRAF=null, logoInterval=null;
+    function startLogoAnimation(){
+      if(logoOverlay || currentSection!=='home') return;
+      if(galleryImages.length===0){ preloadLogoGallery(); return; }
+
+      logoOverlay=document.createElement('div');
+      logoOverlay.style.position='fixed';
+      let headerBottom=0;
+      const h=document.querySelector('header');
+      if(h){ headerBottom=h.getBoundingClientRect().bottom; logoOverlay.style.top=`${headerBottom}px`; } else { logoOverlay.style.top='0px'; }
+      const styles=getComputedStyle(document.body);
+      logoOverlay.style.left=styles.paddingLeft; logoOverlay.style.right=styles.paddingRight;
+      const footer=document.querySelector('footer'); const fh=footer?footer.getBoundingClientRect().height:0;
+      const avail=innerHeight-headerBottom-fh; logoOverlay.style.height= (avail>0? `${avail}px` : '40vh');
+      logoOverlay.style.pointerEvents='none'; logoOverlay.style.zIndex='9999'; logoOverlay.style.overflow='hidden';
       document.body.appendChild(logoOverlay);
-      // Create a single image element that will display sequential gallery
-      // images.  Its motion will follow a single bouncing trajectory.
-      const img = document.createElement('img');
-      img.style.position = 'absolute';
-      logoOverlay.appendChild(img);
-      // Bounce state for the single image
-      const bounce = { x: 0, y: 0, w: 0, h: 0, dx: 0, dy: 0 };
-      // Choose a random initial velocity (1..3 px/frame) then slow it down
-      // by a factor of 4 to achieve a more leisurely movement.
-      const speedFactor = 0.25;
-      bounce.dx = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1) * speedFactor;
-      bounce.dy = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? -1 : 1) * speedFactor;
-      // Index to cycle through gallery images
-      let galleryIndex = 0;
-      // Helper to load an image and adjust its size.  This function
-      // preserves the aspect ratio, enlarges the image by approximately four
-      // times its natural area and clamps it to 40% of the overlay.
-      function loadNextImage() {
-        const src = galleryImages[galleryIndex];
-        galleryIndex = (galleryIndex + 1) % galleryImages.length;
-        img.onload = () => {
-          const natW = img.naturalWidth;
-          const natH = img.naturalHeight;
-          if (natW && natH) {
-            // Double both dimensions to get four times the area
-            let targetW = natW * 2;
-            let targetH = natH * 2;
-            const maxW = logoOverlay.clientWidth * 0.4;
-            const maxH = logoOverlay.clientHeight * 0.4;
-            const scale = Math.min(maxW / targetW, maxH / targetH, 1);
-            targetW *= scale;
-            targetH *= scale;
-            bounce.w = targetW;
-            bounce.h = targetH;
-            img.style.width = `${targetW}px`;
-            img.style.height = `${targetH}px`;
-            // Adjust position if the new size would push the image outside
-            const maxX = logoOverlay.clientWidth - bounce.w;
-            const maxY = logoOverlay.clientHeight - bounce.h;
-            if (bounce.x > maxX) bounce.x = maxX;
-            if (bounce.y > maxY) bounce.y = maxY;
-            img.style.transform = `translate(${bounce.x}px, ${bounce.y}px)`;
-          }
+
+      const img=document.createElement('img'); img.style.position='absolute'; logoOverlay.appendChild(img);
+      const bounce={x:0,y:0,w:0,h:0,dx:(Math.random()*2+1)*0.25*(Math.random()<.5?-1:1),dy:(Math.random()*2+1)*0.25*(Math.random()<.5?-1:1)};
+      let idx=0;
+      function loadNext(){
+        const src=galleryImages[idx]; idx=(idx+1)%galleryImages.length;
+        img.onload=()=>{ const mw=logoOverlay.clientWidth*.4, mh=logoOverlay.clientHeight*.4;
+          let w=img.naturalWidth*2, h=img.naturalHeight*2; const s=Math.min(mw/w,mh/h,1); w*=s; h*=s;
+          bounce.w=w; bounce.h=h; img.style.width=w+'px'; img.style.height=h+'px';
+          const maxX=logoOverlay.clientWidth-bounce.w, maxY=logoOverlay.clientHeight-bounce.h;
+          if(bounce.x>maxX) bounce.x=maxX; if(bounce.y>maxY) bounce.y=maxY;
+          img.style.transform=`translate(${bounce.x}px,${bounce.y}px)`;
         };
-        img.src = src;
+        img.src=src;
       }
-      // Load the first image immediately
-      loadNextImage();
-      // Change the image every 4 seconds
-      logoInterval = setInterval(loadNextImage, 4000);
-      // Animation loop to move the single image and bounce off edges
-      function animate() {
-        const width = logoOverlay.clientWidth;
-        const height = logoOverlay.clientHeight;
-        bounce.x += bounce.dx;
-        bounce.y += bounce.dy;
-        if (bounce.x <= 0) {
-          bounce.x = 0;
-          bounce.dx *= -1;
-        } else if (bounce.x + bounce.w >= width) {
-          bounce.x = width - bounce.w;
-          bounce.dx *= -1;
-        }
-        if (bounce.y <= 0) {
-          bounce.y = 0;
-          bounce.dy *= -1;
-        } else if (bounce.y + bounce.h >= height) {
-          bounce.y = height - bounce.h;
-          bounce.dy *= -1;
-        }
-        img.style.transform = `translate(${bounce.x}px, ${bounce.y}px)`;
-        logoAnimRAF = requestAnimationFrame(animate);
-      }
-      animate();
+      loadNext(); logoInterval=setInterval(loadNext, 4000);
+      (function anim(){ const w=logoOverlay.clientWidth, h=logoOverlay.clientHeight;
+        bounce.x+=bounce.dx; bounce.y+=bounce.dy;
+        if(bounce.x<=0||bounce.x+bounce.w>=w) bounce.dx*=-1;
+        if(bounce.y<=0||bounce.y+bounce.h>=h) bounce.dy*=-1;
+        if(bounce.x<0) bounce.x=0; if(bounce.y<0) bounce.y=0;
+        if(bounce.x+bounce.w>w) bounce.x=w-bounce.w; if(bounce.y+bounce.h>h) bounce.y=h-bounce.h;
+        img.style.transform=`translate(${bounce.x}px,${bounce.y}px)`;
+        logoAnimRAF=requestAnimationFrame(anim);
+      })();
+    }
+    function stopLogoAnimation(){
+      if(logoInterval){ clearInterval(logoInterval); logoInterval=null; }
+      if(logoAnimRAF){ cancelAnimationFrame(logoAnimRAF); logoAnimRAF=null; }
+      if(logoOverlay){ document.body.removeChild(logoOverlay); logoOverlay=null; }
     }
 
-    /**
-     * Stop the logo hover animation and clean up any timers and DOM elements.
-     */
-    function stopLogoAnimation() {
-      // Cancel any timeouts from the previous implementation
-      logoTimers.forEach((id) => clearTimeout(id));
-      logoTimers = [];
-      // Cancel any scheduled image changes
-      if (logoInterval !== null) {
-        clearInterval(logoInterval);
-        logoInterval = null;
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const logo=document.getElementById('logo');
+      if(logo){ logo.style.cursor='pointer'; logo.addEventListener('mouseenter',startLogoAnimation); logo.addEventListener('mouseleave',stopLogoAnimation);
+        logo.addEventListener('click',()=>{ currentSection='home'; fetchFolder(''); });
       }
-      // Cancel the bouncing animation frame
-      if (logoAnimRAF !== null) {
-        cancelAnimationFrame(logoAnimRAF);
-        logoAnimRAF = null;
-      }
-      // Remove overlay and its contents
-      if (logoOverlay) {
-        document.body.removeChild(logoOverlay);
-        logoOverlay = null;
-      }
-      // Clear bounce objects (unused in sequential mode)
-      bounceObjects = [];
-    }
-
-    // Attach event listeners to the logo
-    document.addEventListener('DOMContentLoaded', () => {
-      const logoElement = document.querySelector('header h1');
-      if (logoElement) {
-        logoElement.style.cursor = 'pointer';
-        logoElement.addEventListener('mouseenter', startLogoAnimation);
-        logoElement.addEventListener('mouseleave', stopLogoAnimation);
-        // Clicking the logo returns to the home view (show the bio and hide the project grid)
-        logoElement.addEventListener('click', () => {
-          // Return to the home section.  Set the section to 'home' and use the main
-          // disk key to load the root.  Set showHomeIntro to true to hide the
-          // breadcrumb and grid on the homepage (no projects or about content).
-          currentSection = 'home';
-          currentKey = mainPublicKey;
-          showHomeIntro = true;
-          fetchFolder('');
-        });
-      }
-
-      // Set up navigation buttons. The Projects button hides the introduction and
-      // displays the root folder grid. The About me button shows the introduction.
-      // There is no longer a Lots of Letters button. Navigation only includes Projects
-      // and About me.
-      const navProjects = document.getElementById('nav-projects');
-      const navAbout = document.getElementById('nav-about');
-      if (navProjects) {
-        navProjects.addEventListener('click', () => {
-          // Switch to the Projects section using the separate projects disk key.
-          currentSection = 'projects';
-          currentKey = projectsPublicKey;
-          showHomeIntro = false;
-          // Load the root of the Projects disk (no path prefix)
-          fetchFolder('');
-        });
-      }
-      if (navAbout) {
-        navAbout.addEventListener('click', () => {
-          // Switch to the About section. Use the main disk key and show only the biography.
-          currentSection = 'about';
-          currentKey = mainPublicKey;
-          showHomeIntro = true;
-          fetchFolder('');
-        });
-      }
-
-      // Preload a selection of preview images from the Projects disk when the page loads.
-      // This ensures that the logo hover animation on the home page has images available
-      // even if the user hasn't yet navigated into any subfolders.  The preloaded
-      // images exclude the 'About me' and 'Lots of Letters' sections because those
-      // sections either contain only text or have been removed.  Only previews from
-      // the Projects disk root are collected.  The galleryImages array is capped
-      // at 50 items to limit memory usage.
-      preloadGallery();
+      document.getElementById('nav-projects')?.addEventListener('click',()=>{ currentSection='projects'; fetchFolder('/Projects'); });
+      document.getElementById('nav-about')?.addEventListener('click',()=>{ currentSection='about'; fetchFolder(''); });
+      preloadLogoGallery();
+      fetchFolder('');
     });
 
-    /**
-     * Preload preview images from the Projects disk root for the logo hover animation.
-     */
-    async function preloadGallery() {
-      try {
-        // Fetch the contents of the Logocontent folder using the main public key.
-        const url = `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(mainPublicKey)}&path=${encodeURIComponent(logoContentPath)}&preview_size=XL&preview_crop=true&limit=1000`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const items = data._embedded?.items || [];
-        // Clear any existing images to avoid mixing with previous preloads
-        galleryImages = [];
-        items.forEach(item => {
-          // Only gather previews from files (skip directories).  Some video
-          // entries may not have a preview; skip those as well.
-          if (item.type !== 'dir') {
-            const preview = item.preview || '';
-            if (preview && !galleryImages.includes(preview)) {
-              galleryImages.push(preview);
-              // Keep the gallery array from growing too large
-              if (galleryImages.length > 50) galleryImages.shift();
-            }
-          }
-        });
-      } catch (e) {
-        console.error('Failed to preload gallery images', e);
-      }
+    async function preloadLogoGallery(){
+      try{
+        const url = `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(MAIN_KEY)}&path=${encodeURIComponent(LOGO_CONTENT_PATH)}&preview_size=XL&preview_crop=true&limit=1000`;
+        const data = await getJson(url);
+        galleryImages = (data._embedded?.items||[])
+          .filter(it=>it.type!=='dir' && it.preview)
+          .map(it=>it.preview)
+          .slice(0,50);
+      }catch(e){ /* тихо игнорим */ }
     }
   </script>
 
-  <!-- Contact information pinned to the bottom-left corner -->
-  <!-- Reduce vertical spacing between the email and Instagram lines using a tighter line height. -->
   <footer class="fixed bottom-2 left-2 text-base text-gray-500 select-none">
-    <!-- Reduce the space between email and Instagram lines.  A tighter line height
-         (0.8) further compresses the two lines, while a flex column with no
-         additional gap ensures minimal vertical separation. -->
     <div class="flex flex-col space-y-0" style="line-height:0.8">
       <span style="line-height:0.8">sapozhkov.george@gmail.com</span>
       <span style="line-height:0.8">@georgiisapozhkov</span>
