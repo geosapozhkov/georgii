@@ -549,33 +549,25 @@
             transform: translate(-50%, -50%) scale(1.2);
         }
 
-        /* Drawing canvas */
-        #drawingCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* Project Flow (edit mode) */
+        .project-flow {
+            position: static;
+            display: block;
+            padding: 100px 17px 40px 17px; /* respect side gaps and header */
             width: 100vw;
-            height: 100vh;
-            pointer-events: auto;
-            z-index: 1005;
-            cursor: none;
+            box-sizing: border-box;
         }
-
-        /* Drawing cursor */
-        .drawing-cursor {
-            position: fixed;
-            background-color: #000000;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 1006;
-            transition: transform 0.1s ease;
-            transform: translate(-50%, -50%);
-            display: none;
+        .project-item {
+            display: inline-block;
+            margin: 0 20px 20px 0;
+            vertical-align: top;
         }
-
-        .drawing-cursor.eraser {
-            background-color: #ffffff;
-            border: 2px solid #000000;
+        .project-item img,
+        .project-item video {
+            display: block;
+            height: auto;
+            max-width: calc(100vw - 40px); /* keep side gaps */
+            object-fit: contain;
         }
 
         /* Remove CSS hover effects - we'll use only JavaScript */
@@ -679,8 +671,6 @@
 </head>
 <body>
     <div class="custom-cursor" id="customCursor"></div>
-    <canvas id="drawingCanvas"></canvas>
-    <div class="drawing-cursor" id="drawingCursor"></div>
     <div class="header-grid">
         <a href="#" class="logo" id="logo">Georgii</a>
         <div class="header-content">
@@ -1716,10 +1706,11 @@
         // Global edit mode
         window.isEditMode = false;
         
-        // Check if we're inside a project (project gallery is visible)
+        // Check if we're inside a project (project view is visible)
         function isInsideProject() {
             const projectGallery = document.querySelector('.project-gallery');
-            return projectGallery && projectGallery.style.display !== 'none';
+            const projectFlow = document.querySelector('.project-flow');
+            return (projectGallery && projectGallery.style.display !== 'none') || !!projectFlow;
         }
         function enableEditMode(){
             window.isEditMode = true;
@@ -1848,48 +1839,37 @@
             }
         }
         
-        // Process dropped files and add them to project
+        // Process dropped files and add them to project (edit mode flow)
         async function processDroppedFiles(files) {
-            const projectGallery = document.querySelector('.project-gallery');
-            if (!projectGallery) return;
-            
+            const projectFlow = document.querySelector('.project-flow');
+            if (!projectFlow || !window.portfolioDB || !window.currentProjectContext?.projectId) return;
+            const projectId = window.currentProjectContext.projectId;
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                
-                // Validate file type
                 if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
                     console.warn('Skipping non-media file:', file.name);
                     continue;
                 }
-                
-                // Create file URL
+
                 const fileUrl = URL.createObjectURL(file);
-                
-                // Determine aspect ratio and calculate grid position
-                const aspectRatio = await getAspectRatio(fileUrl, file.type);
-                const gridPosition = calculateGridPosition(aspectRatio, projectGallery);
-                
-                // Create media container
-                const container = createMediaContainer(fileUrl, file.type, file.name, gridPosition);
-                
-                // Add to project gallery
-                projectGallery.appendChild(container);
-                
-                // Save to IndexedDB if available
-                if (window.portfolioDB && window.currentProjectContext?.projectId) {
-                    try {
-                        await window.portfolioDB.addMedia(window.currentProjectContext.projectId, {
-                            filename: file.name,
-                            fileUrl: fileUrl,
-                            aspectRatio: aspectRatio,
-                            layout: gridPosition
-                        });
-                    } catch (error) {
-                        console.error('Failed to save media to database:', error);
-                    }
+                const aspectRatio = await getAspectRatio(fileUrl, file.type).catch(()=>null);
+
+                try {
+                    const rec = await window.portfolioDB.addMedia({
+                        projectId: projectId,
+                        blob: file,
+                        type: file.type.startsWith('video/') ? 'video' : 'image',
+                        aspect: aspectRatio || null,
+                        mime: file.type || ''
+                    });
+                    // Render newly added item
+                    appendProjectItem(projectFlow, rec);
+                } catch (err) {
+                    console.error('Failed to save media to database:', err);
                 }
             }
-            
+
             console.log(`Added ${files.length} media files to project`);
         }
         
@@ -2219,17 +2199,18 @@
             const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             
             allLinks.forEach(a=>{
-                a.addEventListener('click', (e)=>{
+                a.addEventListener('click', async (e)=>{
                     e.preventDefault();
-                    
-                    // In edit mode, allow editing but don't navigate
+                    const projectName = a.textContent.trim();
+
+                    // In edit mode, open/create local project and show project flow
                     if (window.isEditMode) {
-                        // Focus the element for editing
-                        a.focus();
+                        const project = await openOrCreateProjectByTitle('Commerce', projectName);
+                        if (project) {
+                            await showProjectFlow(project);
+                        }
                         return;
                     }
-                    
-                    const projectName = a.textContent.trim();
                     
                      if (projectName === 'Angry Masseur') {
                          // Hide catalog and show project gallery
@@ -2348,6 +2329,11 @@
             const projectGallery = document.querySelector('.project-gallery');
             if (projectGallery) {
                 projectGallery.remove();
+            }
+            // Remove project flow (edit mode)
+            const projectFlow = document.querySelector('.project-flow');
+            if (projectFlow) {
+                projectFlow.remove();
             }
             
             // Remove old video containers (for backward compatibility)
@@ -2550,6 +2536,82 @@
             if (window.isEditMode) {
                 showDropIndicator();
             }
+        }
+
+        // --- Edit-mode Project Flow (natural size, scrollable) ---
+        async function openOrCreateProjectByTitle(tab, title) {
+            if (!window.portfolioDB) return null;
+            const list = await window.portfolioDB.listProjects(tab);
+            let project = list.find(p => (p.title||'').trim() === title.trim());
+            if (!project) {
+                project = await window.portfolioDB.createProject({ title, tab, description: '' });
+            }
+            return project;
+        }
+
+        function createProjectFlowContainer() {
+            // Clear any existing views
+            const existingGallery = document.querySelector('.project-gallery');
+            if (existingGallery) existingGallery.remove();
+            const existingFlow = document.querySelector('.project-flow');
+            if (existingFlow) existingFlow.remove();
+
+            const flow = document.createElement('div');
+            flow.className = 'project-flow';
+            document.body.appendChild(flow);
+            return flow;
+        }
+
+        function appendProjectItem(container, record) {
+            const url = URL.createObjectURL(record.blob);
+            const item = document.createElement('div');
+            item.className = 'project-item';
+
+            if ((record.type||'').toLowerCase() === 'video') {
+                const video = document.createElement('video');
+                video.src = url;
+                video.muted = true; // muted by default
+                video.loop = true;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.addEventListener('click', () => { video.muted = !video.muted; });
+                item.appendChild(video);
+            } else {
+                const img = document.createElement('img');
+                img.src = url;
+                img.loading = 'lazy';
+                item.appendChild(img);
+                // Click to open in modal
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const modal = document.getElementById('imageModal');
+                    const modalImg = document.getElementById('modalImage');
+                    modalImg.src = img.src;
+                    modalImg.style.display = 'block';
+                    modal.classList.add('active');
+                });
+            }
+
+            container.appendChild(item);
+        }
+
+        async function renderProjectMedia(projectId, container) {
+            const media = await window.portfolioDB.listMedia(projectId);
+            media.forEach(m => appendProjectItem(container, m));
+        }
+
+        async function showProjectFlow(project) {
+            // Stop previews
+            stop();
+            // Hide catalog
+            const contentLeft = document.querySelector('.content-left');
+            if (contentLeft) contentLeft.style.display = 'none';
+
+            const flow = createProjectFlowContainer();
+            window.currentProjectContext = { type: 'project', projectId: project.id };
+            await renderProjectMedia(project.id, flow);
+            // Show drop indicator in edit mode
+            if (window.isEditMode) showDropIndicator();
         }
 
         // Function to load Angry Masseur project (Commerce)
@@ -3036,12 +3098,19 @@
             const rightText = document.querySelector('.text-content');
             const allLinks = Array.from(document.querySelectorAll('.catalog-link'));
             allLinks.forEach(a=>{
-                a.addEventListener('click', (e)=>{
+                a.addEventListener('click', async (e)=>{
                     e.preventDefault();
-                    if (window.isEditMode) return; // disable navigation in edit mode
-                    
                     const projectName = a.textContent.trim();
-                    
+
+                    // In edit mode, open/create local project and show project flow
+                    if (window.isEditMode) {
+                        const project = await openOrCreateProjectByTitle('Mind', projectName);
+                        if (project) {
+                            await showProjectFlow(project);
+                        }
+                        return;
+                    }
+
                     // Hide catalog and show project gallery
                     const contentLeft = document.querySelector('.content-left');
                     contentLeft.style.display = 'none';
@@ -3437,16 +3506,9 @@
             // Custom cursor tracking
             document.addEventListener('mousemove', (e) => {
                 const cursor = document.getElementById('customCursor');
-                const drawingCursor = document.getElementById('drawingCursor');
-                
-                if (cursor && !window.isDrawingMode) {
+                if (cursor) {
                     cursor.style.left = e.clientX + 'px';
                     cursor.style.top = e.clientY + 'px';
-                }
-                
-                if (drawingCursor && window.isDrawingMode) {
-                    drawingCursor.style.left = e.clientX + 'px';
-                    drawingCursor.style.top = e.clientY + 'px';
                 }
             });
 
@@ -3459,181 +3521,7 @@
             });
         });
 
-        // Drawing functionality
-        (function() {
-            const drawingCanvas = document.getElementById('drawingCanvas');
-            const drawingCtx = drawingCanvas.getContext('2d');
-            const drawingCursor = document.getElementById('drawingCursor');
-            const customCursor = document.getElementById('customCursor');
-            
-            let isDrawing = false;
-            let isErasing = false;
-            let brushSize = 3;
-            let isDrawingMode = false;
-            
-            // Initialize drawing canvas
-            function initDrawingCanvas() {
-                drawingCanvas.width = window.innerWidth;
-                drawingCanvas.height = window.innerHeight;
-                drawingCanvas.style.pointerEvents = 'auto';
-                drawingCanvas.style.display = 'none';
-                drawingCtx.lineCap = 'round';
-                drawingCtx.lineJoin = 'round';
-                drawingCtx.strokeStyle = '#000000';
-            }
-            
-            // Update cursor size
-            function updateCursorSize() {
-                drawingCursor.style.width = brushSize + 'px';
-                drawingCursor.style.height = brushSize + 'px';
-            }
-            
-            // Enable drawing mode
-            function enableDrawingMode() {
-                if (!isHomePage) return;
-                
-                isDrawingMode = true;
-                drawingCanvas.style.display = 'block';
-                drawingCursor.style.display = 'block';
-                customCursor.style.display = 'none';
-                updateCursorSize();
-            }
-            
-            // Disable drawing mode
-            function disableDrawingMode() {
-                isDrawingMode = false;
-                drawingCanvas.style.display = 'none';
-                drawingCursor.style.display = 'none';
-                customCursor.style.display = 'block';
-            }
-            
-            // Mouse events
-            drawingCanvas.addEventListener('mousedown', (e) => {
-                if (!isDrawingMode) return;
-                
-                isDrawing = true;
-                isErasing = (e.button === 2); // Right mouse button
-                
-                drawingCursor.classList.toggle('eraser', isErasing);
-                
-                drawingCtx.beginPath();
-                drawingCtx.moveTo(e.clientX, e.clientY);
-                
-                if (isErasing) {
-                    drawingCtx.globalCompositeOperation = 'destination-out';
-                } else {
-                    drawingCtx.globalCompositeOperation = 'source-over';
-                    drawingCtx.strokeStyle = '#000000';
-                }
-                
-                drawingCtx.lineWidth = brushSize;
-                drawingCtx.lineTo(e.clientX, e.clientY);
-                drawingCtx.stroke();
-                
-                e.preventDefault();
-            });
-            
-            drawingCanvas.addEventListener('mousemove', (e) => {
-                if (!isDrawingMode) return;
-                
-                // Update cursor position
-                drawingCursor.style.left = e.clientX + 'px';
-                drawingCursor.style.top = e.clientY + 'px';
-                
-                if (isDrawing) {
-                    drawingCtx.lineTo(e.clientX, e.clientY);
-                    drawingCtx.stroke();
-                }
-                
-                e.preventDefault();
-            });
-            
-            drawingCanvas.addEventListener('mouseup', () => {
-                isDrawing = false;
-                isErasing = false;
-                drawingCursor.classList.remove('eraser');
-            });
-            
-            drawingCanvas.addEventListener('mouseleave', () => {
-                isDrawing = false;
-                isErasing = false;
-                drawingCursor.classList.remove('eraser');
-            });
-            
-            // Prevent context menu on right click
-            drawingCanvas.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-            });
-            
-            // Keyboard events
-            document.addEventListener('keydown', (e) => {
-                if (!isDrawingMode) return;
-                
-                if (e.key === '+' || e.key === '=') {
-                    brushSize = Math.min(brushSize + 1, 100);
-                    updateCursorSize();
-                    e.preventDefault();
-                } else if (e.key === '-') {
-                    brushSize = Math.max(brushSize - 1, 1);
-                    updateCursorSize();
-                    e.preventDefault();
-                }
-            });
-            
-            // Mouse wheel events
-            document.addEventListener('wheel', (e) => {
-                if (!isDrawingMode) return;
-                
-                if (e.deltaY < 0) {
-                    // Scroll up - increase brush size
-                    brushSize = Math.min(brushSize + 1, 100);
-                } else {
-                    // Scroll down - decrease brush size
-                    brushSize = Math.max(brushSize - 1, 1);
-                }
-                updateCursorSize();
-                e.preventDefault();
-            });
-            
-            // Toggle drawing mode with spacebar
-            document.addEventListener('keydown', (e) => {
-                if (e.code === 'Space' && isHomePage) {
-                    e.preventDefault();
-                    if (isDrawingMode) {
-                        disableDrawingMode();
-                    } else {
-                        enableDrawingMode();
-                    }
-                }
-            });
-            
-            // Initialize on page load
-            initDrawingCanvas();
-            
-            // Resize canvas on window resize
-            window.addEventListener('resize', () => {
-                initDrawingCanvas();
-            });
-            
-            // Expose functions and variables globally for tab switching
-            window.enableDrawingMode = enableDrawingMode;
-            window.disableDrawingMode = disableDrawingMode;
-            window.isDrawingMode = false;
-            
-            // Update global variable when drawing mode changes
-            const originalEnableDrawingMode = enableDrawingMode;
-            const originalDisableDrawingMode = disableDrawingMode;
-            
-            window.enableDrawingMode = function() {
-                originalEnableDrawingMode();
-                window.isDrawingMode = true;
-            };
-            
-            window.disableDrawingMode = function() {
-                originalDisableDrawingMode();
-                window.isDrawingMode = false;
-            };
-        })();
+        // Drawing functionality removed
     })();
 
     // Debug grid toggle (Ctrl+G)
