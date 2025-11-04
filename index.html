@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>georgii</title>
+  <title>Georgii</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     @font-face {
@@ -23,7 +23,7 @@
 </head>
 <body class="p-6">
   <header class="max-w-6xl mx-auto mb-10 text-center">
-    <h1 class="text-4xl font-bold mb-2 tracking-tight">georgii</h1>
+    <h1 class="text-4xl font-bold mb-2 tracking-tight">Georgii</h1>
   </header>
 
   <main class="max-w-6xl mx-auto">
@@ -31,10 +31,6 @@
     <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
     <div id="loading" class="text-center text-gray-400 mt-10">Loading...</div>
   </main>
-
-  <footer class="max-w-6xl mx-auto text-center text-sm text-gray-400 mt-10">
-    © 2025 georgii
-  </footer>
 
   <!-- Модальное окно для предпросмотра -->
   <div id="previewModal" class="fixed inset-0 hidden items-center justify-center preview-backdrop z-50">
@@ -92,8 +88,8 @@
 
         if (item.type === 'dir') {
           card.innerHTML = `
-            <div class="text-lg font-semibold mb-1">${item.name}</div>
-            <div class="text-xs text-gray-400">папка</div>
+            <div class="text-lg font-semibold mb-1">${capitalize(item.name)}</div>
+            <div class="text-xs text-gray-400">Папка</div>
           `;
           card.onclick = () => fetchFolder(item.path);
         } else {
@@ -107,7 +103,7 @@
           const thumb = item.preview || '';
 
           card.innerHTML = `
-            <div class="font-semibold truncate mb-2">${item.name}</div>
+            <div class="font-semibold truncate mb-2">${capitalize(item.name)}</div>
             ${thumb ? `<img src="${thumb}" alt="${item.name}" class="rounded object-cover w-full h-48 mb-2">` : ''}
             <button class="px-3 py-1 border rounded hover:bg-gray-50 w-fit">Открыть</button>
           `;
@@ -116,7 +112,7 @@
           openBtn.onclick = (e) => {
             e.stopPropagation();
             modal.classList.remove('hidden');
-            previewTitle.textContent = item.name;
+            previewTitle.textContent = capitalize(item.name);
             if (isImage) {
               previewContent.innerHTML = `<img src="${href}" class="max-h-[80vh] object-contain rounded">`;
             } else if (isVideo) {
@@ -140,11 +136,11 @@
     function renderBreadcrumb(path) {
       breadcrumb.innerHTML = '';
       const parts = path.replace('disk:/', '').split('/').filter(Boolean);
-      const crumbs = [{ name: 'home', path: '' }];
+      const crumbs = [{ name: 'Home', path: '' }];
       let cumulative = '';
       for (const part of parts) {
         cumulative += '/' + part;
-        crumbs.push({ name: part, path: cumulative });
+        crumbs.push({ name: capitalize(part), path: cumulative });
       }
       crumbs.forEach((c, i) => {
         const link = document.createElement('button');
@@ -154,6 +150,10 @@
         breadcrumb.appendChild(link);
         if (i < crumbs.length - 1) breadcrumb.append(' / ');
       });
+    }
+
+    function capitalize(text) {
+      return text.charAt(0).toUpperCase() + text.slice(1);
     }
 
     fetchFolder();
