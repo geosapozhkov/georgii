@@ -5,40 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>georgii</title>
   <style>
-    @property --bg-solid {
-      syntax: '<color>';
-      inherits: true;
-      initial-value: #101010;
-    }
-    @property --bg-a {
-      syntax: '<color>';
-      inherits: true;
-      initial-value: #101010;
-    }
-    @property --bg-b {
-      syntax: '<color>';
-      inherits: true;
-      initial-value: #101010;
-    }
-    @property --bg-c {
-      syntax: '<color>';
-      inherits: true;
-      initial-value: #101010;
-    }
-    @property --fg {
-      syntax: '<color>';
-      inherits: true;
-      initial-value: #fafafa;
-    }
-
     body {
       font-family: Arial, sans-serif;
       font-size: 16px;
       margin: 0;
       padding: 0;
-      background-color: var(--bg-solid);
-      color: var(--fg);
-      transition: --bg-solid 18s linear, --fg 18s linear;
+      background-color: #101010;
+      color: #F2F2F2;
+      transition: background-color 30s linear, color 30s linear;
     }
 
     nav {
@@ -51,7 +25,7 @@
     nav a {
       margin-right: 12px;
       text-decoration: none;
-      color: var(--fg);
+      color: currentColor;
       font-weight: normal;
       transition: opacity 0.3s;
     }
@@ -131,52 +105,14 @@
       transform: translateY(-16px) scale(1.04);
     }
 
-    /* Major screen animated background (blurred grayscale gradient) */
-    #major-bg {
-      position: fixed;
-      inset: -22%;
-      z-index: 0;
-      pointer-events: none;
-      opacity: 0.95;
-      background:
-        radial-gradient(closest-side at 20% 35%, var(--bg-a), transparent 62%),
-        radial-gradient(closest-side at 72% 22%, var(--bg-b), transparent 60%),
-        radial-gradient(closest-side at 55% 78%, var(--bg-c), transparent 64%),
-        linear-gradient(180deg, var(--bg-solid), var(--bg-solid));
-      filter: blur(130px) saturate(90%);
-      transform: translate3d(0, 0, 0) scale(1.15);
-      transition: opacity 650ms ease, --bg-a 22s linear, --bg-b 22s linear, --bg-c 22s linear;
-      animation: majorBgDrift 260s ease-in-out infinite alternate;
-    }
-
-    body[data-mode="section"] #major-bg {
-      opacity: 0;
-    }
-
+    /* Major screen: flat (no gradient) to avoid banding/pixels */
     body[data-mode="section"] {
       background-color: #ffffff;
       color: #222222;
     }
-
-    @keyframes majorBgDrift {
-      0% { transform: translate3d(-1.5%, -0.5%, 0) scale(1.15); }
-      55% { transform: translate3d(1.0%, 1.2%, 0) scale(1.18); }
-      100% { transform: translate3d(-0.6%, 1.6%, 0) scale(1.16); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #major-bg {
-        animation: none;
-      }
-      body {
-        transition: none;
-      }
-    }
   </style>
 </head>
 <body>
-
-  <div id="major-bg" aria-hidden="true"></div>
 
   <nav>
     <a href="#" onclick="showSection('texts'); return false;">Texts</a>
@@ -252,12 +188,12 @@
 
   <script>
     // Major screen background palette controller:
-    // super-slow grayscale drift between #101010 and #FAFAFA,
+    // super-slow grayscale drift (flat color) between #101010 and #FAFAFA,
     // biased by season (winter darker, summer lighter) and time-of-day (day lighter, night darker).
     (function () {
       const DARK = '#101010';
       const LIGHT = '#FAFAFA';
-      const root = document.documentElement;
+      const body = document.body;
 
       function clamp01(n) {
         return Math.max(0, Math.min(1, n));
@@ -329,22 +265,22 @@
 
       function applyPalette(lightFactor) {
         const solid = mixHex(DARK, LIGHT, lightFactor);
-        const a = mixHex(DARK, LIGHT, clamp01(lightFactor + 0.08));
-        const b = mixHex(DARK, LIGHT, clamp01(lightFactor - 0.05));
-        const c = mixHex(DARK, LIGHT, clamp01(lightFactor + 0.02));
         const fg = lightFactor >= 0.62 ? '#111111' : '#F2F2F2';
 
-        root.style.setProperty('--bg-solid', solid);
-        root.style.setProperty('--bg-a', a);
-        root.style.setProperty('--bg-b', b);
-        root.style.setProperty('--bg-c', c);
-        root.style.setProperty('--fg', fg);
+        // Drive actual properties (so transition works everywhere)
+        if (!document.body) return;
+        document.body.style.backgroundColor = solid;
+        document.body.style.color = fg;
       }
 
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       let current = computeLightFactor(new Date());
       // Default to "home" (major screen) mode unless a section hash is active.
-      if (document.body) document.body.dataset.mode = 'home';
+      if (document.body) {
+        document.body.dataset.mode = 'home';
+        // ensure CSS transition applies to our first paint too
+        document.body.style.transition = 'background-color 30s linear, color 30s linear';
+      }
       applyPalette(current);
 
       function refreshMode() {
@@ -352,6 +288,13 @@
         const hasSection = !!(hash && document.getElementById(hash));
         if (!document.body) return;
         document.body.dataset.mode = hasSection ? 'section' : 'home';
+        if (hasSection) {
+          // Let CSS control the section look (white background)
+          document.body.style.backgroundColor = '';
+          document.body.style.color = '';
+        } else {
+          applyPalette(current);
+        }
       }
 
       refreshMode();
