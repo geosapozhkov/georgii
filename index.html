@@ -13,7 +13,6 @@
       padding: 0;
       background-color: #101010;
       color: #F2F2F2;
-      transition: background-color 30s linear, color 30s linear;
     }
 
     nav {
@@ -61,8 +60,6 @@
 
     .section {
       display: none;
-      position: relative;
-      z-index: 1;
     }
 
     .section.active {
@@ -144,9 +141,10 @@
     </div>
   </div>
 
-  <!-- JS -->
   <script>
-    /* ===== MAJOR SCREEN BACKGROUND ENGINE ===== */
+    /* ===============================
+       MAJOR SCREEN BACKGROUND (SMOOTH)
+       =============================== */
 
     (function () {
       const DARK = '#101010';
@@ -155,64 +153,75 @@
 
       const clamp = n => Math.max(0, Math.min(1, n));
 
-      const mix = (a, b, t) => {
-        const h = x => parseInt(x, 16);
-        const r = Math.round(h(a.slice(1,3)) + (h(b.slice(1,3)) - h(a.slice(1,3))) * t);
-        const g = Math.round(h(a.slice(3,5)) + (h(b.slice(3,5)) - h(a.slice(3,5))) * t);
-        const b2 = Math.round(h(a.slice(5,7)) + (h(b.slice(5,7)) - h(a.slice(5,7))) * t);
+      function mix(a, b, t) {
+        const c = x => parseInt(x, 16);
+        const r = Math.round(c(a.slice(1,3)) + (c(b.slice(1,3)) - c(a.slice(1,3))) * t);
+        const g = Math.round(c(a.slice(3,5)) + (c(b.slice(3,5)) - c(a.slice(3,5))) * t);
+        const b2 = Math.round(c(a.slice(5,7)) + (c(b.slice(5,7)) - c(a.slice(5,7))) * t);
         return `#${[r,g,b2].map(v=>v.toString(16).padStart(2,'0')).join('')}`.toUpperCase();
-      };
+      }
 
-      const dayOfYear = d => {
+      function dayOfYear(d) {
         const start = Date.UTC(d.getFullYear(),0,0);
         const now = Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
         return (now - start) / 86400000;
-      };
+      }
 
       function lightFactor(now) {
         const season = Math.cos((2*Math.PI*(dayOfYear(now)-172))/365);
-        const seasonL = 0.24 + 0.58 * ((season+1)/2);
+        const seasonL = 0.24 + 0.58 * ((season + 1) / 2);
 
-        const h = now.getHours() + now.getMinutes()/60;
-        const day = Math.cos((2*Math.PI*(h-12))/24);
-        const dayL = 0.14 + 0.70 * Math.pow((day+1)/2,1.25);
+        const h = now.getHours() + now.getMinutes() / 60;
+        const day = Math.cos((2*Math.PI*(h - 12)) / 24);
+        const dayL = 0.14 + 0.70 * Math.pow((day + 1) / 2, 1.25);
 
-        const t = now.getTime()/1000;
+        const t = now.getTime() / 1000;
         const drift =
-          0.045*Math.sin(t/(60*18)) +
-          0.030*Math.sin(t/(60*55)+1.7) +
-          0.020*Math.sin(t/(60*140));
+          0.045 * Math.sin(t / (60 * 18)) +
+          0.030 * Math.sin(t / (60 * 55) + 1.7) +
+          0.020 * Math.sin(t / (60 * 140));
 
-        return clamp(0.58*seasonL + 0.42*dayL + drift);
+        return clamp(0.58 * seasonL + 0.42 * dayL + drift);
       }
 
       let current = lightFactor(new Date());
+      let lastTime = performance.now();
 
       function apply(v) {
         body.style.backgroundColor = mix(DARK, LIGHT, v);
-        body.style.color = v > 0.62 ? '#111' : '#F2F2F2';
+        body.style.color = v > 0.62 ? '#111111' : '#F2F2F2';
       }
 
       body.dataset.mode = 'home';
       apply(current);
 
-      setInterval(() => {
-        if (body.dataset.mode === 'section') return;
-        const target = lightFactor(new Date());
-        current += (target - current) * 0.12;
-        apply(current);
-      }, 5000);
+      function animate(time) {
+        if (body.dataset.mode !== 'section') {
+          const target = lightFactor(new Date());
+          const dt = Math.min((time - lastTime) / 1000, 0.05);
+          lastTime = time;
+
+          const followSpeed = 0.015;
+          current += (target - current) * followSpeed * dt * 60;
+
+          apply(current);
+        }
+        requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
     })();
 
-    /* ===== SECTION ROUTING ===== */
+    /* ===============================
+       SECTION ROUTING
+       =============================== */
 
     function showSection(id) {
       document.getElementById('intro').style.display = 'none';
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
 
-      const el = document.getElementById(id);
-      if (el) el.classList.add('active');
+      document.getElementById(id)?.classList.add('active');
 
       [...document.querySelectorAll('nav a')]
         .find(a => a.textContent.replace(/\s/g,'').toLowerCase() === id)
@@ -223,49 +232,52 @@
     }
 
     window.addEventListener('hashchange', () => {
-      const id = location.hash.replace('#','');
-      if (!id) {
+      if (!location.hash) {
         document.body.dataset.mode = 'home';
         document.getElementById('intro').style.display = '';
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       }
     });
 
-    /* ===== TEXTS DRAG ===== */
+    /* ===============================
+       TEXTS DRAG SYSTEM
+       =============================== */
 
-    (function(){
+    (function () {
       const canvas = document.getElementById('texts-canvas');
       if (!canvas) return;
 
-      const files = Array.from({length:44},(_,i)=>`${i}.png`);
+      const files = Array.from({ length: 44 }, (_, i) => `${i}.png`);
       const W = window.innerWidth;
       const H = 800;
 
-      files.forEach(f=>{
+      files.forEach(f => {
         const img = document.createElement('img');
         img.src = `texts/${f}`;
         img.className = 'draggable-text';
-        img.style.left = Math.random()*(W-300)+'px';
-        img.style.top = Math.random()*(H-300)+'px';
+        img.style.left = Math.random() * (W - 300) + 'px';
+        img.style.top = Math.random() * (H - 300) + 'px';
         canvas.appendChild(img);
       });
 
-      let active=null,ox=0,oy=0;
+      let active = null, ox = 0, oy = 0;
 
-      document.addEventListener('click',e=>{
-        if(!e.target.classList.contains('draggable-text')) return;
-        if(active===e.target){
+      document.addEventListener('click', e => {
+        if (!e.target.classList.contains('draggable-text')) return;
+
+        if (active === e.target) {
           active.classList.remove('lifted');
-          active=null;
-          document.onmousemove=null;
+          active = null;
+          document.onmousemove = null;
         } else {
-          active=e.target;
-          ox=e.clientX-active.offsetLeft;
-          oy=e.clientY-active.offsetTop;
+          active = e.target;
+          ox = e.clientX - active.offsetLeft;
+          oy = e.clientY - active.offsetTop;
           active.classList.add('lifted');
-          document.onmousemove=ev=>{
-            active.style.left=(ev.clientX-ox)+'px';
-            active.style.top=(ev.clientY-oy)+'px';
+
+          document.onmousemove = ev => {
+            active.style.left = (ev.clientX - ox) + 'px';
+            active.style.top = (ev.clientY - oy) + 'px';
           };
         }
       });
