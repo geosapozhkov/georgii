@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>georgii</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -26,7 +27,6 @@
       margin-right: 12px;
       text-decoration: none;
       color: currentColor;
-      font-weight: normal;
       transition: opacity 0.3s;
     }
 
@@ -48,8 +48,6 @@
       position: fixed;
       bottom: 20px;
       left: 20px;
-      font-size: 16px;
-      text-align: left;
       z-index: 2;
     }
 
@@ -63,7 +61,6 @@
 
     .section {
       display: none;
-      padding: 0;
       position: relative;
       z-index: 1;
     }
@@ -72,462 +69,207 @@
       display: block;
     }
 
-    .section img {
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 20px;
-    }
-
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 360px;
-      padding: 0 16px;
-      /* overflow: hidden;  // Optional, only if you see overflow issues */
-    }
-    .gallery img, .gallery video {
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-      display: block;
-    }
-    .draggable-text {
-      box-shadow: none;
-      transition: box-shadow 0.2s, transform 0.2s;
-      z-index: 1;
-      cursor: grab;
-      transform: none;
-    }
-    .draggable-text.lifted {
-      box-shadow: 0 12px 32px 0 rgba(0,0,0,0.25), 0 1.5px 6px 0 rgba(0,0,0,0.10);
-      z-index: 10;
-      cursor: grabbing;
-      transform: translateY(-16px) scale(1.04);
-    }
-
-    /* Major screen: flat (no gradient) to avoid banding/pixels */
     body[data-mode="section"] {
       background-color: #ffffff;
       color: #222222;
     }
+
+    /* TEXTS */
+
+    .texts-canvas {
+      position: relative;
+      width: 100vw;
+      height: 90vh;
+      min-height: 600px;
+    }
+
+    .draggable-text {
+      position: absolute;
+      width: 360px;
+      cursor: grab;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .draggable-text.lifted {
+      cursor: grabbing;
+      z-index: 10;
+      transform: translateY(-16px) scale(1.04);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    }
   </style>
 </head>
+
 <body>
 
+  <!-- NAV -->
   <nav>
-    <a href="#" onclick="showSection('texts'); return false;">Texts</a>
-    <a href="#" onclick="showSection('sounds'); return false;">Sounds</a>
-    <a href="#" onclick="showSection('drawings'); return false;">Drawings</a>
-    <a href="#" onclick="showSection('graphic'); return false;">Graphic design</a>
-    <a href="#" onclick="showSection('cgi'); return false;">CGI</a>
-    <a href="#" onclick="showSection('photo'); return false;">Photography</a>
-    <a href="#" onclick="showSection('commercial'); return false;">Commercial</a>
-    <a href="#" onclick="showSection('aboutme'); return false;">About me</a>
+    <a href="#" onclick="showSection('texts');return false;">Texts</a>
+    <a href="#" onclick="showSection('commercial');return false;">Commercial</a>
+    <a href="#" onclick="showSection('aboutme');return false;">About me</a>
   </nav>
 
+  <!-- INTRO -->
   <div class="intro" id="intro">
     <p>Привет, я Гоша — дизайнер, исследующий<br>и создающий картинки, тексты и звуки</p>
     <p>Hi, I'm Gosha — a designer exploring and creating images, texts and sounds</p>
   </div>
 
+  <!-- FOOTER -->
   <div class="footer">
     <p>@georgiisapozhkov</p>
     <p>sapozhkov.george@gmail.com</p>
   </div>
 
-  <!-- Sections -->
+  <!-- SECTIONS -->
+
   <div id="texts" class="section">
-    <div class="texts-canvas" id="texts-canvas" style="position:relative;width:100vw;height:90vh;min-height:600px;"></div>
-  </div>
-  <div id="sounds" class="section"></div>
-  <div id="drawings" class="section"></div>
-  <div id="graphic" class="section"></div>
-  <div id="cgi" class="section">
-    <div class="gallery">
-      <video src="cgi/Composition 1.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 1"></video>
-      <img src="cgi/Frame 175.png" alt="CGI 1" />
-      <img src="cgi/Frame 176.png" alt="CGI 2" />
-      <img src="cgi/Frame 177.png" alt="CGI 3" />
-      <img src="cgi/IMG_8567.jpg" alt="CGI 4" />
-      <video src="cgi/Img 8565.mp4" autoplay loop muted playsinline style="width:100%;height:auto;display:block;" alt="CGI Animation 2"></video>
-      <img src="cgi/photo_2025-07-05_12-22-13.jpg" alt="CGI 5" />
-      <img src="cgi/photo_2025-07-05_12-22-26.jpg" alt="CGI 6" />
-    </div>
+    <div class="texts-canvas" id="texts-canvas"></div>
   </div>
 
-  <div id="photo" class="section">
-    <div class="gallery">
-      <img src="photography/000030080010.jpg" alt="Photo 1" />
-      <img src="photography/000030080032 copy.jpg" alt="Photo 2" />
-      <img src="photography/001240250035.jpg" alt="Photo 3" />
-      <img src="photography/R0003325.jpg" alt="Photo 4" />
-      <img src="photography/R0003368.jpg" alt="Photo 5" />
-      <img src="photography/R0003526.jpg" alt="Photo 6" />
-      <img src="photography/R0003862.jpg" alt="Photo 7" />
-      <img src="photography/R0003863.jpg" alt="Photo 8" />
-      <img src="photography/R0003872.jpg" alt="Photo 9" />
-    </div>
-  </div>
   <div id="commercial" class="section"></div>
+
   <div id="aboutme" class="section">
-    <div style="max-width:1100px; margin:80px 0 0 20px; padding:0; display:flex; flex-direction:row; gap:180px; align-items:flex-start; flex-wrap:wrap;">
-      <!-- Left column -->
-      <div style="flex:1 1 360px; min-width:320px; display:flex; flex-direction:column; align-items:flex-start;">
-        <img src="about me/IMG_0406 4.jpg" alt="About me left" style="max-width:100%; height:auto; margin-bottom:32px; display:block;" />
-        <div style="width:100%; text-align:left;">
-          <p>Life and design explorer, pictures with meaning and quality creator.</p>
-          <p>I'm interested in contributing to the visual image of modernity, while exploring and reflecting on the visual culture of our world. I'm open to working with studios, designers, and anyone passionate about creating images that tell their own story.</p>
-        </div>
+    <div style="max-width:1100px;margin:80px 0 0 20px;display:flex;gap:180px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:320px;">
+        <img src="about me/IMG_0406 4.jpg" style="max-width:100%;margin-bottom:32px;">
+        <p>Life and design explorer, pictures with meaning and quality creator.</p>
+        <p>
+          I'm interested in contributing to the visual image of modernity,
+          exploring visual culture and collaborating with studios and designers.
+        </p>
       </div>
-      <!-- Right column -->
-      <div style="flex:1 1 360px; min-width:320px; display:flex; flex-direction:column; align-items:flex-start;">
-        <img src="about me/image 538.jpg" alt="About me right" style="max-width:100%; height:auto; display:block;" />
+      <div style="flex:1;min-width:320px;">
+        <img src="about me/image 538.jpg" style="max-width:100%;">
       </div>
     </div>
   </div>
 
+  <!-- JS -->
   <script>
-    // Major screen background palette controller:
-    // super-slow grayscale drift (flat color) between #101010 and #FAFAFA,
-    // biased by season (winter darker, summer lighter) and time-of-day (day lighter, night darker).
+    /* ===== MAJOR SCREEN BACKGROUND ENGINE ===== */
+
     (function () {
       const DARK = '#101010';
       const LIGHT = '#FAFAFA';
       const body = document.body;
 
-      function clamp01(n) {
-        return Math.max(0, Math.min(1, n));
-      }
+      const clamp = n => Math.max(0, Math.min(1, n));
 
-      function hexToRgb(hex) {
-        const h = hex.replace('#', '').trim();
-        const r = parseInt(h.slice(0, 2), 16);
-        const g = parseInt(h.slice(2, 4), 16);
-        const b = parseInt(h.slice(4, 6), 16);
-        return { r, g, b };
-      }
-
-      function rgbToHex({ r, g, b }) {
-        const to2 = (v) => v.toString(16).padStart(2, '0');
-        return `#${to2(r)}${to2(g)}${to2(b)}`.toUpperCase();
-      }
-
-      function mixHex(a, b, t) {
-        const c1 = hexToRgb(a);
-        const c2 = hexToRgb(b);
-        const tt = clamp01(t);
-        return rgbToHex({
-          r: Math.round(c1.r + (c2.r - c1.r) * tt),
-          g: Math.round(c1.g + (c2.g - c1.g) * tt),
-          b: Math.round(c1.b + (c2.b - c1.b) * tt),
-        });
-      }
-
-      function isLeapYear(y) {
-        return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
-      }
-
-      function dayOfYearLocal(d) {
-        // Local calendar date -> day-of-year (1..365/366) without TZ drift
-        const y = d.getFullYear();
-        const m = d.getMonth();
-        const dd = d.getDate();
-        const start = Date.UTC(y, 0, 0);
-        const cur = Date.UTC(y, m, dd);
-        return Math.floor((cur - start) / 86400000);
-      }
-
-      function computeLightFactor(now) {
-        const doy = dayOfYearLocal(now);
-        const yearLen = isLeapYear(now.getFullYear()) ? 366 : 365;
-
-        // Season curve: 1 at ~June 21, -1 at ~Dec 21
-        const seasonCos = Math.cos((2 * Math.PI * (doy - 172)) / yearLen);
-        const seasonLight01 = (seasonCos + 1) / 2; // 0..1 (winter..summer)
-        const seasonalPref = 0.24 + 0.58 * seasonLight01; // ~0.24 winter .. ~0.82 summer
-
-        // Day/night curve: 1 at noon, 0 at midnight
-        const hours = now.getHours() + now.getMinutes() / 60;
-        const dayCos = Math.cos((2 * Math.PI * (hours - 12)) / 24);
-        const diurnalLight01 = (dayCos + 1) / 2;
-        const diurnalPref = 0.14 + 0.70 * Math.pow(diurnalLight01, 1.25);
-
-        // Slow drift (multi-hour & multi-minute waves)
-        const t = now.getTime() / 1000;
-        const drift =
-          0.045 * Math.sin(t / (60 * 18)) +
-          0.030 * Math.sin(t / (60 * 55) + 1.7) +
-          0.020 * Math.sin(t / (60 * 140) + 0.2);
-
-        const combined = 0.58 * seasonalPref + 0.42 * diurnalPref + drift;
-        return clamp01(combined);
-      }
-
-      function applyPalette(lightFactor) {
-        const solid = mixHex(DARK, LIGHT, lightFactor);
-        const fg = lightFactor >= 0.62 ? '#111111' : '#F2F2F2';
-
-        // Drive actual properties (so transition works everywhere)
-        if (!document.body) return;
-        document.body.style.backgroundColor = solid;
-        document.body.style.color = fg;
-      }
-
-      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let current = computeLightFactor(new Date());
-      // Default to "home" (major screen) mode unless a section hash is active.
-      if (document.body) {
-        document.body.dataset.mode = 'home';
-        // ensure CSS transition applies to our first paint too
-        document.body.style.transition = 'background-color 30s linear, color 30s linear';
-      }
-      applyPalette(current);
-
-      function refreshMode() {
-        const hash = window.location.hash.replace('#', '').trim();
-        const hasSection = !!(hash && document.getElementById(hash));
-        if (!document.body) return;
-        document.body.dataset.mode = hasSection ? 'section' : 'home';
-        if (hasSection) {
-          // Let CSS control the section look (white background)
-          document.body.style.backgroundColor = '';
-          document.body.style.color = '';
-        } else {
-          applyPalette(current);
-        }
-      }
-
-      refreshMode();
-      window.addEventListener('hashchange', refreshMode);
-
-      const tickMs = prefersReduced ? 60_000 : 5_000; // still slow, but even calmer for reduced motion
-      window.setInterval(() => {
-        if (document.body && document.body.dataset.mode === 'section') return;
-        const target = computeLightFactor(new Date());
-        // Smoothly chase the target to avoid jumps
-        current = current + (target - current) * 0.12;
-        applyPalette(current);
-      }, tickMs);
-    })();
-
-    function showSection(id, updateHash = true) {
-      document.getElementById('intro').style.display = 'none';
-      document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active');
-      // Map section IDs to nav link text for special cases
-      const sectionToNavText = {
-        photo: 'Photography',
-        graphic: 'Graphic design',
+      const mix = (a, b, t) => {
+        const h = x => parseInt(x, 16);
+        const r = Math.round(h(a.slice(1,3)) + (h(b.slice(1,3)) - h(a.slice(1,3))) * t);
+        const g = Math.round(h(a.slice(3,5)) + (h(b.slice(3,5)) - h(a.slice(3,5))) * t);
+        const b2 = Math.round(h(a.slice(5,7)) + (h(b.slice(5,7)) - h(a.slice(5,7))) * t);
+        return `#${[r,g,b2].map(v=>v.toString(16).padStart(2,'0')).join('')}`.toUpperCase();
       };
-      const navMatch = sectionToNavText[id] || id;
-      const link = [...document.querySelectorAll('nav a')].find(a =>
-        a.textContent.replace(/\s+/g, '').toLowerCase() === navMatch.replace(/\s+/g, '').toLowerCase()
-      );
-      if (link) link.classList.add('active');
-      if (updateHash) window.location.hash = id;
-      if (id === 'photo' || id === 'cgi') {
-        randomizeGalleryGrid(id);
-        randomizeVerticalOffsets(id);
-        combineGalleryEffects(id);
+
+      const dayOfYear = d => {
+        const start = Date.UTC(d.getFullYear(),0,0);
+        const now = Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
+        return (now - start) / 86400000;
+      };
+
+      function lightFactor(now) {
+        const season = Math.cos((2*Math.PI*(dayOfYear(now)-172))/365);
+        const seasonL = 0.24 + 0.58 * ((season+1)/2);
+
+        const h = now.getHours() + now.getMinutes()/60;
+        const day = Math.cos((2*Math.PI*(h-12))/24);
+        const dayL = 0.14 + 0.70 * Math.pow((day+1)/2,1.25);
+
+        const t = now.getTime()/1000;
+        const drift =
+          0.045*Math.sin(t/(60*18)) +
+          0.030*Math.sin(t/(60*55)+1.7) +
+          0.020*Math.sin(t/(60*140));
+
+        return clamp(0.58*seasonL + 0.42*dayL + drift);
       }
+
+      let current = lightFactor(new Date());
+
+      function apply(v) {
+        body.style.backgroundColor = mix(DARK, LIGHT, v);
+        body.style.color = v > 0.62 ? '#111' : '#F2F2F2';
+      }
+
+      body.dataset.mode = 'home';
+      apply(current);
+
+      setInterval(() => {
+        if (body.dataset.mode === 'section') return;
+        const target = lightFactor(new Date());
+        current += (target - current) * 0.12;
+        apply(current);
+      }, 5000);
+    })();
+
+    /* ===== SECTION ROUTING ===== */
+
+    function showSection(id) {
+      document.getElementById('intro').style.display = 'none';
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+
+      [...document.querySelectorAll('nav a')]
+        .find(a => a.textContent.replace(/\s/g,'').toLowerCase() === id)
+        ?.classList.add('active');
+
+      document.body.dataset.mode = 'section';
+      location.hash = id;
     }
 
-    function showSectionFromHash() {
-      const hash = window.location.hash.replace('#', '');
-      if (hash && document.getElementById(hash)) {
-        showSection(hash, false);
-      } else {
+    window.addEventListener('hashchange', () => {
+      const id = location.hash.replace('#','');
+      if (!id) {
+        document.body.dataset.mode = 'home';
         document.getElementById('intro').style.display = '';
-        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       }
-    }
-
-    window.addEventListener('DOMContentLoaded', showSectionFromHash);
-    window.addEventListener('hashchange', showSectionFromHash);
-
-    function randomizeGalleryGrid(sectionId) {
-      const images = Array.from(document.querySelectorAll(`#${sectionId} .gallery img`)).filter(img => img.src.match(/\.jpe?g$/i));
-      const videos = Array.from(document.querySelectorAll(`#${sectionId} .gallery video`)).filter(vid => vid.src.match(/\.mp4$/i));
-
-      // Helper to shuffle an array
-      function shuffle(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-      }
-
-      // --- JPEG IMAGES ---
-      const imgCount = images.length;
-      const img3col = Math.round(imgCount * 0.10);
-      const img2col = Math.round(imgCount * 0.60);
-      const img1col = imgCount - img3col - img2col;
-      shuffle(images).forEach((img, idx) => {
-        if (idx < img3col) {
-          img.style.gridColumn = '1 / span 3';
-        } else if (idx < img3col + img2col) {
-          // Randomly pick a start column: 1 or 2
-          const col = Math.floor(Math.random() * 2) + 1;
-          img.style.gridColumn = `${col} / span 2`;
-        } else {
-          // Randomly pick a column: 1, 2, or 3
-          const col = Math.floor(Math.random() * 3) + 1;
-          img.style.gridColumn = `${col} / span 1`;
-        }
-      });
-
-      // --- MP4 VIDEOS ---
-      // Always make videos span the full gallery width (3 columns)
-      videos.forEach(vid => {
-        vid.style.gridColumn = '1 / span 3';
-      });
-    }
-
-    function randomizeVerticalOffsets(sectionId) {
-      const gallery = document.querySelector(`#${sectionId} .gallery`);
-      if (!gallery) return;
-      const items = Array.from(gallery.children);
-      // Group items by their grid row
-      const rows = {};
-      items.forEach(item => {
-        const row = window.getComputedStyle(item).gridRowStart;
-        if (!rows[row]) rows[row] = [];
-        rows[row].push(item);
-        // Reset any previous transform
-        item.style.transform = '';
-      });
-      Object.values(rows).forEach(rowItems => {
-        if (rowItems.length === 3) {
-          const maxHeight = Math.max(...rowItems.map(i => i.offsetHeight));
-          const idx = Math.floor(Math.random() * 3);
-          rowItems[idx].style.transform = `translateY(${maxHeight}px)`;
-        }
-      });
-    }
-
-    function randomizeVerticalStagger(sectionId) {
-      const gallery = document.querySelector(`#${sectionId} .gallery`);
-      if (!gallery) return;
-      const items = Array.from(gallery.children);
-      items.forEach(item => {
-        // Reset previous margin
-        item.style.marginTop = '0';
-        // Randomly offset each item vertically by up to 200px
-        const offset = Math.floor(Math.random() * 200);
-        item.style.marginTop = offset + 'px';
-      });
-    }
-
-    function combineGalleryEffects(sectionId) {
-      const gallery = document.querySelector(`#${sectionId} .gallery`);
-      if (!gallery) return;
-      const items = Array.from(gallery.children);
-      // Reset all transforms and margins
-      items.forEach(item => {
-        item.style.marginTop = '0';
-        item.style.marginBottom = '0';
-        item.style.transform = '';
-      });
-      for (let i = 0; i < items.length; i += 3) {
-        const group = items.slice(i, i + 3);
-        // 1. Staggered Layout: offset second item
-        if (group[1]) {
-          group[1].style.marginTop = (group[1].offsetHeight * 0.4) + 'px';
-        }
-        // 2. Mixed Sizes: randomly scale one or two
-        if (group.length === 3) {
-          const idx = Math.floor(Math.random() * 3);
-          group[idx].style.transform = 'scale(1.08)';
-          if (Math.random() > 0.5) {
-            const idx2 = (idx + 1) % 3;
-            group[idx2].style.transform = 'scale(0.92)';
-          }
-        }
-        // 3. Negative Space: randomly add margin-bottom to one item
-        if (group.length > 0 && Math.random() > 0.5) {
-          const idx = Math.floor(Math.random() * group.length);
-          group[idx].style.marginBottom = (40 + Math.floor(Math.random() * 120)) + 'px';
-        }
-      }
-    }
-
-    // Dynamically generate draggable text images for all .png files in the texts folder
-    (async function() {
-      const canvas = document.getElementById('texts-canvas');
-      if (canvas) {
-        // List of all .png files in the texts folder
-        const imageNames = [
-          '0.png','1.png','2.png','3.png','4.png','5.png','6.png','7.png','8.png','9.png',
-          '10.png','11.png','12.png','13.png','14.png','15.png','16.png','17.png','18.png','19.png',
-          '20.png','21.png','22.png','23.png','24.png','25.png','26.png','27.png','28.png','29.png',
-          '30.png','31.png','32.png','33.png','34.png','35.png','36.png','37.png','38.png','39.png',
-          '40.png','41.png','42.png','43.png'
-        ];
-        const canvasW = canvas.offsetWidth || window.innerWidth;
-        const canvasH = canvas.offsetHeight || 800;
-        imageNames.forEach((name, i) => {
-          const img = document.createElement('img');
-          img.src = `texts/${name}`;
-          img.className = 'draggable-text';
-          img.alt = `Text ${name}`;
-          img.style.position = 'absolute';
-          img.style.width = '360px';
-          // Random position within the canvas
-          const left = Math.floor(Math.random() * (canvasW - 200));
-          const top = Math.floor(Math.random() * (canvasH - 200));
-          img.style.left = left + 'px';
-          img.style.top = top + 'px';
-          canvas.appendChild(img);
-        });
-      }
-    })();
-
-    // Drag and drop for .draggable-text images (single click to lift, drag, and lay down)
-    (function() {
-      let dragImg = null;
-      let offsetX = 0;
-      let offsetY = 0;
-      let zCounter = 10;
-      let isDragging = false;
-      document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('draggable-text')) {
-          if (!dragImg) {
-            dragImg = e.target;
-            offsetX = e.clientX - dragImg.offsetLeft;
-            offsetY = e.clientY - dragImg.offsetTop;
-            dragImg.classList.add('lifted');
-            zCounter++;
-            dragImg.style.zIndex = zCounter;
-            isDragging = true;
-            document.addEventListener('mousemove', moveHandler);
-          } else if (dragImg === e.target) {
-            dragImg.classList.remove('lifted');
-            dragImg = null;
-            isDragging = false;
-            document.removeEventListener('mousemove', moveHandler);
-          }
-        }
-      });
-      function moveHandler(e) {
-        if (dragImg && isDragging) {
-          dragImg.style.left = (e.clientX - offsetX) + 'px';
-          dragImg.style.top = (e.clientY - offsetY) + 'px';
-        }
-      }
-    })();
-
-    // Toggle mute on video click (sound on/off)
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('video').forEach(video => {
-        video.addEventListener('click', function() {
-          video.muted = !video.muted;
-        });
-      });
     });
+
+    /* ===== TEXTS DRAG ===== */
+
+    (function(){
+      const canvas = document.getElementById('texts-canvas');
+      if (!canvas) return;
+
+      const files = Array.from({length:44},(_,i)=>`${i}.png`);
+      const W = window.innerWidth;
+      const H = 800;
+
+      files.forEach(f=>{
+        const img = document.createElement('img');
+        img.src = `texts/${f}`;
+        img.className = 'draggable-text';
+        img.style.left = Math.random()*(W-300)+'px';
+        img.style.top = Math.random()*(H-300)+'px';
+        canvas.appendChild(img);
+      });
+
+      let active=null,ox=0,oy=0;
+
+      document.addEventListener('click',e=>{
+        if(!e.target.classList.contains('draggable-text')) return;
+        if(active===e.target){
+          active.classList.remove('lifted');
+          active=null;
+          document.onmousemove=null;
+        } else {
+          active=e.target;
+          ox=e.clientX-active.offsetLeft;
+          oy=e.clientY-active.offsetTop;
+          active.classList.add('lifted');
+          document.onmousemove=ev=>{
+            active.style.left=(ev.clientX-ox)+'px';
+            active.style.top=(ev.clientY-oy)+'px';
+          };
+        }
+      });
+    })();
   </script>
 
 </body>
