@@ -11,9 +11,24 @@
   #projects { margin-top: 20px; }
   .project { border: 1px solid #444; padding: 10px; margin-bottom: 20px; }
   .project-title { font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; }
-  .grid img, .grid video { width: 100%; display: block; }
   .dropzone { border: 2px dashed #888; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 10px; }
+  .project-grid {
+    column-count: 3;
+    column-gap: 20px;
+  }
+  .project-grid img,
+  .project-grid video {
+    width: 100%;
+    display: block;
+    margin-bottom: 20px;
+    break-inside: avoid;
+  }
+  @media (max-width: 900px) {
+    .project-grid { column-count: 2; }
+  }
+  @media (max-width: 600px) {
+    .project-grid { column-count: 1; }
+  }
 </style>
 </head>
 <body>
@@ -26,68 +41,68 @@
 <div id="projects"></div>
 
 <script>
-  const projectsContainer = document.getElementById('projects');
-  const projects = [];
+const projectsContainer = document.getElementById('projects');
+const projects = [];
 
-  function renderProjects() {
-    projectsContainer.innerHTML = '';
-    projects.forEach((project, index) => {
-      const projectDiv = document.createElement('div');
-      projectDiv.className = 'project';
+function renderProjects() {
+  projectsContainer.innerHTML = '';
+  projects.forEach((project, index) => {
+    const projectDiv = document.createElement('div');
+    projectDiv.className = 'project';
 
-      projectDiv.innerHTML = `
-        <div class="project-title">
-          ${project.name} 
-          <button onclick="toggleProject(${index})">${project.open ? 'Закрыть' : 'Открыть'}</button>
-        </div>
-        <div class="dropzone" id="dropzone-${index}" style="${project.open ? '' : 'display:none'}">
-          Перетащи сюда картинки и видео
-        </div>
-        <div class="grid" id="grid-${index}" style="${project.open ? '' : 'display:none'}"></div>
-      `;
+    projectDiv.innerHTML = `
+      <div class="project-title">
+        ${project.name} 
+        <button onclick="toggleProject(${index})">${project.open ? 'Закрыть' : 'Открыть'}</button>
+      </div>
+      <div class="dropzone" id="dropzone-${index}" style="${project.open ? '' : 'display:none'}">
+        Перетащи сюда картинки и видео
+      </div>
+      <div class="project-grid" id="grid-${index}" style="${project.open ? '' : 'display:none'}"></div>
+    `;
 
-      projectsContainer.appendChild(projectDiv);
+    projectsContainer.appendChild(projectDiv);
 
-      const dropzone = document.getElementById(`dropzone-${index}`);
-      dropzone.addEventListener('dragover', e => e.preventDefault());
-      dropzone.addEventListener('drop', e => handleDrop(e, index));
-    });
-  }
-
-  function toggleProject(index) {
-    projects[index].open = !projects[index].open;
-    renderProjects();
-  }
-
-  document.getElementById('createProject').addEventListener('click', () => {
-    const nameInput = document.getElementById('newProjectName');
-    const name = nameInput.value.trim();
-    if(!name) return alert('Введите название проекта');
-    projects.push({ name, files: [], open: true });
-    nameInput.value = '';
-    renderProjects();
+    const dropzone = document.getElementById(`dropzone-${index}`);
+    dropzone.addEventListener('dragover', e => e.preventDefault());
+    dropzone.addEventListener('drop', e => handleDrop(e, index));
   });
+}
 
-  function handleDrop(event, index) {
-    event.preventDefault();
-    const files = Array.from(event.dataTransfer.files);
-    const grid = document.getElementById(`grid-${index}`);
+function toggleProject(index) {
+  projects[index].open = !projects[index].open;
+  renderProjects();
+}
 
-    files.forEach(file => {
-      const url = URL.createObjectURL(file);
-      let el;
-      if(file.type.startsWith('image/')) {
-        el = document.createElement('img');
-        el.src = url;
-      } else if(file.type.startsWith('video/')) {
-        el = document.createElement('video');
-        el.src = url;
-        el.controls = true;
-      }
-      grid.appendChild(el);
-      projects[index].files.push({ file, url });
-    });
-  }
+document.getElementById('createProject').addEventListener('click', () => {
+  const nameInput = document.getElementById('newProjectName');
+  const name = nameInput.value.trim();
+  if(!name) return alert('Введите название проекта');
+  projects.push({ name, files: [], open: true });
+  nameInput.value = '';
+  renderProjects();
+});
+
+function handleDrop(event, index) {
+  event.preventDefault();
+  const files = Array.from(event.dataTransfer.files);
+  const grid = document.getElementById(`grid-${index}`);
+
+  files.forEach(file => {
+    const url = URL.createObjectURL(file);
+    let el;
+    if(file.type.startsWith('image/')) {
+      el = document.createElement('img');
+      el.src = url;
+    } else if(file.type.startsWith('video/')) {
+      el = document.createElement('video');
+      el.src = url;
+      el.controls = true;
+    }
+    grid.appendChild(el);
+    projects[index].files.push({ file, url });
+  });
+}
 
 </script>
 </body>
