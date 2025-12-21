@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Project</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="p-1.5">
+  <header class="flex items-start mb-12 px-1.5">
+    <h1 id="project-title" class="text-4xl font-bold tracking-tight mr-4">Project</h1>
+    <nav id="top-nav" class="ml-auto flex space-x-4 whitespace-nowrap flex-shrink-0 text-base text-gray-600">
+      <a href="index.html" class="hover:opacity-50 cursor-pointer">← Back to Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <nav id="breadcrumb" class="mb-6 text-sm text-gray-500 flex flex-wrap gap-2"></nav>
+    <div id="file-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-x-6 gap-y-24"></div>
+    <div id="loading" class="text-center text-gray-400 mt-10">Loading...</div>
+  </main>
+
+  <!-- Фулл-скрин просмотр -->
+  <div id="viewerOverlay" class="fixed inset-0 hidden bg-white flex items-center justify-center z-50">
+    <div id="viewerContent" class="flex items-center justify-center max-w-full max-h-full w-full h-full"></div>
+  </div>
+
+  <script src="js/project.js"></script>
+</body>
+</html>
+
