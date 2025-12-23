@@ -1,6 +1,5 @@
 // Главная страница - работа с локальными файлами
 let currentSection = 'home';
-let galleryImages = [];
 
 const grid = document.getElementById('file-grid');
 const loading = document.getElementById('loading');
@@ -18,55 +17,78 @@ const isImage = (name) => /\.(jpe?g|png|gif|webp)$/i.test(name);
 const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
 
 // =============== ЗАГРУЗКА ПРОЕКТОВ ===============
-async function loadProjects(){
+async function loadProjects(category = null){
   try{
-    loading.style.display='block';
     projectsList.innerHTML = '';
     
     // Загружаем список проектов из папки projects/
     // В реальности это будет список папок из projects/
     // Для статического сайта используем конфигурацию
     
-    const projects = await getProjectsList();
+    let projects = await getProjectsList();
+    
+    // Фильтруем по категории, если указана
+    if(category){
+      projects = projects.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
+    }
     
     if(projects.length === 0){
-      projectsList.innerHTML = '<div class="col-span-full text-center text-gray-400">Проекты не найдены</div>';
-      loading.style.display='none';
+      projectsList.innerHTML = '<div class="col-span-12 text-center text-gray-400">Проекты не найдены</div>';
       return;
     }
 
     for(const project of projects){
       const projectCard = document.createElement('a');
-      projectCard.href = `project.html?project=${encodeURIComponent(project.name)}`;
+      // Передаем категорию в URL
+      const categoryParam = project.category ? `&category=${encodeURIComponent(project.category)}` : '';
+      projectCard.href = `project.html?project=${encodeURIComponent(project.name)}${categoryParam}`;
       projectCard.className = 'cursor-pointer hover:opacity-75 transition-opacity';
       
-      // Пытаемся найти первое изображение для превью
+      // Пытаемся найти обложку (cover) для превью
       let previewUrl = '';
-      if(project.images && project.images.length > 0){
-        previewUrl = `projects/${project.name}/images/${project.images[0]}`;
-      } else {
-        // Пытаемся загрузить первое изображение из папки
-        previewUrl = await getFirstImageFromProject(project.name);
+      let coverFileName = '';
+      const categoryPath = project.category ? `${project.category}/` : '';
+      
+      // Ищем файл с "cover" в названии
+      const coverInfo = await getCoverImageFromProject(project.name, project.category);
+      previewUrl = coverInfo.url;
+      coverFileName = coverInfo.filename;
+      
+      // Извлекаем название проекта из имени файла cover_ProjectName_00 или Cover_Project Name_01
+      let projectTitleFromCover = project.title || project.name.replace(/_/g, ' ');
+      if(coverFileName) {
+        // Парсим название из различных форматов:
+        // cover_ProjectName_00.ext, Cover_Project Name_01.ext, cover_Project Name_01.ext
+        const coverMatch = coverFileName.match(/^[Cc]over[_-](.+?)[_-]\d+\./i);
+        if(coverMatch && coverMatch[1]) {
+          projectTitleFromCover = coverMatch[1].replace(/_/g, ' ').trim();
+        }
       }
       
       projectCard.innerHTML = `
-        <div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
-          ${previewUrl ? `<img src="${previewUrl}" alt="${project.title || project.name}" class="w-full h-48 object-cover" onerror="this.parentElement.innerHTML='<div class=\\'w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400\\'>Нет превью</div>'">` : '<div class="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">Нет превью</div>'}
-          <div class="p-4">
-            <h3 class="text-xl font-bold">${project.title || project.name}</h3>
-            ${project.description ? `<p class="text-gray-600 text-sm mt-2">${project.description}</p>` : ''}
-          </div>
+        <div class="border border-gray-200 overflow-hidden bg-white relative">
+          ${previewUrl ? `
+            <div class="relative w-full" style="aspect-ratio: 16/9; overflow: hidden;">
+              <img src="${previewUrl}" alt="${projectTitleFromCover}" class="w-full h-full object-cover" onerror="this.parentElement.parentElement.innerHTML='<div class=\\'w-full aspect-[16/9] bg-gray-100 flex items-center justify-center text-gray-400\\'>Нет превью</div>'">
+              <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                <h3 class="text-2xl font-bold text-white text-center px-4">${projectTitleFromCover}</h3>
+              </div>
+            </div>
+          ` : `
+            <div class="w-full aspect-[16/9] bg-gray-100 flex items-center justify-center relative">
+              <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                <h3 class="text-2xl font-bold text-white text-center px-4">${projectTitleFromCover}</h3>
+              </div>
+            </div>
+          `}
         </div>
       `;
       
       projectsList.appendChild(projectCard);
     }
-    
-    loading.style.display='none';
   }catch(e){
     console.error('Ошибка загрузки проектов:', e);
-    projectsList.innerHTML = '<div class="col-span-full text-center text-gray-400">Ошибка загрузки проектов</div>';
-    loading.style.display='none';
+    projectsList.innerHTML = '<div class="col-span-12 text-center text-gray-400">Ошибка загрузки проектов</div>';
   }
 }
 
@@ -89,25 +111,85 @@ async function getProjectsList(){
   ];
 }
 
-// Получаем первое изображение из проекта
-async function getFirstImageFromProject(projectName){
-  // Пытаемся загрузить список изображений
-  // Для статического сайта это сложно без сервера
-  // Поэтому используем известные имена файлов или конфигурацию
-  const commonNames = ['01.jpg', '01.png', 'cover.jpg', 'cover.png', 'preview.jpg', 'preview.png'];
+// Получаем обложку проекта (изображение с "cover" в названии)
+async function getCoverImageFromProject(projectName, category = null){
+  const categoryPath = category ? `${category}/` : '';
+  const basePath = `projects/${categoryPath}${projectName}/images`;
   
-  for(const name of commonNames){
-    const url = `projects/${projectName}/images/${name}`;
+  // Сначала проверяем files.json для списка файлов
+  try {
+    const filesResponse = await fetch(`${basePath}/files.json`);
+    if(filesResponse.ok) {
+      const filesData = await filesResponse.json();
+      const files = filesData.files || [];
+      
+      // Ищем файл с "cover" в названии (приоритет) - ТОЛЬКО изображения (не видео)
+      const coverFile = files.find(file => {
+        const isImage = /\.(jpe?g|png|gif|webp)$/i.test(file);
+        const hasCover = file.toLowerCase().includes('cover');
+        return isImage && hasCover;
+      });
+      
+      if(coverFile) {
+        return {
+          url: `${basePath}/${coverFile}`,
+          filename: coverFile
+        };
+      }
+    }
+  } catch(e) {
+    // Если files.json не найден, продолжаем поиск по стандартным именам
+  }
+  
+  // Fallback: ищем файлы с "cover" в названии по стандартным паттернам (с разными вариантами)
+  // Пробуем разные варианты: с заглавной буквы, с пробелами в названии проекта, с подчеркиваниями
+  const projectNameVariants = [
+    projectName, // Angry_Masseur
+    projectName.replace(/_/g, ' '), // Angry Masseur
+    projectName.replace(/_/g, ''), // AngryMasseur
+  ];
+  
+  const coverPatterns = [];
+  // Генерируем паттерны только для изображений (jpg, png, gif, webp)
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+  for(const variant of projectNameVariants) {
+    for(const ext of imageExtensions) {
+      coverPatterns.push(
+        `cover_${variant}_00.${ext}`, `cover_${variant}_01.${ext}`,
+        `Cover_${variant}_00.${ext}`, `Cover_${variant}_01.${ext}`
+      );
+    }
+  }
+  for(const ext of imageExtensions) {
+    coverPatterns.push(
+      `cover_00.${ext}`, `cover_01.${ext}`,
+      `Cover_00.${ext}`, `Cover_01.${ext}`,
+      `cover.${ext}`, `Cover.${ext}`
+    );
+  }
+  
+  for(const name of coverPatterns){
+    const url = `${basePath}/${name}`;
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if(response.ok){
-        return url;
+        return {
+          url: url,
+          filename: name
+        };
       }
     } catch(e) {
       continue;
     }
   }
-  return '';
+  
+  return { url: '', filename: '' };
+}
+
+// Получаем первое изображение из проекта (для обратной совместимости)
+async function getFirstImageFromProject(projectName, category = null){
+  const coverInfo = await getCoverImageFromProject(projectName, category);
+  return coverInfo.url;
 }
 
 // =============== ГЛАВНАЯ СТРАНИЦА (HOME) ===============
@@ -173,143 +255,31 @@ viewerOverlay.addEventListener('click',(e)=>{
   if(e.target===viewerOverlay) closeViewer(); 
 });
 
-// =============== АНИМАЦИЯ ЛОГО ===============
-let logoOverlay=null, logoAnimRAF=null, logoInterval=null;
-
-function startLogoAnimation(){
-  if(logoOverlay || currentSection!=='home') {
-    console.log('Анимация не запущена:', { logoOverlay: !!logoOverlay, currentSection });
-    return;
-  }
-  
-  if(galleryImages.length===0){ 
-    console.log('Изображения не загружены, загружаем...');
-    // Загружаем изображения для анимации лого
-    loadLogoGallery().then(() => {
-      console.log('Изображения загружены:', galleryImages.length);
-      // После загрузки изображений запускаем анимацию, если курсор все еще на лого
-      if(galleryImages.length > 0 && currentSection === 'home' && !logoOverlay){
-        console.log('Запускаем анимацию после загрузки');
-        startLogoAnimation();
-      } else {
-        console.log('Анимация не запущена после загрузки:', { 
-          imagesCount: galleryImages.length, 
-          currentSection, 
-          logoOverlay: !!logoOverlay 
-        });
-      }
-    });
-    return; 
-  }
-  
-  console.log('Запускаем анимацию с', galleryImages.length, 'изображениями');
-
-  logoOverlay=document.createElement('div');
-  logoOverlay.style.position='fixed';
-  let headerBottom=0;
-  const h=document.querySelector('header');
-  if(h){ headerBottom=h.getBoundingClientRect().bottom; logoOverlay.style.top=`${headerBottom}px`; } else { logoOverlay.style.top='0px'; }
-  const styles=getComputedStyle(document.body);
-  logoOverlay.style.left=styles.paddingLeft; logoOverlay.style.right=styles.paddingRight;
-  const footer=document.querySelector('footer'); const fh=footer?footer.getBoundingClientRect().height:0;
-  const avail=innerHeight-headerBottom-fh; logoOverlay.style.height= (avail>0? `${avail}px` : '40vh');
-  logoOverlay.style.pointerEvents='none'; logoOverlay.style.zIndex='9999'; logoOverlay.style.overflow='hidden';
-  document.body.appendChild(logoOverlay);
-
-  const img=document.createElement('img'); img.style.position='absolute'; logoOverlay.appendChild(img);
-  const bounce={x:0,y:0,w:0,h:0,dx:(Math.random()*2+1)*0.25*(Math.random()<.5?-1:1),dy:(Math.random()*2+1)*0.25*(Math.random()<.5?-1:1)};
-  let idx=0;
-  function loadNext(){
-    const src=galleryImages[idx]; idx=(idx+1)%galleryImages.length;
-    img.onload=()=>{ const mw=logoOverlay.clientWidth*.4, mh=logoOverlay.clientHeight*.4;
-      let w=img.naturalWidth*2, h=img.naturalHeight*2; const s=Math.min(mw/w,mh/h,1); w*=s; h*=s;
-      bounce.w=w; bounce.h=h; img.style.width=w+'px'; img.style.height=h+'px';
-      const maxX=logoOverlay.clientWidth-bounce.w, maxY=logoOverlay.clientHeight-bounce.h;
-      if(bounce.x>maxX) bounce.x=maxX; if(bounce.y>maxY) bounce.y=maxY;
-      img.style.transform=`translate(${bounce.x}px,${bounce.y}px)`;
-    };
-    img.src=src;
-  }
-  loadNext(); logoInterval=setInterval(loadNext, 4000);
-  (function anim(){ const w=logoOverlay.clientWidth, h=logoOverlay.clientHeight;
-    bounce.x+=bounce.dx; bounce.y+=bounce.dy;
-    if(bounce.x<=0||bounce.x+bounce.w>=w) bounce.dx*=-1;
-    if(bounce.y<=0||bounce.y+bounce.h>=h) bounce.dy*=-1;
-    if(bounce.x<0) bounce.x=0; if(bounce.y<0) bounce.y=0;
-    if(bounce.x+bounce.w>w) bounce.x=w-bounce.w; if(bounce.y+bounce.h>h) bounce.y=h-bounce.h;
-    img.style.transform=`translate(${bounce.x}px,${bounce.y}px)`;
-    logoAnimRAF=requestAnimationFrame(anim);
-  })();
-}
-
-function stopLogoAnimation(){
-  if(logoInterval){ clearInterval(logoInterval); logoInterval=null; }
-  if(logoAnimRAF){ cancelAnimationFrame(logoAnimRAF); logoAnimRAF=null; }
-  if(logoOverlay){ document.body.removeChild(logoOverlay); logoOverlay=null; }
-}
-
-async function loadLogoGallery(){
-  // Если изображения уже загружены, не загружаем снова
-  if(galleryImages.length > 0) {
-    return Promise.resolve();
-  }
-  
-  // Загружаем изображения для анимации лого из папки images/logo-gallery/
-  try {
-    const response = await fetch('images/logo-gallery/files.json');
-    if(response.ok){
-      const data = await response.json();
-      galleryImages = data.files.map(file => `images/logo-gallery/${file}`);
-      console.log('Загружено изображений для лого:', galleryImages.length);
-      return;
-    }
-  } catch(e) {
-    console.error('Ошибка загрузки logo-gallery/files.json:', e);
-  }
-  
-  // Fallback: пробуем загрузить стандартные имена файлов
-  const commonNames = [];
-  for(let i = 1; i <= 50; i++){
-    commonNames.push(`0${i}`.slice(-2) + '.jpg');
-    commonNames.push(`0${i}`.slice(-2) + '.png');
-  }
-  
-  // Проверяем какие файлы существуют
-  galleryImages = [];
-  for(const name of commonNames){
-    try {
-      const response = await fetch(`images/logo-gallery/${name}`, { method: 'HEAD' });
-      if(response.ok){
-        galleryImages.push(`images/logo-gallery/${name}`);
-        if(galleryImages.length >= 50) break; // Ограничиваем до 50 изображений
-      }
-    } catch(e) {
-      continue;
-    }
-  }
-  
-  console.log('Найдено изображений для лого (fallback):', galleryImages.length);
-}
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', ()=>{
   const logo=document.getElementById('logo');
   if(logo){ 
-    logo.style.cursor='pointer'; 
-    logo.addEventListener('mouseenter',startLogoAnimation); 
-    logo.addEventListener('mouseleave',stopLogoAnimation);
     logo.addEventListener('click',()=>{ 
       currentSection='home'; 
-      showHome(); 
+      showHome();
     });
   }
   
-  document.getElementById('nav-projects')?.addEventListener('click',()=>{ 
-    currentSection='projects'; 
+  document.getElementById('nav-commerce')?.addEventListener('click',()=>{ 
+    currentSection='commerce'; 
     grid.style.display='none';
     projectsList.style.display='grid';
     breadcrumb.style.display='none';
-    loadProjects();
+    loadProjects('commerce');
+  });
+  
+  document.getElementById('nav-mind')?.addEventListener('click',()=>{ 
+    currentSection='mind'; 
+    grid.style.display='none';
+    projectsList.style.display='grid';
+    breadcrumb.style.display='none';
+    loadProjects('mind');
   });
   
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
@@ -322,7 +292,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   
   showHome();
-  
-  // Предзагружаем изображения для анимации лого
-  loadLogoGallery();
 });

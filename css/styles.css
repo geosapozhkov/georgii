@@ -6,9 +6,32 @@
 }
 
 body {
-  background: #fafafa;
+  background: #FAFAFA;
   font-family: 'Booklet', sans-serif;
-  color: #1f1f1f;
+  color: #ACACAC;
+  min-height: 100vh;
+}
+
+/* Override Tailwind text color classes to use #ACACAC */
+.text-gray-600,
+.text-gray-500,
+.text-gray-400,
+.text-gray-300,
+.text-gray-200,
+.text-gray-100 {
+  color: #ACACAC !important;
+}
+
+/* Ensure all text elements use the specified color */
+h1, h2, h3, h4, h5, h6,
+p, span, div, a, button,
+nav, footer, header {
+  color: #ACACAC;
+}
+
+/* Allow images and videos to keep their natural appearance */
+img, video {
+  color: inherit;
 }
 
 /* Стили для fullwidth элементов - занимают всю ширину сетки */

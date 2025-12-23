@@ -1,9 +1,22 @@
 {
   "projects": [
     {
-      "name": "Poool_Angry_Masseur",
-      "title": "Poool Angry Masseur",
-      "description": "Описание проекта Poool Angry Masseur"
+      "name": "Angry_Masseur",
+      "title": "Angry Masseur",
+      "description": "",
+      "category": "commerce"
+    },
+    {
+      "name": "Type_Oclock",
+      "title": "Type O'clock",
+      "description": "",
+      "category": "commerce"
+    },
+    {
+      "name": "Red_Building",
+      "title": "Red Building",
+      "description": "",
+      "category": "mind"
     }
   ]
 }

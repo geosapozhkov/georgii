@@ -1,6 +1,7 @@
 // Страница проекта - работа с локальными файлами
 const urlParams = new URLSearchParams(window.location.search);
 const projectName = urlParams.get('project') || '';
+const projectCategory = urlParams.get('category') || '';
 
 const grid = document.getElementById('file-grid');
 const loading = document.getElementById('loading');
@@ -54,16 +55,18 @@ async function loadProject(projectName, subfolder = ''){
     return;
   }
 
+  // Используем категорию для построения пути, если она указана
+  const categoryPath = projectCategory ? `${projectCategory}/` : '';
   const projectPath = subfolder 
-    ? `projects/${projectName}${subfolder}` 
-    : `projects/${projectName}`;
+    ? `projects/${categoryPath}${projectName}${subfolder}` 
+    : `projects/${categoryPath}${projectName}`;
   
   const imagesPath = `${projectPath}/images`;
   
   try{
     // Загружаем список файлов из папки images
-    console.log(`Загрузка проекта: ${projectName}, подпапка: ${subfolder || 'корневая'}`);
-    const images = await getProjectImages(projectName, subfolder);
+    console.log(`Загрузка проекта: ${projectName}, категория: ${projectCategory || 'нет'}, подпапка: ${subfolder || 'корневая'}`);
+    const images = await getProjectImages(projectName, subfolder, projectCategory);
     console.log(`Загружено файлов: ${images.length}`);
     
     renderBreadcrumb(projectName, subfolder);
@@ -71,7 +74,7 @@ async function loadProject(projectName, subfolder = ''){
     grid.style.display = 'grid';
 
     if(!images || images.length === 0){
-      grid.innerHTML='<div class="col-span-full text-center text-gray-400 border border-dashed rounded-lg p-6">Папка пуста или изображения не найдены.<br>Добавьте файлы с нумерацией (01.jpg, 02.png, image_01.jpg и т.д.) в папку images/</div>';
+      grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Папка пуста или изображения не найдены.<br>Добавьте файлы с нумерацией (01.jpg, 02.png, image_01.jpg и т.д.) в папку images/</div>';
       loading.style.display='none'; 
       return;
     }
@@ -90,7 +93,7 @@ async function loadProject(projectName, subfolder = ''){
       
       // Если fullwidth, элемент занимает все колонки на всех размерах экрана
       if(isFullwidth){
-        wrap.className = 'cursor-pointer col-span-full w-full';
+        wrap.className = 'cursor-pointer col-span-12 w-full';
         wrap.style.width = '100%';
         wrap.style.maxWidth = '100%';
         // Fullwidth сбрасывает позицию - начинаем новую строку
@@ -128,31 +131,263 @@ async function loadProject(projectName, subfolder = ''){
           // Обычные изображения: ширина 100%, высота автоматическая, центрированы
           wrap.innerHTML = `<img src="${image.src}" alt="${image.name}" style="width:100%; height:auto; display:block;">`;
         }
-        const itemIdx = currentItems.push({ 
-          src: image.src, 
-          type: 'image', 
-          name: image.name 
-        }) - 1;
-        wrap.onclick = (e)=>{ e.stopPropagation(); openViewer(itemIdx); };
+        // Изображения не кликабельны - убрали открытие в viewer
       } else if(isVideo(image.name)){
-        // Для fullwidth используем большую высоту
-        const maxHeight = isFullwidth ? '24rem' : '12rem';
-        // Пытаемся показать превью видео, если доступно
-        wrap.innerHTML = `
-          <div class="relative bg-gray-200 w-full flex items-center justify-center" style="max-height:${maxHeight};">
-            <video class="w-full h-full object-contain" style="max-height:${maxHeight};" preload="metadata" muted>
-              <source src="${image.src}" type="video/mp4">
-            </video>
-            <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>`;
-        const itemIdx = currentItems.push({ 
-          src: image.src, 
-          type: 'video', 
-          name: image.name 
-        }) - 1;
-        wrap.onclick = (e)=>{ e.stopPropagation(); openViewer(itemIdx); };
+        const video = document.createElement('video');
+        const source = document.createElement('source');
+        source.src = image.src;
+        source.type = 'video/mp4';
+        video.appendChild(source);
+        
+        // Если fullwidth - создаём простой видеоплеер с минималистичным интерфейсом
+        if(isFullwidth) {
+          // Создаём контейнер для видео
+          const videoContainer = document.createElement('div');
+          videoContainer.className = 'relative w-full flex items-center justify-center';
+          
+          video.className = 'w-full h-auto object-contain';
+          video.style.cssText = 'width:100%; max-width:100%; height:auto; display:block;';
+          video.preload = 'auto';
+          video.muted = true;
+          video.controls = false; // Отключаем стандартные контролы
+          video.playsInline = true;
+          
+          // Линия прогресса внизу (высота увеличена в 10 раз: 2px -> 20px)
+          const progressBar = document.createElement('div');
+          progressBar.className = 'video-progress-bar';
+          progressBar.style.cssText = 'position:absolute; bottom:0; left:0; right:0; height:20px; background:rgba(172,172,172,0.3); cursor:pointer; opacity:0; transition:opacity 0.3s;';
+          
+          const progressFill = document.createElement('div');
+          progressFill.className = 'video-progress-fill';
+          progressFill.style.cssText = 'height:100%; background:#ACACAC; width:0%; transition:width 0.1s linear;';
+          progressBar.appendChild(progressFill);
+          
+          // Иконка Play/Pause (по центру)
+          const playPauseBtn = document.createElement('div');
+          playPauseBtn.className = 'video-play-pause';
+          playPauseBtn.style.cssText = 'position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; transition:opacity 0.3s;';
+          playPauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:48px; height:48px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+          
+          // Иконка звука (правый нижний угол)
+          const volumeBtn = document.createElement('div');
+          volumeBtn.className = 'video-volume-btn';
+          volumeBtn.style.cssText = 'position:absolute; bottom:24px; right:48px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:auto; z-index:10; opacity:0; transition:opacity 0.3s;';
+          volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+          
+          // Иконка полноэкранного режима (правый нижний угол, рядом со звуком)
+          const fullscreenBtn = document.createElement('div');
+          fullscreenBtn.className = 'video-fullscreen-btn';
+          fullscreenBtn.style.cssText = 'position:absolute; bottom:24px; right:12px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:auto; z-index:10; opacity:0; transition:opacity 0.3s;';
+          fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+          
+          // Обновление иконки звука
+          const updateVolumeIcon = () => {
+            if(video.muted || video.volume === 0) {
+              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+            } else if(video.volume < 0.5) {
+              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>';
+            } else {
+              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+            }
+          };
+          
+          // Обновление иконки Play/Pause
+          const updatePlayPauseIcon = () => {
+            if(video.paused) {
+              playPauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:48px; height:48px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            } else {
+              playPauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:48px; height:48px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
+            }
+          };
+          
+          // Обновление иконки полноэкранного режима
+          const updateFullscreenIcon = () => {
+            if(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+              fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
+            } else {
+              fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
+            }
+          };
+          
+          // Показать/скрыть UI элементов
+          let hideUITimeout = null;
+          
+          const showUI = () => {
+            // Очищаем таймер скрытия
+            if(hideUITimeout) {
+              clearTimeout(hideUITimeout);
+              hideUITimeout = null;
+            }
+            
+            // Показываем элементы UI (только если видео на паузе - показываем playPauseBtn)
+            if(video.paused) {
+              playPauseBtn.style.opacity = '1';
+            }
+            progressBar.style.opacity = '1';
+            volumeBtn.style.opacity = '1';
+            fullscreenBtn.style.opacity = '1';
+            
+            // Устанавливаем таймер на скрытие через 1 секунду
+            hideUITimeout = setTimeout(() => {
+              hideUI();
+              hideUITimeout = null;
+            }, 1000);
+          };
+          
+          const hideUI = () => {
+            playPauseBtn.style.opacity = '0';
+            progressBar.style.opacity = '0';
+            volumeBtn.style.opacity = '0';
+            fullscreenBtn.style.opacity = '0';
+            
+            if(hideUITimeout) {
+              clearTimeout(hideUITimeout);
+              hideUITimeout = null;
+            }
+          };
+          
+          // Переключение полноэкранного режима
+          const toggleFullscreen = () => {
+            if(!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+              // Войти в полноэкранный режим
+              if(videoContainer.requestFullscreen) {
+                videoContainer.requestFullscreen();
+              } else if(videoContainer.webkitRequestFullscreen) {
+                videoContainer.webkitRequestFullscreen();
+              } else if(videoContainer.mozRequestFullScreen) {
+                videoContainer.mozRequestFullScreen();
+              } else if(videoContainer.msRequestFullscreen) {
+                videoContainer.msRequestFullscreen();
+              }
+            } else {
+              // Выйти из полноэкранного режима
+              if(document.exitFullscreen) {
+                document.exitFullscreen();
+              } else if(document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+              } else if(document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+              } else if(document.msExitFullscreen) {
+                document.msExitFullscreen();
+              }
+            }
+          };
+          
+          // Обновление прогресса
+          const updateProgress = () => {
+            if(video.duration && video.duration > 0) {
+              const percent = (video.currentTime / video.duration) * 100;
+              progressFill.style.width = percent + '%';
+            }
+          };
+          
+          // Обновляем прогресс при воспроизведении
+          let progressInterval = null;
+          video.addEventListener('play', () => {
+            updatePlayPauseIcon();
+            progressInterval = setInterval(updateProgress, 100);
+          });
+          video.addEventListener('pause', () => {
+            updatePlayPauseIcon();
+            if(progressInterval) {
+              clearInterval(progressInterval);
+              progressInterval = null;
+            }
+            updateProgress();
+          });
+          video.addEventListener('loadedmetadata', updateProgress);
+          video.addEventListener('volumechange', updateVolumeIcon);
+          
+          // События полноэкранного режима
+          document.addEventListener('fullscreenchange', updateFullscreenIcon);
+          document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+          document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+          document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+          
+          // Инициализация иконок
+          updatePlayPauseIcon();
+          updateVolumeIcon();
+          updateFullscreenIcon();
+          
+          // UI показывается/скрывается при наведении
+          videoContainer.addEventListener('mouseenter', () => {
+            showUI();
+          });
+          
+          videoContainer.addEventListener('mouseleave', () => {
+            hideUI();
+          });
+          
+          videoContainer.addEventListener('mousemove', () => {
+            // При движении мыши показываем UI и сбрасываем таймер
+            showUI();
+          });
+          
+          // Клик на видео = play/pause
+          videoContainer.addEventListener('click', (e) => {
+            // Если клик был на progress bar или кнопках, не обрабатываем здесь
+            if(e.target === progressBar || progressBar.contains(e.target) || 
+               e.target === volumeBtn || volumeBtn.contains(e.target) ||
+               e.target === fullscreenBtn || fullscreenBtn.contains(e.target)) {
+              return;
+            }
+            if(video.paused) {
+              video.play();
+            } else {
+              video.pause();
+            }
+            showUI(); // Показываем UI при клике
+          });
+          
+          // Клик на progress bar = перемотка
+          progressBar.addEventListener('click', (e) => {
+            if(!video.duration || video.duration <= 0) return;
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percent = Math.max(0, Math.min(1, clickX / rect.width));
+            video.currentTime = percent * video.duration;
+            updateProgress();
+            showUI(); // Показываем UI при клике
+          });
+          
+          // Клик на кнопку звука
+          volumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            video.muted = !video.muted;
+            updateVolumeIcon();
+            showUI(); // Показываем UI при клике
+          });
+          
+          // Клик на кнопку полноэкранного режима
+          fullscreenBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleFullscreen();
+            showUI(); // Показываем UI при клике
+          });
+          
+          videoContainer.appendChild(video);
+          videoContainer.appendChild(playPauseBtn);
+          videoContainer.appendChild(progressBar);
+          videoContainer.appendChild(volumeBtn);
+          videoContainer.appendChild(fullscreenBtn);
+          wrap.appendChild(videoContainer);
+        
+        } else {
+          // Для обычных видео (не fullwidth) - простое автопроигрывание с зацикливанием
+          video.className = 'w-full h-full object-contain';
+          video.style.cssText = 'max-height:12rem;';
+          video.autoplay = true;
+          video.loop = true;
+          video.muted = true;
+          video.playsInline = true;
+          
+          // Простой контейнер без контролов
+          const videoContainer = document.createElement('div');
+          videoContainer.className = 'relative bg-gray-200 w-full flex items-center justify-center';
+          videoContainer.style.maxHeight = '12rem';
+          videoContainer.appendChild(video);
+          wrap.appendChild(videoContainer);
+        }
       } else {
         return; // Пропускаем неизвестные типы файлов
       }
@@ -189,19 +424,56 @@ function extractNumber(filename){
   return 999999;
 }
 
-// Получаем список изображений проекта - оптимизированный поиск по структуре названий
+// Получаем список изображений проекта - сначала проверяем files.json, потом автоматический поиск
 // Структура: ProjectName_type_width_number.ext
 // Например: Poool_Angry_Masseur_image_01.png или Poool_Angry_Masseur_image_fullwidth_01.png
-async function getProjectImages(projectName, subfolder = ''){
+async function getProjectImages(projectName, subfolder = '', category = ''){
+  const categoryPath = category ? `${category}/` : '';
   const basePath = subfolder 
-    ? `projects/${projectName}${subfolder}/images` 
-    : `projects/${projectName}/images`;
+    ? `projects/${categoryPath}${projectName}${subfolder}/images` 
+    : `projects/${categoryPath}${projectName}/images`;
   
-  // Всегда делаем автоматический поиск, files.json - опциональное дополнение
-  // Это позволяет находить новые файлы автоматически
-  
-  // Оптимизированный поиск по известной структуре
   const foundFiles = [];
+  
+  // СНАЧАЛА проверяем files.json - это быстрее и точнее
+  try {
+    const response = await fetch(`${basePath}/files.json`);
+    if(response.ok){
+      const data = await response.json();
+      const jsonFiles = data.files || [];
+      
+      if(jsonFiles.length > 0){
+        console.log(`📋 Найдено ${jsonFiles.length} файлов в files.json`);
+        
+        // Используем файлы из files.json напрямую (без проверки HEAD - доверяем files.json)
+        // Исключаем файлы с "cover" в названии - они используются только как обложки
+        for(const jsonFile of jsonFiles){
+          // Пропускаем файлы с "cover" в названии
+          if(jsonFile.toLowerCase().includes('cover')){
+            continue;
+          }
+          foundFiles.push({
+            name: jsonFile,
+            src: `${basePath}/${jsonFile}`,
+            number: extractNumber(jsonFile)
+          });
+        }
+        
+        // Если нашли файлы через files.json, используем их
+        if(foundFiles.length > 0){
+          foundFiles.sort((a, b) => a.number - b.number);
+          console.log(`✅ Найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
+          return foundFiles;
+        }
+      }
+    }
+  } catch(e) {
+    // files.json не найден или ошибка - это нормально, продолжаем автоматический поиск
+  }
+  
+  // Если files.json нет или пуст, делаем автоматический поиск
+  console.log('📂 Автоматический поиск файлов...');
+  
   // Только нужные расширения
   const imageExtensions = ['png', 'webp'];
   const videoExtensions = ['mp4'];
@@ -240,6 +512,10 @@ async function getProjectImages(projectName, subfolder = ''){
             try {
               const response = await fetch(`${basePath}/${filename}`, { method: 'HEAD' });
               if(response.ok){
+                // Пропускаем файлы с "cover" в названии - они используются только как обложки
+                if(filename.toLowerCase().includes('cover')){
+                  break; // Переходим к следующему типу/расширению
+                }
                 foundFiles.push({
                   name: filename,
                   src: `${basePath}/${filename}`,
@@ -247,7 +523,6 @@ async function getProjectImages(projectName, subfolder = ''){
                 });
                 foundAny = true;
                 consecutiveNotFound = 0;
-                console.log(`Найден файл: ${filename}`);
                 break; // Нашли файл, переходим к следующему типу/расширению
               }
             } catch(e) {
@@ -270,37 +545,6 @@ async function getProjectImages(projectName, subfolder = ''){
         break;
       }
     }
-  }
-  
-  // Если есть files.json, добавляем файлы из него (если их еще нет)
-  try {
-    const response = await fetch(`${basePath}/files.json`);
-    if(response.ok){
-      const data = await response.json();
-      const jsonFiles = data.files || [];
-      console.log(`📋 Найдено ${jsonFiles.length} файлов в files.json`);
-      
-      for(const jsonFile of jsonFiles){
-        const alreadyExists = foundFiles.find(f => f.name === jsonFile);
-        if(!alreadyExists){
-          // Проверяем, существует ли файл
-          try {
-            const fileResponse = await fetch(`${basePath}/${jsonFile}`, { method: 'HEAD' });
-            if(fileResponse.ok){
-              foundFiles.push({
-                name: jsonFile,
-                src: `${basePath}/${jsonFile}`,
-                number: extractNumber(jsonFile)
-              });
-            }
-          } catch(e) {
-            // Файл не существует, пропускаем
-          }
-        }
-      }
-    }
-  } catch(e) {
-    // files.json не найден - это нормально
   }
   
   // Сортируем по номеру
