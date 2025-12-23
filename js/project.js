@@ -74,7 +74,7 @@ async function loadProject(projectName, subfolder = ''){
     grid.style.display = 'grid';
 
     if(!images || images.length === 0){
-      grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Папка пуста или изображения не найдены.<br>Добавьте файлы с нумерацией (01.jpg, 02.png, image_01.jpg и т.д.) в папку images/</div>';
+      grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Убедитесь, что файл <code class="bg-gray-100 px-2 py-1 rounded">images/files.json</code> существует и содержит список файлов.<br><br>Сгенерируйте его с помощью: <code class="bg-gray-100 px-2 py-1 rounded">node generate-files-list.js ' + projectName + '</code></div>';
       loading.style.display='none'; 
       return;
     }
@@ -424,9 +424,8 @@ function extractNumber(filename){
   return 999999;
 }
 
-// Получаем список изображений проекта - сначала проверяем files.json, потом автоматический поиск
-// Структура: ProjectName_type_width_number.ext
-// Например: Poool_Angry_Masseur_image_01.png или Poool_Angry_Masseur_image_fullwidth_01.png
+// Получаем список изображений проекта из files.json
+// Для генерации files.json используйте: node generate-files-list.js ProjectName
 async function getProjectImages(projectName, subfolder = '', category = ''){
   const categoryPath = category ? `${category}/` : '';
   const basePath = subfolder 
@@ -468,89 +467,21 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
       }
     }
   } catch(e) {
-    // files.json не найден или ошибка - это нормально, продолжаем автоматический поиск
+    // files.json не найден - возвращаем пустой массив
+    console.warn(`⚠️ files.json не найден для проекта ${projectName}. Сгенерируйте его с помощью: node generate-files-list.js ${projectName}`);
   }
   
-  // Если files.json нет или пуст, делаем автоматический поиск
-  console.log('📂 Автоматический поиск файлов...');
-  
-  // Только нужные расширения
-  const imageExtensions = ['png', 'webp'];
-  const videoExtensions = ['mp4'];
-  const types = ['image', 'video'];
-  const widths = ['', 'fullwidth']; // пустая строка для обычной ширины
-  
-  let consecutiveNotFound = 0;
-  const maxConsecutiveNotFound = 2; // Останавливаемся после 2 пропусков подряд
-  
-  // Проверяем файлы по номерам: 1, 2, 3, ... (максимум до 100)
-  for(let num = 1; num <= 100; num++){
-    let foundAny = false;
-    const numStr2 = String(num).padStart(2, '0');
-    
-    // Проверяем только нужные комбинации по структуре: ProjectName_type_width_number.ext
-    for(const type of types){
-      const extensions = type === 'image' ? imageExtensions : videoExtensions;
-      
-      for(const width of widths){
-        for(const ext of extensions){
-          // Формируем имя файла по структуре
-          // Проверяем оба варианта: с одним и двумя подчеркиваниями перед fullwidth
-          const filenamesToCheck = [];
-          
-          if(width){
-            // С шириной: ProjectName_type_fullwidth_01.ext или ProjectName_type__fullwidth_01.ext
-            filenamesToCheck.push(`${projectName}_${type}_${width}_${numStr2}.${ext}`);
-            filenamesToCheck.push(`${projectName}_${type}__${width}_${numStr2}.${ext}`); // двойное подчеркивание
-          } else {
-            // Без ширины: ProjectName_type_01.ext
-            filenamesToCheck.push(`${projectName}_${type}_${numStr2}.${ext}`);
-          }
-          
-          // Проверяем все варианты имени файла
-          for(const filename of filenamesToCheck){
-            try {
-              const response = await fetch(`${basePath}/${filename}`, { method: 'HEAD' });
-              if(response.ok){
-                // Пропускаем файлы с "cover" в названии - они используются только как обложки
-                if(filename.toLowerCase().includes('cover')){
-                  break; // Переходим к следующему типу/расширению
-                }
-                foundFiles.push({
-                  name: filename,
-                  src: `${basePath}/${filename}`,
-                  number: num
-                });
-                foundAny = true;
-                consecutiveNotFound = 0;
-                break; // Нашли файл, переходим к следующему типу/расширению
-              }
-            } catch(e) {
-              // Игнорируем ошибки
-            }
-          }
-          
-          if(foundAny) break; // Нашли файл, переходим к следующему типу
-        }
-        if(foundAny) break; // Нашли файл, переходим к следующему номеру
-      }
-      if(foundAny) break; // Нашли файл, переходим к следующему номеру
-    }
-    
-    // Если не нашли файл с этим номером
-    if(!foundAny){
-      consecutiveNotFound++;
-      if(consecutiveNotFound >= maxConsecutiveNotFound && foundFiles.length > 0){
-        console.log(`Остановка поиска: не найдено файлов за последние ${maxConsecutiveNotFound} номеров`);
-        break;
-      }
-    }
+  // Если files.json нет или пуст, возвращаем пустой массив
+  // Пользователь должен сгенерировать files.json с помощью скрипта generate-files-list.js
+  if(foundFiles.length === 0){
+    console.warn(`⚠️ Файлы не найдены для проекта ${projectName}. Проверьте наличие files.json в папке images/`);
   }
   
-  // Сортируем по номеру
-  foundFiles.sort((a, b) => a.number - b.number);
-  
-  console.log(`✅ Найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
+  // Сортируем по номеру (если есть файлы)
+  if(foundFiles.length > 0){
+    foundFiles.sort((a, b) => a.number - b.number);
+    console.log(`✅ Найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
+  }
   
   return foundFiles;
 }
