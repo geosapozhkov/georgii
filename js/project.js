@@ -74,7 +74,7 @@ async function loadProject(projectName, subfolder = ''){
     grid.style.display = 'grid';
 
     if(!images || images.length === 0){
-      grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Убедитесь, что файл <code class="bg-gray-100 px-2 py-1 rounded">images/files.json</code> существует и содержит список файлов.<br><br>Сгенерируйте его с помощью: <code class="bg-gray-100 px-2 py-1 rounded">node generate-files-list.js ' + projectName + '</code></div>';
+      grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Добавьте изображения или видео в папку <code class="bg-gray-100 px-2 py-1 rounded">projects/' + (projectCategory ? projectCategory + '/' : '') + projectName + '/images/</code><br><br>Файлы будут автоматически обнаружены при следующей загрузке страницы.</div>';
       loading.style.display='none'; 
       return;
     }
@@ -424,8 +424,8 @@ function extractNumber(filename){
   return 999999;
 }
 
-// Получаем список изображений проекта из files.json
-// Для генерации files.json используйте: node generate-files-list.js ProjectName
+// Получаем список изображений проекта автоматически из папки
+// Сначала проверяет files.json (если есть), затем использует directory listing
 async function getProjectImages(projectName, subfolder = '', category = ''){
   const categoryPath = category ? `${category}/` : '';
   const basePath = subfolder 
@@ -434,7 +434,7 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
   
   const foundFiles = [];
   
-  // СНАЧАЛА проверяем files.json - это быстрее и точнее
+  // СНАЧАЛА проверяем files.json - это быстрее
   try {
     const response = await fetch(`${basePath}/files.json`);
     if(response.ok){
@@ -444,7 +444,7 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
       if(jsonFiles.length > 0){
         console.log(`📋 Найдено ${jsonFiles.length} файлов в files.json`);
         
-        // Используем файлы из files.json напрямую (без проверки HEAD - доверяем files.json)
+        // Используем файлы из files.json напрямую
         // Исключаем файлы с "cover" в названии - они используются только как обложки
         for(const jsonFile of jsonFiles){
           // Пропускаем файлы с "cover" в названии
@@ -467,20 +467,85 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
       }
     }
   } catch(e) {
-    // files.json не найден - возвращаем пустой массив
-    console.warn(`⚠️ files.json не найден для проекта ${projectName}. Сгенерируйте его с помощью: node generate-files-list.js ${projectName}`);
+    // files.json не найден - это нормально, будем использовать directory listing
   }
   
-  // Если files.json нет или пуст, возвращаем пустой массив
-  // Пользователь должен сгенерировать files.json с помощью скрипта generate-files-list.js
+  // Если files.json нет или пуст, используем directory listing для автоматического обнаружения файлов
+  try {
+    console.log(`📂 Автоматическое обнаружение файлов из папки...`);
+    const dirResponse = await fetch(`${basePath}/`);
+    
+    if(dirResponse.ok){
+      const html = await dirResponse.text();
+      
+      // Парсим HTML directory listing для извлечения списка файлов
+      // Ищем ссылки на файлы (обычно в <a> тегах)
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const links = doc.querySelectorAll('a');
+      
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
+      const allExtensions = [...imageExtensions, ...videoExtensions];
+      
+      for(const link of links){
+        let href = link.getAttribute('href');
+        if(!href || href === '../' || href === './' || href.includes('?')) continue;
+        
+        // Декодируем URL (пробелы могут быть закодированы как %20)
+        try {
+          href = decodeURIComponent(href);
+        } catch(e) {
+          // Если декодирование не удалось, используем исходное значение
+        }
+        
+        // Убираем слеш в конце, если есть
+        let filename = href.replace(/\/$/, '');
+        
+        // Пропускаем пустые имена и родительские директории
+        if(!filename || filename === '..' || filename === '.') continue;
+        
+        // Пропускаем files.json и служебные файлы
+        if(filename === 'files.json' || filename.startsWith('.')) continue;
+        
+        // Пропускаем файлы с "cover" в названии
+        if(filename.toLowerCase().includes('cover')) continue;
+        
+        // Проверяем расширение файла (должно быть хотя бы одна точка)
+        const lastDot = filename.lastIndexOf('.');
+        if(lastDot === -1 || lastDot === 0) continue; // Нет расширения или файл начинается с точки
+        
+        const ext = filename.substring(lastDot).toLowerCase();
+        if(!allExtensions.includes(ext)) continue;
+        
+        // Проверяем, что файл существует (не директория)
+        // В directory listing обычно директории заканчиваются на /
+        // Также проверяем текст ссылки - директории часто имеют отличительные признаки
+        const linkText = link.textContent.trim();
+        if(!href.endsWith('/') && linkText !== '../' && linkText !== './'){
+          // Используем исходный href для src (может быть закодирован)
+          const originalHref = link.getAttribute('href');
+          foundFiles.push({
+            name: filename,
+            src: `${basePath}/${originalHref}`,
+            number: extractNumber(filename)
+          });
+        }
+      }
+      
+      if(foundFiles.length > 0){
+        foundFiles.sort((a, b) => a.number - b.number);
+        console.log(`✅ Автоматически найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
+        return foundFiles;
+      }
+    }
+  } catch(e) {
+    console.error('Ошибка при автоматическом обнаружении файлов:', e);
+  }
+  
+  // Если ничего не нашли
   if(foundFiles.length === 0){
-    console.warn(`⚠️ Файлы не найдены для проекта ${projectName}. Проверьте наличие files.json в папке images/`);
-  }
-  
-  // Сортируем по номеру (если есть файлы)
-  if(foundFiles.length > 0){
-    foundFiles.sort((a, b) => a.number - b.number);
-    console.log(`✅ Найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
+    console.warn(`⚠️ Файлы не найдены для проекта ${projectName}`);
   }
   
   return foundFiles;

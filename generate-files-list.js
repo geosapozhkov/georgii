@@ -2,6 +2,7 @@
 
 // Скрипт для автоматической генерации files.json для проектов
 // Использование: node generate-files-list.js [project-name]
+// Для проектов с категориями: node generate-files-list.js Commerce/ProjectName
 
 const fs = require('fs');
 const path = require('path');
@@ -19,6 +20,10 @@ const allFiles = fs.readdirSync(imagesPath)
   .filter(file => {
     // Игнорируем files.json и другие служебные файлы
     if (file === 'files.json' || file.startsWith('.')) {
+      return false;
+    }
+    // Исключаем файлы с "cover" в названии - они используются только как обложки
+    if (file.toLowerCase().includes('cover')) {
       return false;
     }
     // Проверяем, что это изображение или видео
