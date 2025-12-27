@@ -192,12 +192,22 @@ async function loadProject(projectName, subfolder = ''){
         
         // Если fullwidthRepeat - простое зацикленное видео на всю ширину без плеера
         if(isFullwidthRepeat) {
+          console.log(`   🎬 Обработка fullwidthRepeat видео: ${image.name}`);
           video.className = 'w-full h-auto object-contain';
           video.style.cssText = 'width:100%; max-width:100%; height:auto; display:block;';
           video.autoplay = true;
           video.loop = true;
           video.muted = true;
           video.playsInline = true;
+          
+          // Добавляем обработчики ошибок для диагностики
+          video.addEventListener('error', (e) => {
+            console.error(`   ❌ Ошибка загрузки видео ${image.name}:`, e);
+            console.error(`   URL: ${image.src}`);
+          });
+          video.addEventListener('loadeddata', () => {
+            console.log(`   ✅ Видео загружено: ${image.name}`);
+          });
           
           // Простой контейнер без контролов
           const videoContainer = document.createElement('div');

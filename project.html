@@ -6,20 +6,23 @@
   <meta name="referrer" content="no-referrer">
   <title>Project</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=14">
+  <link rel="stylesheet" href="css/styles.css?v=24">
 </head>
 <body class="p-1.5">
-  <header class="flex items-start mb-12 px-1.5">
+  <header class="flex items-start mb-12 px-1.5 relative">
     <h1 id="project-title" class="text-4xl font-bold tracking-tight mr-4">Project</h1>
-    <nav id="top-nav" class="ml-auto flex space-x-4 whitespace-nowrap flex-shrink-0 text-gray-600">
+    <nav id="breadcrumb" class="text-gray-500 flex flex-wrap gap-2" style="position: absolute; left: calc(40% + 200px); padding-left: 1.5rem; align-items: baseline;"></nav>
+    <nav id="top-nav" class="ml-auto flex items-baseline space-x-4 whitespace-nowrap flex-shrink-0 text-gray-600">
       <a href="index.html" class="hover:opacity-50 cursor-pointer">Back to Home</a>
     </nav>
   </header>
 
   <main>
     <div class="flex items-baseline mb-12">
-      <nav id="breadcrumb" class="text-gray-500 flex flex-wrap gap-2" style="width:50%;"></nav>
-      <div id="project-description" class="description-text"></div>
+      <div style="width: calc(40% + 200px);"></div>
+      <div class="flex items-baseline" style="width: calc(60% - 200px);">
+        <div id="project-description" class="description-text"></div>
+      </div>
     </div>
     <div id="file-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-x-6 gap-y-24"></div>
     <div id="loading" class="text-center text-gray-400 mt-10">Loading...</div>
@@ -30,7 +33,7 @@
     <div id="viewerContent" class="flex items-center justify-center max-w-full max-h-full w-full h-full"></div>
   </div>
 
-  <script src="js/project.js?v=52"></script>
+  <script src="js/project.js?v=53"></script>
 </body>
 </html>
 

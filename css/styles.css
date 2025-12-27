@@ -181,7 +181,7 @@ img, video {
 #bio {
   position: absolute;
   left: 50%;
-  width: calc(50% - 250px);
+  width: calc(50% - 220px);
   padding-left: 1.5rem;
   padding-right: 1.5rem;
   padding-top: 0.3rem;
@@ -196,8 +196,14 @@ img, video {
 
 /* Стили для описания на странице проекта */
 #project-description {
-  width: 50%;
+  width: 60%;
   padding-left: 1.5rem;
+  padding-right: 0;
   box-sizing: border-box;
+}
+
+/* Стили для breadcrumb на странице проекта - выровнен с описанием */
+#breadcrumb {
+  align-items: baseline;
 }
 
