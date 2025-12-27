@@ -161,11 +161,16 @@ async function getCoverImageFromProject(projectName, category = null){
       }
       
       // Fallback: ищем в списке files (для обратной совместимости)
+      // Ищем файл по паттерну Cover_ProjectName_image_00 или Cover_ProjectName_00
+      // Также поддерживаем старые названия с "cover" в середине
       const files = filesData.files || [];
+      // Экранируем специальные символы в имени проекта для regex
+      const escapedProjectName = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/_/g, '[\\s_]');
+      const coverPattern = new RegExp(`^Cover_${escapedProjectName}_image_00|^Cover_${escapedProjectName}_00`, 'i');
       const coverFile = files.find(file => {
         const isImage = /\.(jpe?g|png|gif|webp)$/i.test(file);
-        const hasCover = file.toLowerCase().includes('cover');
-        return isImage && hasCover;
+        // Проверяем новый паттерн или fallback на старый (для обратной совместимости)
+        return isImage && (coverPattern.test(file) || file.toLowerCase().includes('cover'));
       });
       
       if(coverFile) {

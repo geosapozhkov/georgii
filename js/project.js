@@ -451,20 +451,25 @@ async function loadProject(projectName, subfolder = ''){
 }
 
 // Извлекает номер из имени файла для сортировки
-// Структура: ProjectName_type_width_number.ext
+// Новая структура: ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01
 function extractNumber(filename){
-  // Ищем паттерны в конце имени файла перед расширением
-  // Поддерживаем структуру: ProjectName_type_width_01.ext или ProjectName_type_01.ext
+  // Ищем паттерны для новой системы названий:
+  // ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01
   const patterns = [
-    /_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _01.jpg, _01.png (основной паттерн)
-    /^(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // 01.jpg (без префикса)
-    /(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i    // любое число перед расширением
+    /_(image|video)_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_01.jpg, _video_01.mp4
+    /_(image|video)_fullwidth_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_fullwidth_01.jpg
+    /_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _01.jpg (fallback для старой системы)
+    /^(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i   // 01.jpg (fallback)
   ];
   
   for(const pattern of patterns){
     const match = filename.match(pattern);
-    if(match && match[1]){
-      return parseInt(match[1], 10);
+    if(match){
+      // Для новых паттернов номер во второй группе, для старых - в первой
+      const number = match[2] || match[1];
+      if(number){
+        return parseInt(number, 10);
+      }
     }
   }
   
@@ -494,9 +499,13 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
         
         // Используем файлы из files.json напрямую
         // Исключаем файлы с "cover" в названии - они используются только как обложки
+        // Также исключаем файлы, которые соответствуют паттерну обложки Cover_ProjectName_image_00 или Cover_ProjectName_00
+        const escapedProjectName = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/_/g, '[\\s_]');
+        const coverPattern = new RegExp(`^Cover_${escapedProjectName}_image_00|^Cover_${escapedProjectName}_00`, 'i');
+        
         for(const jsonFile of jsonFiles){
-          // Пропускаем файлы с "cover" в названии
-          if(jsonFile.toLowerCase().includes('cover')){
+          // Пропускаем файлы с "cover" в названии или соответствующие паттерну обложки
+          if(jsonFile.toLowerCase().includes('cover') || coverPattern.test(jsonFile)){
             continue;
           }
           // Правильно кодируем имя файла для URL

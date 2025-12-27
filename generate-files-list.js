@@ -29,13 +29,21 @@ const allFiles = fs.readdirSync(imagesPath)
     return imageExts.includes(ext) || videoExts.includes(ext);
   });
 
-// Находим обложку (изображение с "cover" в названии)
+// Находим обложку по новому паттерну: Cover_ProjectName_image_00 или Cover_ProjectName_00
+// Извлекаем имя проекта из пути
+const projectName = path.basename(projectPath);
+// Экранируем специальные символы в имени проекта для regex
+const escapedProjectName = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/_/g, '[\\s_]');
+const coverPattern = new RegExp(`^Cover_${escapedProjectName}_image_00|^Cover_${escapedProjectName}_00`, 'i');
+
 const coverFile = allFiles.find(file => {
   const ext = path.extname(file).toLowerCase();
   const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
   const isImage = imageExts.includes(ext);
+  // Проверяем новый паттерн или fallback на старый (для обратной совместимости)
+  const matchesPattern = coverPattern.test(file);
   const hasCover = file.toLowerCase().includes('cover');
-  return isImage && hasCover;
+  return isImage && (matchesPattern || hasCover);
 });
 
 // Разделяем файлы на обычные и fullwidth (исключаем обложку из основного списка)
@@ -56,9 +64,29 @@ allFiles.forEach(file => {
 });
 
 // Функция для извлечения числа из имени файла
+// Новая система: ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01
 const getNumber = (filename) => {
-  const match = filename.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : 999999;
+  // Ищем паттерны для новой системы названий
+  const patterns = [
+    /_(image|video)_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_01.jpg, _video_01.mp4
+    /_(image|video)_fullwidth_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_fullwidth_01.jpg
+    /_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _01.jpg (fallback для старой системы)
+    /^(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i   // 01.jpg (fallback)
+  ];
+  
+  for(const pattern of patterns){
+    const match = filename.match(pattern);
+    if(match){
+      // Для новых паттернов номер во второй группе, для старых - в первой
+      const number = match[2] || match[1];
+      if(number){
+        return parseInt(number, 10);
+      }
+    }
+  }
+  
+  // Если номер не найден, возвращаем большое число для сортировки в конец
+  return 999999;
 };
 
 // Сортируем оба списка по номерам
