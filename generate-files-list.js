@@ -64,12 +64,13 @@ allFiles.forEach(file => {
 });
 
 // Функция для извлечения числа из имени файла
-// Новая система: ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01
+// Новая система: ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01, ProjectName_video_fullwidthRepeat_01
 const getNumber = (filename) => {
   // Ищем паттерны для новой системы названий
   const patterns = [
-    /_(image|video)_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_01.jpg, _video_01.mp4
+    /_(image|video)_fullwidthRepeat_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _video_fullwidthRepeat_01.mp4
     /_(image|video)_fullwidth_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_fullwidth_01.jpg
+    /_(image|video)_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_01.jpg, _video_01.mp4
     /_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _01.jpg (fallback для старой системы)
     /^(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i   // 01.jpg (fallback)
   ];

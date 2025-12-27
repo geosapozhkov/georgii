@@ -138,8 +138,9 @@ async function loadProject(projectName, subfolder = ''){
     images.forEach((image, idx) => {
       const wrap = document.createElement('div');
       
-      // Проверяем, есть ли "fullwidth" в имени файла
+      // Проверяем, есть ли "fullwidth" в имени файла (включая fullwidthRepeat)
       const isFullwidth = image.name.toLowerCase().includes('fullwidth');
+      const isFullwidthRepeat = image.name.toLowerCase().includes('fullwidthrepeat');
       
       // Если fullwidth, элемент занимает все колонки на всех размерах экрана
       if(isFullwidth){
@@ -189,8 +190,23 @@ async function loadProject(projectName, subfolder = ''){
         source.type = 'video/mp4';
         video.appendChild(source);
         
-        // Если fullwidth - создаём простой видеоплеер с минималистичным интерфейсом
-        if(isFullwidth) {
+        // Если fullwidthRepeat - простое зацикленное видео на всю ширину без плеера
+        if(isFullwidthRepeat) {
+          video.className = 'w-full h-auto object-contain';
+          video.style.cssText = 'width:100%; max-width:100%; height:auto; display:block;';
+          video.autoplay = true;
+          video.loop = true;
+          video.muted = true;
+          video.playsInline = true;
+          
+          // Простой контейнер без контролов
+          const videoContainer = document.createElement('div');
+          videoContainer.className = 'relative w-full';
+          videoContainer.appendChild(video);
+          wrap.appendChild(videoContainer);
+        }
+        // Если fullwidth (но не fullwidthRepeat) - создаём простой видеоплеер с минималистичным интерфейсом
+        else if(isFullwidth) {
           // Создаём контейнер для видео
           const videoContainer = document.createElement('div');
           videoContainer.className = 'relative w-full flex items-center justify-center';
@@ -453,13 +469,14 @@ async function loadProject(projectName, subfolder = ''){
 }
 
 // Извлекает номер из имени файла для сортировки
-// Новая структура: ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01
+// Новая структура: ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01, ProjectName_video_fullwidthRepeat_01
 function extractNumber(filename){
   // Ищем паттерны для новой системы названий:
-  // ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01
+  // ProjectName_image_01, ProjectName_video_01, ProjectName_image_fullwidth_01, ProjectName_video_fullwidthRepeat_01
   const patterns = [
-    /_(image|video)_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_01.jpg, _video_01.mp4
+    /_(image|video)_fullwidthRepeat_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _video_fullwidthRepeat_01.mp4
     /_(image|video)_fullwidth_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_fullwidth_01.jpg
+    /_(image|video)_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _image_01.jpg, _video_01.mp4
     /_(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i,  // _01.jpg (fallback для старой системы)
     /^(\d+)\.(jpg|jpeg|png|gif|webp|mp4|mov|avi|mkv|webm)$/i   // 01.jpg (fallback)
   ];
@@ -540,10 +557,10 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
         
         // Если нашли файлы через files.json, используем их
         if(foundFiles.length > 0){
-          // Сортируем файлы: сначала fullwidth видео, потом остальные
+          // Сортируем файлы: сначала fullwidth видео (включая fullwidthRepeat), потом остальные
           foundFiles.sort((a, b) => {
-            const aIsFullwidthVideo = a.name.toLowerCase().includes('fullwidth') && isVideo(a.name);
-            const bIsFullwidthVideo = b.name.toLowerCase().includes('fullwidth') && isVideo(b.name);
+            const aIsFullwidthVideo = (a.name.toLowerCase().includes('fullwidth') || a.name.toLowerCase().includes('fullwidthrepeat')) && isVideo(a.name);
+            const bIsFullwidthVideo = (b.name.toLowerCase().includes('fullwidth') || b.name.toLowerCase().includes('fullwidthrepeat')) && isVideo(b.name);
             
             // Fullwidth видео идут первыми
             if(aIsFullwidthVideo && !bIsFullwidthVideo) return -1;
@@ -626,10 +643,10 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
       }
       
       if(foundFiles.length > 0){
-        // Сортируем файлы: сначала fullwidth видео, потом остальные
+        // Сортируем файлы: сначала fullwidth видео (включая fullwidthRepeat), потом остальные
         foundFiles.sort((a, b) => {
-          const aIsFullwidthVideo = a.name.toLowerCase().includes('fullwidth') && isVideo(a.name);
-          const bIsFullwidthVideo = b.name.toLowerCase().includes('fullwidth') && isVideo(b.name);
+          const aIsFullwidthVideo = (a.name.toLowerCase().includes('fullwidth') || a.name.toLowerCase().includes('fullwidthrepeat')) && isVideo(a.name);
+          const bIsFullwidthVideo = (b.name.toLowerCase().includes('fullwidth') || b.name.toLowerCase().includes('fullwidthrepeat')) && isVideo(b.name);
           
           // Fullwidth видео идут первыми
           if(aIsFullwidthVideo && !bIsFullwidthVideo) return -1;
