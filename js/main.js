@@ -24,6 +24,16 @@ const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
 //   'image-only'  - Только изображение: без текста на обложке
 const PROJECT_COVER_STYLE = 'image-only'; // Измените здесь стиль обложек
 
+// Генерация случайного серого оттенка от #0A0A0A до #E3E3E3
+function getRandomColor() {
+  // Генерируем случайное число от 10 (0x0A) до 227 (0xE3)
+  const grayValue = Math.floor(Math.random() * (227 - 10 + 1)) + 10;
+  // Конвертируем в hex и форматируем с ведущим нулем если нужно
+  const hex = grayValue.toString(16).padStart(2, '0').toUpperCase();
+  // Возвращаем оттенок серого (все три канала одинаковые)
+  return `#${hex}${hex}${hex}`;
+}
+
 // =============== ЗАГРУЗКА ПРОЕКТОВ ===============
 async function loadProjects(category = null){
   try{
@@ -76,11 +86,14 @@ async function loadProjects(category = null){
       // Определяем, показывать ли текст на обложке
       const showTitle = PROJECT_COVER_STYLE !== 'image-only';
       
+      // Генерируем случайный цвет для placeholder, если обложки нет
+      const placeholderColor = previewUrl ? '' : getRandomColor();
+      
       projectCard.innerHTML = `
         <div class="project-card project-cover-style-${PROJECT_COVER_STYLE}">
           ${previewUrl ? `
             <div class="project-cover-container">
-              <img src="${previewUrl}" alt="${projectTitleFromCover}" class="project-cover-image" onerror="this.parentElement.parentElement.innerHTML='<div class=\\'project-cover-placeholder\\'>Нет превью</div>'">
+              <img src="${previewUrl}" alt="${projectTitleFromCover}" class="project-cover-image" onerror="this.parentElement.parentElement.innerHTML='<div class=\\'project-cover-placeholder\\' style=\\'background:${getRandomColor()};\\'></div>'">
               ${showTitle ? `
                 <div class="project-cover-overlay">
                   <h3 class="project-cover-title">${projectTitleFromCover}</h3>
@@ -88,12 +101,12 @@ async function loadProjects(category = null){
               ` : ''}
             </div>
           ` : `
-            <div class="project-cover-placeholder">
+            <div class="project-cover-placeholder" style="background: ${placeholderColor};">
               ${showTitle ? `
                 <div class="project-cover-overlay">
                   <h3 class="project-cover-title">${projectTitleFromCover}</h3>
                 </div>
-              ` : `<span>Нет превью</span>`}
+              ` : ''}
             </div>
           `}
         </div>
@@ -131,14 +144,22 @@ async function getCoverImageFromProject(projectName, category = null){
   const categoryPath = category ? `${category}/` : '';
   const basePath = `projects/${categoryPath}${projectName}/images`;
   
-  // Сначала проверяем files.json для списка файлов
+  // Проверяем files.json для получения обложки
   try {
     const filesResponse = await fetch(`${basePath}/files.json`);
     if(filesResponse.ok) {
       const filesData = await filesResponse.json();
-      const files = filesData.files || [];
       
-      // Ищем файл с "cover" в названии (приоритет) - ТОЛЬКО изображения (не видео)
+      // Используем поле cover из files.json, если оно есть
+      if(filesData.cover) {
+        return {
+          url: `${basePath}/${filesData.cover}`,
+          filename: filesData.cover
+        };
+      }
+      
+      // Fallback: ищем в списке files (для обратной совместимости)
+      const files = filesData.files || [];
       const coverFile = files.find(file => {
         const isImage = /\.(jpe?g|png|gif|webp)$/i.test(file);
         const hasCover = file.toLowerCase().includes('cover');
@@ -153,94 +174,8 @@ async function getCoverImageFromProject(projectName, category = null){
       }
     }
   } catch(e) {
-    // Если files.json не найден, продолжаем поиск по стандартным именам
-  }
-  
-  // Fallback 1: Пробуем найти обложку через directory listing
-  try {
-    const dirResponse = await fetch(`${basePath}/`);
-    if(dirResponse.ok) {
-      const html = await dirResponse.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const links = doc.querySelectorAll('a');
-      
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-      
-      for(const link of links) {
-        let href = link.getAttribute('href');
-        if(!href || href === '../' || href === './' || href.includes('?')) continue;
-        
-        try {
-          href = decodeURIComponent(href);
-        } catch(e) {
-          // Если декодирование не удалось, используем исходное значение
-        }
-        
-        let filename = href.replace(/\/$/, '');
-        if(!filename || filename === '..' || filename === '.' || filename === 'files.json') continue;
-        
-        // Проверяем, что это изображение с "cover" в названии
-        const lastDot = filename.lastIndexOf('.');
-        if(lastDot === -1) continue;
-        
-        const ext = filename.substring(lastDot).toLowerCase();
-        if(!imageExtensions.includes(ext)) continue;
-        
-        if(filename.toLowerCase().includes('cover')) {
-          const originalHref = link.getAttribute('href');
-          return {
-            url: `${basePath}/${originalHref}`,
-            filename: filename
-          };
-        }
-      }
-    }
-  } catch(e) {
-    // Если directory listing не работает, продолжаем с паттернами
-  }
-  
-  // Fallback 2: ищем файлы с "cover" в названии по стандартным паттернам (с разными вариантами)
-  // Пробуем разные варианты: с заглавной буквы, с пробелами в названии проекта, с подчеркиваниями
-  const projectNameVariants = [
-    projectName, // Angry_Masseur
-    projectName.replace(/_/g, ' '), // Angry Masseur
-    projectName.replace(/_/g, ''), // AngryMasseur
-  ];
-  
-  const coverPatterns = [];
-  // Генерируем паттерны только для изображений (jpg, png, gif, webp)
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-  for(const variant of projectNameVariants) {
-    for(const ext of imageExtensions) {
-      coverPatterns.push(
-        `cover_${variant}_00.${ext}`, `cover_${variant}_01.${ext}`,
-        `Cover_${variant}_00.${ext}`, `Cover_${variant}_01.${ext}`,
-        `Cover_${variant}_cover_00.${ext}`, `Cover_${variant}_cover_01.${ext}`
-      );
-    }
-  }
-  for(const ext of imageExtensions) {
-    coverPatterns.push(
-      `cover_00.${ext}`, `cover_01.${ext}`,
-      `Cover_00.${ext}`, `Cover_01.${ext}`,
-      `cover.${ext}`, `Cover.${ext}`
-    );
-  }
-  
-  for(const name of coverPatterns){
-    const url = `${basePath}/${name}`;
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      if(response.ok){
-        return {
-          url: url,
-          filename: name
-        };
-      }
-    } catch(e) {
-      continue;
-    }
+    // Если files.json не найден, возвращаем пустую строку
+    console.warn(`files.json не найден для проекта ${projectName}:`, e);
   }
   
   return { url: '', filename: '' };

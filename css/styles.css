@@ -164,7 +164,6 @@ img, video {
 .project-cover-placeholder {
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #CCCCCC;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -7,8 +7,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const projectName = process.argv[2] || 'Poool_Angry_Masseur';
-const imagesPath = path.join(__dirname, 'projects', projectName, 'images');
+const projectPath = process.argv[2] || 'Commerce/Angry_Masseur';
+const imagesPath = path.join(__dirname, 'projects', projectPath, 'images');
 
 if (!fs.existsSync(imagesPath)) {
   console.error(`Папка не найдена: ${imagesPath}`);
@@ -22,10 +22,6 @@ const allFiles = fs.readdirSync(imagesPath)
     if (file === 'files.json' || file.startsWith('.')) {
       return false;
     }
-    // Исключаем файлы с "cover" в названии - они используются только как обложки
-    if (file.toLowerCase().includes('cover')) {
-      return false;
-    }
     // Проверяем, что это изображение или видео
     const ext = path.extname(file).toLowerCase();
     const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
@@ -33,11 +29,24 @@ const allFiles = fs.readdirSync(imagesPath)
     return imageExts.includes(ext) || videoExts.includes(ext);
   });
 
-// Разделяем файлы на обычные и fullwidth
+// Находим обложку (изображение с "cover" в названии)
+const coverFile = allFiles.find(file => {
+  const ext = path.extname(file).toLowerCase();
+  const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  const isImage = imageExts.includes(ext);
+  const hasCover = file.toLowerCase().includes('cover');
+  return isImage && hasCover;
+});
+
+// Разделяем файлы на обычные и fullwidth (исключаем обложку из основного списка)
 const regularFiles = [];
 const fullwidthFiles = [];
 
 allFiles.forEach(file => {
+  // Пропускаем обложку - она будет в отдельном поле
+  if (file === coverFile) {
+    return;
+  }
   const isFullwidth = file.toLowerCase().includes('fullwidth');
   if (isFullwidth) {
     fullwidthFiles.push(file);
@@ -61,7 +70,8 @@ const files = [...regularFiles, ...fullwidthFiles];
 
 // Создаем объект для JSON
 const filesList = {
-  files: files
+  files: files,
+  cover: coverFile || null
 };
 
 // Записываем в файл
@@ -72,6 +82,11 @@ console.log(`✅ Создан файл: ${outputPath}`);
 console.log(`📁 Найдено файлов: ${files.length}`);
 console.log(`   - Обычных: ${regularFiles.length}`);
 console.log(`   - Fullwidth: ${fullwidthFiles.length}`);
+if (coverFile) {
+  console.log(`   - Обложка: ${coverFile}`);
+} else {
+  console.log(`   - Обложка: не найдена`);
+}
 console.log(`📋 Список файлов:`);
 files.forEach((file, index) => {
   const type = file.toLowerCase().includes('fullwidth') ? ' [FULLWIDTH]' : '';
