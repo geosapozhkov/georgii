@@ -207,3 +207,81 @@ img, video {
   align-items: baseline;
 }
 
+/* =============== МОБИЛЬНАЯ ВЕРСИЯ (до 640px) =============== */
+@media (max-width: 639px) {
+  /* Главная страница - адаптация header */
+  body > header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  
+  /* Логотип на мобильных */
+  #logo {
+    margin-bottom: 1rem;
+    margin-right: 0 !important;
+  }
+  
+  /* Описание About me на мобильных */
+  #bio {
+    position: static !important;
+    left: auto !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Навигация на мобильных - под логотипом */
+  #top-nav {
+    margin-left: 0 !important;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  /* Страница проекта - адаптация header */
+  body > header #breadcrumb {
+    position: static !important;
+    left: auto !important;
+    padding-left: 0 !important;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Заголовок проекта на мобильных */
+  #project-title {
+    margin-bottom: 0.5rem;
+    margin-right: 0 !important;
+  }
+  
+  /* Навигация Back to Home на мобильных */
+  body > header #top-nav {
+    margin-left: 0 !important;
+    margin-top: 0.5rem;
+  }
+  
+  /* Контейнер описания проекта на мобильных */
+  main > div.flex.items-baseline {
+    flex-direction: column !important;
+  }
+  
+  main > div.flex.items-baseline > div:first-child {
+    width: 0 !important;
+    display: none !important;
+  }
+  
+  main > div.flex.items-baseline > div:last-child {
+    width: 100% !important;
+  }
+  
+  /* Описание проекта на мобильных */
+  #project-description {
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 1rem;
+  }
+}
+

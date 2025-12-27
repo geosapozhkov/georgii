@@ -12,6 +12,22 @@ const projectsList = document.getElementById('projects-list');
 let currentItems = [];
 let currentIndex = 0;
 
+// =============== АНИМАЦИЯ ФОНА ===============
+let backgroundAnimationFrame = null;
+let backgroundAnimationStartTime = null;
+let backgroundAnimationDuration = 0;
+let backgroundHoverTimer = null;
+let isBackgroundAnimating = false;
+let isBackgroundReturning = false;
+let backgroundReturnStartTime = null;
+let backgroundReturnStartColor = null;
+let currentAnimationStartColor = null; // Начальный цвет текущей анимации
+let currentAnimationEndColor = null; // Конечный цвет текущей анимации
+let isHovering = false; // флаг, что курсор на логотипе
+const BACKGROUND_COLOR_START = { r: 250, g: 250, b: 250 }; // #FAFAFA
+const BACKGROUND_COLOR_END = { r: 15, g: 15, b: 15 }; // #0F0F0F
+const BACKGROUND_RETURN_DURATION = 3000; // 3 секунды для возврата
+
 // =============== ВСПОМОГАТЕЛЬНОЕ ===============
 const isImage = (name) => /\.(jpe?g|png|gif|webp)$/i.test(name);
 const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
@@ -224,6 +240,10 @@ function showHome(){
   breadcrumb.style.display='none';
   const bioEl = document.getElementById('bio');
   if(bioEl) bioEl.style.display='none';
+  // Останавливаем анимацию фона при переходе на главную (если она была запущена на другой странице)
+  if (currentSection !== 'home') {
+    stopBackgroundAnimation();
+  }
 }
 
 // =============== ПРОСМОТРЩИК ===============
@@ -293,10 +313,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
       currentSection='home'; 
       showHome();
     });
+    
+    // Обработчики для анимации фона
+    logo.addEventListener('mouseenter', startBackgroundAnimation);
+    logo.addEventListener('mouseleave', stopBackgroundAnimation);
   }
   
   document.getElementById('nav-commerce')?.addEventListener('click',()=>{ 
     currentSection='commerce'; 
+    stopBackgroundAnimation();
     grid.style.display='none';
     projectsList.style.display='grid';
     breadcrumb.style.display='none';
@@ -307,6 +332,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   document.getElementById('nav-mind')?.addEventListener('click',()=>{ 
     currentSection='mind'; 
+    stopBackgroundAnimation();
     grid.style.display='none';
     projectsList.style.display='grid';
     breadcrumb.style.display='none';
@@ -317,6 +343,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
     currentSection='about'; 
+    stopBackgroundAnimation();
     grid.style.display='none';
     projectsList.style.display='none';
     breadcrumb.style.display='none';
@@ -342,3 +369,242 @@ document.addEventListener('DOMContentLoaded', ()=>{
     showHome();
   }
 });
+
+// =============== ФУНКЦИИ АНИМАЦИИ ФОНА ===============
+
+// Генерация случайной скорости анимации (5 сек - 1 мин, редко до часа)
+function getRandomAnimationDuration() {
+  // 90% вероятность: от 5 секунд до 1 минуты
+  // 10% вероятность: от 1 минуты до 1 часа
+  const isRare = Math.random() < 0.1;
+  
+  if (isRare) {
+    // Редкий случай: от 1 минуты (60000ms) до 1 часа (3600000ms)
+    return 60000 + Math.random() * (3600000 - 60000);
+  } else {
+    // Обычный случай: от 5 секунд (5000ms) до 1 минуты (60000ms)
+    return 5000 + Math.random() * (60000 - 5000);
+  }
+}
+
+// Конвертация RGB в hex
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map(x => {
+    const hex = Math.round(x).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  }).join("");
+}
+
+// Интерполяция между двумя цветами
+function interpolateColor(color1, color2, factor) {
+  return {
+    r: color1.r + (color2.r - color1.r) * factor,
+    g: color1.g + (color2.g - color1.g) * factor,
+    b: color1.b + (color2.b - color1.b) * factor
+  };
+}
+
+// Генерация случайного цвета в диапазоне от белого до чёрного
+function getRandomColorInRange() {
+  // Генерируем случайное значение яркости от 15 до 250
+  const brightness = 15 + Math.random() * (250 - 15);
+  return {
+    r: Math.round(brightness),
+    g: Math.round(brightness),
+    b: Math.round(brightness)
+  };
+}
+
+// Анимация фона (от текущего цвета к случайному)
+function animateBackground(currentTime) {
+  if (!backgroundAnimationStartTime) {
+    backgroundAnimationStartTime = currentTime;
+  }
+  
+  const elapsed = currentTime - backgroundAnimationStartTime;
+  const progress = Math.min(elapsed / backgroundAnimationDuration, 1);
+  
+  // Используем ease-in-out для плавности
+  const easedProgress = progress < 0.5
+    ? 2 * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+  
+  // Интерполируем цвет от начального к конечному
+  const currentColor = interpolateColor(
+    currentAnimationStartColor,
+    currentAnimationEndColor,
+    easedProgress
+  );
+  
+  // Применяем цвет к фону
+  document.body.style.backgroundColor = rgbToHex(currentColor.r, currentColor.g, currentColor.b);
+  
+  if (progress < 1) {
+    backgroundAnimationFrame = requestAnimationFrame(animateBackground);
+  } else {
+    // Анимация завершена - начинаем новую анимацию к случайной точке, если курсор все еще на логотипе
+    if (isHovering && currentSection === 'home') {
+      // Текущий цвет становится начальным для следующей анимации
+      currentAnimationStartColor = currentAnimationEndColor;
+      // Генерируем новый случайный конечный цвет
+      currentAnimationEndColor = getRandomColorInRange();
+      // Генерируем новую случайную скорость
+      backgroundAnimationDuration = getRandomAnimationDuration();
+      backgroundAnimationStartTime = null;
+      // Продолжаем анимацию к новой точке
+      backgroundAnimationFrame = requestAnimationFrame(animateBackground);
+    } else {
+      // Курсор убран или мы не на главной странице - останавливаем
+      backgroundAnimationFrame = null;
+      backgroundAnimationStartTime = null;
+      isBackgroundAnimating = false;
+    }
+  }
+}
+
+// Анимация возврата фона к исходному цвету
+function animateBackgroundReturn(currentTime) {
+  if (!backgroundReturnStartTime) {
+    backgroundReturnStartTime = currentTime;
+  }
+  
+  const elapsed = currentTime - backgroundReturnStartTime;
+  const progress = Math.min(elapsed / BACKGROUND_RETURN_DURATION, 1);
+  
+  // Используем ease-in-out для плавности
+  const easedProgress = progress < 0.5
+    ? 2 * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+  
+  // Интерполируем цвет от текущего к исходному
+  const currentColor = interpolateColor(
+    backgroundReturnStartColor,
+    BACKGROUND_COLOR_START,
+    easedProgress
+  );
+  
+  // Применяем цвет к фону
+  document.body.style.backgroundColor = rgbToHex(currentColor.r, currentColor.g, currentColor.b);
+  
+  if (progress < 1) {
+    backgroundAnimationFrame = requestAnimationFrame(animateBackgroundReturn);
+  } else {
+    // Возврат завершен
+    backgroundAnimationFrame = null;
+    backgroundReturnStartTime = null;
+    isBackgroundReturning = false;
+    document.body.style.backgroundColor = '#FAFAFA';
+  }
+}
+
+// Запуск анимации фона (с задержкой 3 секунды)
+function startBackgroundAnimation() {
+  // Проверяем, что мы на главной странице
+  if (currentSection !== 'home') {
+    return;
+  }
+  
+  // Устанавливаем флаг, что курсор на логотипе
+  isHovering = true;
+  
+  // Если идет возврат фона, останавливаем его
+  if (isBackgroundReturning && backgroundAnimationFrame) {
+    cancelAnimationFrame(backgroundAnimationFrame);
+    backgroundAnimationFrame = null;
+    isBackgroundReturning = false;
+    backgroundReturnStartTime = null;
+  }
+  
+  // Очищаем предыдущий таймер, если есть
+  if (backgroundHoverTimer) {
+    clearTimeout(backgroundHoverTimer);
+    backgroundHoverTimer = null;
+  }
+  
+  // Запускаем таймер на 3 секунды
+  backgroundHoverTimer = setTimeout(() => {
+    // Проверяем еще раз, что мы на главной странице и курсор все еще на логотипе
+    if (currentSection !== 'home' || !isHovering || isBackgroundAnimating) {
+      return;
+    }
+    
+    // Определяем начальный цвет на основе текущего цвета фона
+    const currentBgColor = window.getComputedStyle(document.body).backgroundColor;
+    const rgbMatch = currentBgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      currentAnimationStartColor = {
+        r: parseInt(rgbMatch[1]),
+        g: parseInt(rgbMatch[2]),
+        b: parseInt(rgbMatch[3])
+      };
+    } else {
+      // По умолчанию начинаем с белого
+      currentAnimationStartColor = { ...BACKGROUND_COLOR_START };
+    }
+    
+    // Генерируем случайный конечный цвет
+    currentAnimationEndColor = getRandomColorInRange();
+    
+    // Генерируем случайную скорость
+    backgroundAnimationDuration = getRandomAnimationDuration();
+    backgroundAnimationStartTime = null;
+    isBackgroundAnimating = true;
+    
+    // Запускаем анимацию
+    backgroundAnimationFrame = requestAnimationFrame(animateBackground);
+  }, 3000);
+}
+
+// Остановка анимации фона
+function stopBackgroundAnimation() {
+  // Сбрасываем флаг, что курсор на логотипе
+  isHovering = false;
+  
+  // Очищаем таймер задержки
+  if (backgroundHoverTimer) {
+    clearTimeout(backgroundHoverTimer);
+    backgroundHoverTimer = null;
+  }
+  
+  // Если идет возврат, ничего не делаем (возврат уже идет)
+  if (isBackgroundReturning) {
+    return;
+  }
+  
+  // Если анимация была запущена, начинаем плавный возврат
+  if (isBackgroundAnimating || backgroundAnimationFrame) {
+    // Останавливаем анимацию
+    if (backgroundAnimationFrame) {
+      cancelAnimationFrame(backgroundAnimationFrame);
+      backgroundAnimationFrame = null;
+    }
+    
+    // Получаем текущий цвет фона
+    const currentBgColor = window.getComputedStyle(document.body).backgroundColor;
+    // Парсим RGB из строки "rgb(r, g, b)"
+    const rgbMatch = currentBgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      backgroundReturnStartColor = {
+        r: parseInt(rgbMatch[1]),
+        g: parseInt(rgbMatch[2]),
+        b: parseInt(rgbMatch[3])
+      };
+    } else {
+      // Fallback на черный цвет, если не удалось распарсить
+      backgroundReturnStartColor = BACKGROUND_COLOR_END;
+    }
+    
+    // Сбрасываем состояние анимации
+    backgroundAnimationStartTime = null;
+    isBackgroundAnimating = false;
+    
+    // Запускаем анимацию возврата
+    isBackgroundReturning = true;
+    backgroundReturnStartTime = null;
+    backgroundAnimationFrame = requestAnimationFrame(animateBackgroundReturn);
+  } else {
+    // Если анимация не была запущена, просто возвращаем исходный цвет
+    document.body.style.backgroundColor = '#FAFAFA';
+  }
+}
+
