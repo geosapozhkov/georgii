@@ -180,8 +180,8 @@ img, video {
 /* Стили для описания на странице About me */
 #bio {
   position: absolute;
-  left: 50%;
-  width: calc(50% - 220px);
+  left: calc(40% + 200px);
+  width: calc(60% - 200px - 220px);
   padding-left: 1.5rem;
   padding-right: 1.5rem;
   padding-top: 0.3rem;
