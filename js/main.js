@@ -118,7 +118,15 @@ async function loadProjects(category = null){
 async function getProjectsList(){
   // Загружаем из JSON файла
   try {
-    const response = await fetch('js/projects.json');
+    // Добавляем cache-busting параметр для предотвращения кэширования
+    const cacheBuster = `?v=${Date.now()}`;
+    const response = await fetch(`js/projects.json${cacheBuster}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if(response.ok){
       const data = await response.json();
       return data.projects || [];
@@ -145,7 +153,15 @@ async function getCoverImageFromProject(projectName, category = null){
   console.log(`   Путь к files.json: ${basePath}/files.json`);
   
   try {
-    const filesResponse = await fetch(`${basePath}/files.json`);
+    // Добавляем cache-busting параметр и заголовки для предотвращения кэширования
+    const cacheBuster = `?v=${Date.now()}`;
+    const filesResponse = await fetch(`${basePath}/files.json${cacheBuster}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     console.log(`   Статус ответа files.json: ${filesResponse.status} ${filesResponse.statusText}`);
     
     if(filesResponse.ok) {

@@ -496,7 +496,15 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
   console.log(`   Путь к files.json: ${basePath}/files.json`);
   
   try {
-    const response = await fetch(`${basePath}/files.json`);
+    // Добавляем cache-busting параметр и заголовки для предотвращения кэширования
+    const cacheBuster = `?v=${Date.now()}`;
+    const response = await fetch(`${basePath}/files.json${cacheBuster}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     console.log(`   Статус ответа files.json: ${response.status} ${response.statusText}`);
     
     if(response.ok){
@@ -703,7 +711,15 @@ viewerOverlay.addEventListener('click',(e)=>{
 // Загрузка описания проекта
 async function loadProjectDescription() {
   try {
-    const response = await fetch('js/projects.json');
+    // Добавляем cache-busting параметр для предотвращения кэширования
+    const cacheBuster = `?v=${Date.now()}`;
+    const response = await fetch(`js/projects.json${cacheBuster}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if(response.ok) {
       const data = await response.json();
       const project = data.projects.find(p => p.name === projectName);
@@ -739,11 +755,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   projectTitle.textContent = projectName.replace(/_/g, ' ');
   document.title = projectName.replace(/_/g, ' ');
   
-  // Обновляем ссылку "Back to Home" с учетом категории
+  // Ссылка "Back to Home" всегда ведет на главную страницу без параметров
   const backLink = document.querySelector('a[href="index.html"]');
-  if(backLink && projectCategory) {
-    const categoryParam = `?category=${encodeURIComponent(projectCategory)}`;
-    backLink.href = `index.html${categoryParam}`;
+  if(backLink) {
+    backLink.href = 'index.html';
   }
   
   // Показываем breadcrumb сразу при загрузке страницы
