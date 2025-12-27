@@ -67,3 +67,138 @@ img, video {
   [data-grid-start="12"] { grid-column-start: 12 !important; }
 }
 
+/* =============== СТИЛИ ДЛЯ ОБЛОЖЕК ПРОЕКТОВ =============== */
+
+/* Контейнер карточки проекта */
+.project-card {
+  border: 1px solid #E5E5E5;
+  overflow: hidden;
+  background: white;
+  position: relative;
+}
+
+/* Контейнер изображения обложки */
+.project-cover-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #F5F5F5;
+}
+
+.project-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Оверлей для текста (настраиваемый) */
+.project-cover-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+/* Вариант 1: Минималистичный - без оверлея, текст снизу */
+.project-cover-style-minimal .project-cover-overlay {
+  background: transparent;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 16px;
+}
+
+.project-cover-style-minimal .project-cover-title {
+  color: #ACACAC;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 12px;
+  font-size: 1.25rem;
+  font-weight: normal;
+  text-align: left;
+}
+
+/* Вариант 2: Классический - полупрозрачный оверлей, текст по центру */
+.project-cover-style-classic .project-cover-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.project-cover-style-classic .project-cover-title {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 0 16px;
+}
+
+/* Вариант 3: Тонкий оверлей - легкий градиент снизу */
+.project-cover-style-gradient .project-cover-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 20px;
+}
+
+.project-cover-style-gradient .project-cover-title {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: left;
+  padding: 0;
+}
+
+/* Вариант 4: Без текста на обложке - только изображение */
+.project-cover-style-image-only .project-cover-overlay {
+  display: none;
+}
+
+/* Заголовок проекта */
+.project-cover-title {
+  margin: 0;
+  line-height: 1.2;
+  word-wrap: break-word;
+}
+
+/* Плейсхолдер для отсутствующей обложки */
+.project-cover-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #CCCCCC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #ACACAC;
+}
+
+/* =============== СТИЛИ ДЛЯ ОПИСАНИЙ =============== */
+.description-text {
+  line-height: 1.1;
+  color: #ACACAC;
+}
+
+/* Стили для описания на странице About me */
+#bio {
+  position: absolute;
+  left: 50%;
+  width: calc(50% - 250px);
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 0.3rem;
+  box-sizing: border-box;
+}
+
+/* Стили для навигации на главной странице */
+#top-nav {
+  margin-top: 0 !important;
+  padding-top: 0;
+}
+
+/* Стили для описания на странице проекта */
+#project-description {
+  width: 50%;
+  padding-left: 1.5rem;
+  box-sizing: border-box;
+}
+

@@ -9,6 +9,7 @@ const breadcrumb = document.getElementById('breadcrumb');
 const viewerOverlay = document.getElementById('viewerOverlay');
 const viewerContent = document.getElementById('viewerContent');
 const projectTitle = document.getElementById('project-title');
+const projectDescription = document.getElementById('project-description');
 
 let currentItems = [];
 let currentIndex = 0;
@@ -17,14 +18,58 @@ let currentIndex = 0;
 const isImage = (name) => /\.(jpe?g|png|gif|webp)$/i.test(name);
 const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
 
-function renderBreadcrumb(projectName, subfolder = ''){
-  breadcrumb.innerHTML = '';
-  const crumbs = [
-    { name:'Home', on: () => window.location.href='index.html' },
-    { name:'Projects', on: () => window.location.href='index.html#projects' }
+// Генерация случайного текста из 3 предложений
+function generateRandomDescription() {
+  const sentences = [
+    "This project explores the boundaries between digital and physical spaces, creating a unique visual language that challenges traditional perceptions.",
+    "Through careful composition and thoughtful design, we aim to communicate complex ideas in a simple and accessible way.",
+    "The work reflects on contemporary issues while maintaining a timeless aesthetic that resonates across different cultures and contexts.",
+    "By combining innovative techniques with classical principles, we create something that feels both familiar and entirely new.",
+    "Each element has been carefully considered to contribute to the overall narrative and emotional impact of the piece.",
+    "The project seeks to bridge the gap between artistic expression and functional design, proving that beauty and utility can coexist.",
+    "Through experimentation and iteration, we discovered new ways of seeing and understanding the world around us.",
+    "This work represents a synthesis of different disciplines, bringing together diverse perspectives to create a cohesive whole.",
+    "The visual language developed here speaks to universal themes while remaining deeply personal and authentic.",
+    "We believe that good design should not only look beautiful but also serve a purpose and tell a story."
   ];
   
-  crumbs.push({ name: projectName, on: () => loadProject(projectName, '') });
+  // Выбираем 3 случайных предложения
+  const selected = [];
+  const used = new Set();
+  while(selected.length < 3) {
+    const index = Math.floor(Math.random() * sentences.length);
+    if(!used.has(index)) {
+      used.add(index);
+      selected.push(sentences[index]);
+    }
+  }
+  
+  return selected.join(' ');
+}
+
+function renderBreadcrumb(projectName, subfolder = ''){
+  breadcrumb.innerHTML = '';
+  
+  // URL для возврата на главную страницу (без параметров)
+  const homeUrl = 'index.html';
+  
+  // URL для возврата на страницу категории
+  const categoryParam = projectCategory ? `?category=${encodeURIComponent(projectCategory)}` : '';
+  const categoryUrl = `index.html${categoryParam}`;
+  
+  // Форматируем название категории (первая буква заглавная)
+  const categoryDisplayName = projectCategory 
+    ? projectCategory.charAt(0).toUpperCase() + projectCategory.slice(1).toLowerCase()
+    : 'Projects';
+  
+  const crumbs = [
+    { name:'Home', on: () => window.location.href=homeUrl },
+    { name: categoryDisplayName, on: () => window.location.href=categoryUrl }
+  ];
+  
+  // Форматируем название проекта (заменяем подчеркивания на пробелы)
+  const projectDisplayName = projectName.replace(/_/g, ' ');
+  crumbs.push({ name: projectDisplayName, on: () => loadProject(projectName, '') });
   
   if(subfolder){
     const parts = subfolder.split('/').filter(Boolean);
@@ -37,11 +82,14 @@ function renderBreadcrumb(projectName, subfolder = ''){
 
   crumbs.forEach((c,i)=>{
     const b=document.createElement('button'); 
-    b.className='hover:underline'; 
+    b.className='hover:underline cursor-pointer'; 
     b.textContent=c.name; 
     b.onclick=c.on;
     breadcrumb.appendChild(b); 
-    if(i<crumbs.length-1) breadcrumb.append(' / ');
+    if(i<crumbs.length-1) {
+      const separator = document.createTextNode(' / ');
+      breadcrumb.appendChild(separator);
+    }
   });
 }
 
@@ -605,6 +653,34 @@ viewerOverlay.addEventListener('click',(e)=>{
   if(e.target===viewerOverlay) closeViewer(); 
 });
 
+// Загрузка описания проекта
+async function loadProjectDescription() {
+  try {
+    const response = await fetch('js/projects.json');
+    if(response.ok) {
+      const data = await response.json();
+      const project = data.projects.find(p => p.name === projectName);
+      
+      if(project && project.description && project.description.trim() !== '') {
+        // Используем описание из JSON, если оно есть
+        projectDescription.textContent = project.description;
+      } else {
+        // Используем случайный текст, если описание пустое
+        projectDescription.textContent = generateRandomDescription();
+      }
+    } else {
+      // Если не удалось загрузить JSON, используем случайный текст
+      projectDescription.textContent = generateRandomDescription();
+    }
+  } catch(e) {
+    // В случае ошибки используем случайный текст
+    projectDescription.textContent = generateRandomDescription();
+  }
+  
+  // Показываем описание
+  projectDescription.style.display = 'block';
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', ()=>{
   if(!projectName){
@@ -615,6 +691,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Устанавливаем заголовок
   projectTitle.textContent = projectName.replace(/_/g, ' ');
   document.title = projectName.replace(/_/g, ' ');
+  
+  // Обновляем ссылку "Back to Home" с учетом категории
+  const backLink = document.querySelector('a[href="index.html"]');
+  if(backLink && projectCategory) {
+    const categoryParam = `?category=${encodeURIComponent(projectCategory)}`;
+    backLink.href = `index.html${categoryParam}`;
+  }
+  
+  // Показываем breadcrumb сразу при загрузке страницы
+  breadcrumb.style.display = 'flex';
+  renderBreadcrumb(projectName, '');
+  
+  // Загружаем описание проекта
+  loadProjectDescription();
   
   // Загружаем контент проекта
   loadProject(projectName);
