@@ -422,17 +422,17 @@ async function loadProject(projectName, subfolder = ''){
         
         } else {
           // Для обычных видео (не fullwidth) - простое автопроигрывание с зацикливанием
-          video.className = 'w-full h-full object-contain';
-          video.style.cssText = 'max-height:12rem;';
+          // Без ограничений по высоте и без серого фона
+          video.className = 'w-full h-auto object-contain';
+          video.style.cssText = 'width:100%; height:auto; display:block;';
           video.autoplay = true;
           video.loop = true;
           video.muted = true;
           video.playsInline = true;
           
-          // Простой контейнер без контролов
+          // Простой контейнер без контролов и без ограничений
           const videoContainer = document.createElement('div');
-          videoContainer.className = 'relative bg-gray-200 w-full flex items-center justify-center';
-          videoContainer.style.maxHeight = '12rem';
+          videoContainer.className = 'relative w-full';
           videoContainer.appendChild(video);
           wrap.appendChild(videoContainer);
         }
@@ -488,10 +488,16 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
   const foundFiles = [];
   
   // СНАЧАЛА проверяем files.json - это быстрее
+  console.log(`🔍 Загрузка файлов проекта: ${projectName}, категория: ${category || 'нет'}`);
+  console.log(`   Путь к files.json: ${basePath}/files.json`);
+  
   try {
     const response = await fetch(`${basePath}/files.json`);
+    console.log(`   Статус ответа files.json: ${response.status} ${response.statusText}`);
+    
     if(response.ok){
       const data = await response.json();
+      console.log(`   Данные files.json:`, data);
       const jsonFiles = data.files || [];
       
       if(jsonFiles.length > 0){
@@ -506,20 +512,34 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
         for(const jsonFile of jsonFiles){
           // Пропускаем файлы с "cover" в названии или соответствующие паттерну обложки
           if(jsonFile.toLowerCase().includes('cover') || coverPattern.test(jsonFile)){
+            console.log(`   ⏭️ Пропущен файл (обложка): ${jsonFile}`);
             continue;
           }
           // Правильно кодируем имя файла для URL
           const encodedFile = encodeURIComponent(jsonFile).replace(/'/g, '%27');
+          const fileSrc = `${basePath}/${encodedFile}`;
+          console.log(`   ✅ Добавлен файл: ${jsonFile} -> ${fileSrc}`);
           foundFiles.push({
             name: jsonFile,
-            src: `${basePath}/${encodedFile}`,
+            src: fileSrc,
             number: extractNumber(jsonFile)
           });
         }
         
         // Если нашли файлы через files.json, используем их
         if(foundFiles.length > 0){
-          foundFiles.sort((a, b) => a.number - b.number);
+          // Сортируем файлы: сначала fullwidth видео, потом остальные
+          foundFiles.sort((a, b) => {
+            const aIsFullwidthVideo = a.name.toLowerCase().includes('fullwidth') && isVideo(a.name);
+            const bIsFullwidthVideo = b.name.toLowerCase().includes('fullwidth') && isVideo(b.name);
+            
+            // Fullwidth видео идут первыми
+            if(aIsFullwidthVideo && !bIsFullwidthVideo) return -1;
+            if(!aIsFullwidthVideo && bIsFullwidthVideo) return 1;
+            
+            // Если оба fullwidth видео или оба не fullwidth видео, сортируем по номеру
+            return a.number - b.number;
+          });
           console.log(`✅ Найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
           return foundFiles;
         }
@@ -527,6 +547,7 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
     }
   } catch(e) {
     // files.json не найден - это нормально, будем использовать directory listing
+    console.error(`   ❌ Ошибка загрузки files.json:`, e);
   }
   
   // Если files.json нет или пуст, используем directory listing для автоматического обнаружения файлов
@@ -593,7 +614,18 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
       }
       
       if(foundFiles.length > 0){
-        foundFiles.sort((a, b) => a.number - b.number);
+        // Сортируем файлы: сначала fullwidth видео, потом остальные
+        foundFiles.sort((a, b) => {
+          const aIsFullwidthVideo = a.name.toLowerCase().includes('fullwidth') && isVideo(a.name);
+          const bIsFullwidthVideo = b.name.toLowerCase().includes('fullwidth') && isVideo(b.name);
+          
+          // Fullwidth видео идут первыми
+          if(aIsFullwidthVideo && !bIsFullwidthVideo) return -1;
+          if(!aIsFullwidthVideo && bIsFullwidthVideo) return 1;
+          
+          // Если оба fullwidth видео или оба не fullwidth видео, сортируем по номеру
+          return a.number - b.number;
+        });
         console.log(`✅ Автоматически найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
         return foundFiles;
       }

@@ -24,15 +24,7 @@ const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
 //   'image-only'  - Только изображение: без текста на обложке
 const PROJECT_COVER_STYLE = 'image-only'; // Измените здесь стиль обложек
 
-// Генерация случайного серого оттенка от #0A0A0A до #E3E3E3
-function getRandomColor() {
-  // Генерируем случайное число от 10 (0x0A) до 227 (0xE3)
-  const grayValue = Math.floor(Math.random() * (227 - 10 + 1)) + 10;
-  // Конвертируем в hex и форматируем с ведущим нулем если нужно
-  const hex = grayValue.toString(16).padStart(2, '0').toUpperCase();
-  // Возвращаем оттенок серого (все три канала одинаковые)
-  return `#${hex}${hex}${hex}`;
-}
+// Функция getRandomColor() удалена - больше не используем placeholder'ы с серыми обложками
 
 // =============== ЗАГРУЗКА ПРОЕКТОВ ===============
 async function loadProjects(category = null){
@@ -72,6 +64,11 @@ async function loadProjects(category = null){
       previewUrl = coverInfo.url;
       coverFileName = coverInfo.filename;
       
+      // Логирование для отладки
+      console.log(`🔍 Проект: ${project.name}, категория: ${project.category}`);
+      console.log(`   Обложка URL: ${previewUrl}`);
+      console.log(`   Имя файла обложки: ${coverFileName}`);
+      
       // Извлекаем название проекта из имени файла cover_ProjectName_00 или Cover_Project Name_01
       let projectTitleFromCover = project.title || project.name.replace(/_/g, ' ');
       if(coverFileName) {
@@ -83,32 +80,27 @@ async function loadProjects(category = null){
         }
       }
       
+      // Пропускаем проекты без обложки - показываем только проекты с реальными файлами
+      if(!previewUrl) {
+        console.warn(`Пропущен проект ${project.name} - обложка не найдена`);
+        continue;
+      }
+      
       // Определяем, показывать ли текст на обложке
       const showTitle = PROJECT_COVER_STYLE !== 'image-only';
       
-      // Генерируем случайный цвет для placeholder, если обложки нет
-      const placeholderColor = previewUrl ? '' : getRandomColor();
-      
       projectCard.innerHTML = `
         <div class="project-card project-cover-style-${PROJECT_COVER_STYLE}">
-          ${previewUrl ? `
-            <div class="project-cover-container">
-              <img src="${previewUrl}" alt="${projectTitleFromCover}" class="project-cover-image" onerror="this.parentElement.parentElement.innerHTML='<div class=\\'project-cover-placeholder\\' style=\\'background:${getRandomColor()};\\'></div>'">
-              ${showTitle ? `
-                <div class="project-cover-overlay">
-                  <h3 class="project-cover-title">${projectTitleFromCover}</h3>
-                </div>
-              ` : ''}
-            </div>
-          ` : `
-            <div class="project-cover-placeholder" style="background: ${placeholderColor};">
-              ${showTitle ? `
-                <div class="project-cover-overlay">
-                  <h3 class="project-cover-title">${projectTitleFromCover}</h3>
-                </div>
-              ` : ''}
-            </div>
-          `}
+          <div class="project-cover-container">
+            <img src="${previewUrl}" alt="${projectTitleFromCover}" class="project-cover-image" 
+                 onerror="console.error('❌ Ошибка загрузки обложки:', '${previewUrl}'); this.style.display='none';"
+                 onload="console.log('✅ Обложка загружена:', '${previewUrl}');">
+            ${showTitle ? `
+              <div class="project-cover-overlay">
+                <h3 class="project-cover-title">${projectTitleFromCover}</h3>
+              </div>
+            ` : ''}
+          </div>
         </div>
       `;
       
@@ -145,17 +137,25 @@ async function getCoverImageFromProject(projectName, category = null){
   const basePath = `projects/${categoryPath}${projectName}/images`;
   
   // Проверяем files.json для получения обложки
+  console.log(`🔍 Поиск обложки для проекта: ${projectName}, категория: ${category || 'нет'}`);
+  console.log(`   Путь к files.json: ${basePath}/files.json`);
+  
   try {
     const filesResponse = await fetch(`${basePath}/files.json`);
+    console.log(`   Статус ответа files.json: ${filesResponse.status} ${filesResponse.statusText}`);
+    
     if(filesResponse.ok) {
       const filesData = await filesResponse.json();
+      console.log(`   Данные files.json:`, filesData);
       
       // Используем поле cover из files.json, если оно есть
       if(filesData.cover) {
         // Правильно кодируем имя файла для URL (пробелы и специальные символы)
         const encodedCover = encodeURIComponent(filesData.cover).replace(/'/g, '%27');
+        const coverUrl = `${basePath}/${encodedCover}`;
+        console.log(`   📋 Найдена обложка в files.json: ${filesData.cover} -> ${coverUrl}`);
         return {
-          url: `${basePath}/${encodedCover}`,
+          url: coverUrl,
           filename: filesData.cover
         };
       }
@@ -184,7 +184,7 @@ async function getCoverImageFromProject(projectName, category = null){
     }
   } catch(e) {
     // Если files.json не найден, возвращаем пустую строку
-    console.warn(`files.json не найден для проекта ${projectName}:`, e);
+    console.error(`   ❌ Ошибка загрузки files.json для проекта ${projectName}:`, e);
   }
   
   return { url: '', filename: '' };

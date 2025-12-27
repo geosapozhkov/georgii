@@ -83,7 +83,7 @@ img, video {
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: #F5F5F5;
+  background: transparent;
 }
 
 .project-cover-image {
