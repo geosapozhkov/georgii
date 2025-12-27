@@ -71,10 +71,11 @@ async function loadProjects(category = null){
       console.log(`   Обложка URL: ${previewUrl}`);
       console.log(`   Имя файла обложки: ${coverFileName}`);
       
-      // Извлекаем название проекта из имени файла cover_ProjectName_00 или Cover_Project Name_01
+      // Используем title из projects.json, если он есть, иначе извлекаем из имени файла
       let projectTitleFromCover = project.title || project.name.replace(/_/g, ' ');
-      if(coverFileName) {
-        // Парсим название из различных форматов:
+      // Если title есть в projects.json, используем его (он уже содержит правильные символы, включая апостроф)
+      if(!project.title && coverFileName) {
+        // Парсим название из имени файла только если title не указан в projects.json
         // cover_ProjectName_00.ext, Cover_Project Name_01.ext, cover_Project Name_01.ext
         const coverMatch = coverFileName.match(/^[Cc]over[_-](.+?)[_-]\d+\./i);
         if(coverMatch && coverMatch[1]) {

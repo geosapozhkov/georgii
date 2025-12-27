@@ -778,9 +778,36 @@ document.addEventListener('DOMContentLoaded', ()=>{
     return;
   }
   
+  // Загружаем информацию о проекте из projects.json для получения правильного title
+  async function setProjectTitle() {
+    try {
+      const cacheBuster = `?v=${Date.now()}`;
+      const response = await fetch(`js/projects.json${cacheBuster}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
+      if(response.ok) {
+        const data = await response.json();
+        const project = data.projects.find(p => p.name === projectName);
+        if(project && project.title) {
+          projectTitle.textContent = project.title;
+          document.title = project.title;
+          return;
+        }
+      }
+    } catch(e) {
+      console.warn('Не удалось загрузить projects.json, используем название из URL');
+    }
+    // Fallback: используем название из URL
+    projectTitle.textContent = projectName.replace(/_/g, ' ');
+    document.title = projectName.replace(/_/g, ' ');
+  }
+  
   // Устанавливаем заголовок
-  projectTitle.textContent = projectName.replace(/_/g, ' ');
-  document.title = projectName.replace(/_/g, ' ');
+  setProjectTitle();
   
   // Ссылка "Back to Home" всегда ведет на главную страницу без параметров
   const backLink = document.querySelector('a[href="index.html"]');
