@@ -152,8 +152,10 @@ async function getCoverImageFromProject(projectName, category = null){
       
       // Используем поле cover из files.json, если оно есть
       if(filesData.cover) {
+        // Правильно кодируем имя файла для URL (пробелы и специальные символы)
+        const encodedCover = encodeURIComponent(filesData.cover).replace(/'/g, '%27');
         return {
-          url: `${basePath}/${filesData.cover}`,
+          url: `${basePath}/${encodedCover}`,
           filename: filesData.cover
         };
       }
@@ -167,8 +169,10 @@ async function getCoverImageFromProject(projectName, category = null){
       });
       
       if(coverFile) {
+        // Правильно кодируем имя файла для URL
+        const encodedCover = encodeURIComponent(coverFile).replace(/'/g, '%27');
         return {
-          url: `${basePath}/${coverFile}`,
+          url: `${basePath}/${encodedCover}`,
           filename: coverFile
         };
       }

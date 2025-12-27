@@ -499,9 +499,11 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
           if(jsonFile.toLowerCase().includes('cover')){
             continue;
           }
+          // Правильно кодируем имя файла для URL
+          const encodedFile = encodeURIComponent(jsonFile).replace(/'/g, '%27');
           foundFiles.push({
             name: jsonFile,
-            src: `${basePath}/${jsonFile}`,
+            src: `${basePath}/${encodedFile}`,
             number: extractNumber(jsonFile)
           });
         }
