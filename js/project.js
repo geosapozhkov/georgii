@@ -104,7 +104,9 @@ async function loadProject(projectName, subfolder = ''){
   }
 
   // Используем категорию для построения пути, если она указана
-  const categoryPath = projectCategory ? `${projectCategory}/` : '';
+  // Приводим категорию к правильному регистру (первая буква заглавная)
+  const categoryCapitalized = projectCategory ? projectCategory.charAt(0).toUpperCase() + projectCategory.slice(1).toLowerCase() : '';
+  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
   const projectPath = subfolder 
     ? `projects/${categoryPath}${projectName}${subfolder}` 
     : `projects/${categoryPath}${projectName}`;
@@ -480,7 +482,9 @@ function extractNumber(filename){
 // Получаем список изображений проекта автоматически из папки
 // Сначала проверяет files.json (если есть), затем использует directory listing
 async function getProjectImages(projectName, subfolder = '', category = ''){
-  const categoryPath = category ? `${category}/` : '';
+  // Приводим категорию к правильному регистру (первая буква заглавная)
+  const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
+  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
   const basePath = subfolder 
     ? `projects/${categoryPath}${projectName}${subfolder}/images` 
     : `projects/${categoryPath}${projectName}/images`;

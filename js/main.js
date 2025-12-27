@@ -57,7 +57,9 @@ async function loadProjects(category = null){
       // Пытаемся найти обложку (cover) для превью
       let previewUrl = '';
       let coverFileName = '';
-      const categoryPath = project.category ? `${project.category}/` : '';
+      // Приводим категорию к правильному регистру (первая буква заглавная)
+      const categoryCapitalized = project.category ? project.category.charAt(0).toUpperCase() + project.category.slice(1).toLowerCase() : '';
+      const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
       
       // Ищем файл с "cover" в названии
       const coverInfo = await getCoverImageFromProject(project.name, project.category);
@@ -133,7 +135,9 @@ async function getProjectsList(){
 
 // Получаем обложку проекта (изображение с "cover" в названии)
 async function getCoverImageFromProject(projectName, category = null){
-  const categoryPath = category ? `${category}/` : '';
+  // Приводим категорию к правильному регистру (первая буква заглавная)
+  const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
+  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
   const basePath = `projects/${categoryPath}${projectName}/images`;
   
   // Проверяем files.json для получения обложки
