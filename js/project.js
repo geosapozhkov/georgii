@@ -227,6 +227,8 @@ async function loadProject(projectName, subfolder = ''){
           video.muted = true;
           video.controls = false; // Отключаем стандартные контролы
           video.playsInline = true;
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
           
           // Линия прогресса внизу (высота увеличена в 10 раз: 2px -> 20px)
           const progressBar = document.createElement('div');
@@ -324,9 +326,17 @@ async function loadProject(projectName, subfolder = ''){
           
           // Переключение полноэкранного режима
           const toggleFullscreen = () => {
+            // Проверяем, является ли устройство iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            
             if(!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
               // Войти в полноэкранный режим
-              if(videoContainer.requestFullscreen) {
+              if(isIOS) {
+                // На iOS используем webkitEnterFullscreen для видео элемента напрямую
+                if(video.webkitEnterFullscreen) {
+                  video.webkitEnterFullscreen();
+                }
+              } else if(videoContainer.requestFullscreen) {
                 videoContainer.requestFullscreen();
               } else if(videoContainer.webkitRequestFullscreen) {
                 videoContainer.webkitRequestFullscreen();
