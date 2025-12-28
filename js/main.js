@@ -7,6 +7,8 @@ const breadcrumb = document.getElementById('breadcrumb');
 const viewerOverlay = document.getElementById('viewerOverlay');
 const viewerContent = document.getElementById('viewerContent');
 const projectsList = document.getElementById('projects-list');
+const homeContentContainer = document.getElementById('home-content-container');
+const homeContentItem = document.getElementById('home-content-item');
 
 // Текущие элементы
 let currentItems = [];
@@ -233,6 +235,204 @@ async function getFirstImageFromProject(projectName, category = null){
   return coverInfo.url;
 }
 
+// =============== HOME CONTENT ===============
+let homeContentFiles = [];
+let homeContentIndex = 0;
+let homeContentInterval = null;
+let currentVideoElement = null;
+let currentVideoStopTimeout = null;
+
+// Загрузка файлов из HomeContent
+async function loadHomeContent() {
+  try {
+    const basePath = 'projects/HomeContent';
+    
+    // Загружаем files.json
+    const cacheBuster = `?v=${Date.now()}`;
+    const filesResponse = await fetch(`${basePath}/files.json${cacheBuster}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    if (!filesResponse.ok) {
+      console.warn('files.json не найден в HomeContent');
+      homeContentContainer.style.display = 'none';
+      return;
+    }
+    
+    const filesData = await filesResponse.json();
+    const files = filesData.files || [];
+    
+    if (files.length === 0) {
+      console.warn('Нет файлов в files.json');
+      homeContentContainer.style.display = 'none';
+      return;
+    }
+    
+    // Сортируем файлы по имени для правильного порядка
+    files.sort();
+    
+    // Создаем список файлов с типами
+    homeContentFiles = [];
+    for (const file of files) {
+      homeContentFiles.push({
+        path: `${basePath}/${file}`,
+        type: isImage(file) ? 'image' : 'video',
+        name: file
+      });
+    }
+    
+    console.log(`Загружено ${homeContentFiles.length} файлов из HomeContent`);
+    startHomeContentRotation();
+  } catch (e) {
+    console.error('Ошибка загрузки HomeContent:', e);
+    homeContentContainer.style.display = 'none';
+  }
+}
+
+// Отображение текущего элемента HomeContent
+function showHomeContentItem(index) {
+  if (homeContentFiles.length === 0) return;
+  
+  const item = homeContentFiles[index % homeContentFiles.length];
+  homeContentItem.innerHTML = '';
+  
+  // Очищаем предыдущие таймеры
+  if (currentVideoStopTimeout) {
+    clearTimeout(currentVideoStopTimeout);
+    currentVideoStopTimeout = null;
+  }
+  if (currentVideoElement) {
+    currentVideoElement.pause();
+    currentVideoElement.currentTime = 0;
+    currentVideoElement = null;
+  }
+  
+  if (item.type === 'image') {
+    const img = document.createElement('img');
+    img.src = item.path;
+    homeContentItem.appendChild(img);
+  } else if (item.type === 'video') {
+    const video = document.createElement('video');
+    video.src = item.path;
+    video.autoplay = true;
+    video.loop = false;
+    video.muted = true;
+    
+    // Устанавливаем минимальное время воспроизведения 5 секунд
+    const MIN_VIDEO_DURATION = 5000; // 5 секунд
+    
+    // Когда видео загрузится, проверяем его длительность
+    video.addEventListener('loadedmetadata', () => {
+      const videoDuration = video.duration * 1000; // в миллисекундах
+      // Используем максимум из длительности видео и минимума 5 секунд
+      const playDuration = Math.max(videoDuration, MIN_VIDEO_DURATION);
+      
+      // Генерируем случайное время остановки от playDuration до playDuration + 5 секунд
+      const stopTime = playDuration + Math.random() * 5000;
+      
+      // Останавливаем видео через вычисленное время
+      currentVideoStopTimeout = setTimeout(() => {
+        if (video && !video.paused) {
+          video.pause();
+        }
+      }, stopTime);
+    });
+    
+    // Если метаданные не загрузились, используем минимум 5 секунд
+    const fallbackTimeout = setTimeout(() => {
+      if (!currentVideoStopTimeout) {
+        const stopTime = MIN_VIDEO_DURATION + Math.random() * 5000;
+        currentVideoStopTimeout = setTimeout(() => {
+          if (video && !video.paused) {
+            video.pause();
+          }
+        }, stopTime);
+      }
+    }, 1000);
+    
+    video.addEventListener('loadedmetadata', () => {
+      clearTimeout(fallbackTimeout);
+    });
+    
+    currentVideoElement = video;
+    homeContentItem.appendChild(video);
+  }
+}
+
+// Запуск ротации HomeContent
+function startHomeContentRotation() {
+  // Останавливаем предыдущую ротацию, если она была
+  stopHomeContentRotation();
+  
+  // Показываем контейнер
+  homeContentContainer.style.display = 'flex';
+  
+  // Показываем первый элемент
+  homeContentIndex = 0;
+  showHomeContentItem(homeContentIndex);
+  
+  // Функция для перехода к следующему элементу
+  function moveToNext() {
+    const currentItem = homeContentFiles[homeContentIndex % homeContentFiles.length];
+    
+    if (currentItem.type === 'image') {
+      // Для изображений - 3 секунды
+      return 3000;
+    } else if (currentItem.type === 'video') {
+      // Для видео - минимум 5 секунд, но проверяем длительность видео
+      if (currentVideoElement && currentVideoElement.readyState >= 2) {
+        const videoDuration = currentVideoElement.duration * 1000;
+        return Math.max(videoDuration, 5000) + Math.random() * 5000; // минимум 5 сек + до 5 сек случайно
+      }
+      // Если видео еще не загрузилось, используем минимум 5 секунд
+      return 5000 + Math.random() * 5000;
+    }
+    return 3000; // По умолчанию 3 секунды
+  }
+  
+  // Функция для планирования следующего перехода
+  function scheduleNext() {
+    const delay = moveToNext();
+    homeContentInterval = setTimeout(() => {
+      homeContentIndex = (homeContentIndex + 1) % homeContentFiles.length;
+      showHomeContentItem(homeContentIndex);
+      scheduleNext();
+    }, delay);
+  }
+  
+  // Запускаем первую ротацию
+  scheduleNext();
+}
+
+// Остановка ротации HomeContent
+function stopHomeContentRotation() {
+  if (homeContentInterval) {
+    clearTimeout(homeContentInterval);
+    homeContentInterval = null;
+  }
+  
+  // Очищаем таймер остановки видео
+  if (currentVideoStopTimeout) {
+    clearTimeout(currentVideoStopTimeout);
+    currentVideoStopTimeout = null;
+  }
+  
+  // Останавливаем текущее видео, если оно есть
+  if (currentVideoElement) {
+    currentVideoElement.pause();
+    currentVideoElement.currentTime = 0;
+    currentVideoElement = null;
+  }
+  
+  // Скрываем контейнер
+  homeContentContainer.style.display = 'none';
+  homeContentItem.innerHTML = '';
+}
+
 // =============== ГЛАВНАЯ СТРАНИЦА (HOME) ===============
 function showHome(){
   grid.style.display='none';
@@ -240,6 +440,12 @@ function showHome(){
   breadcrumb.style.display='none';
   const bioEl = document.getElementById('bio');
   if(bioEl) bioEl.style.display='none';
+  // Показываем HomeContent на главной странице
+  if (homeContentFiles.length > 0) {
+    startHomeContentRotation();
+  } else {
+    loadHomeContent();
+  }
   // Останавливаем анимацию фона при переходе на главную (если она была запущена на другой странице)
   if (currentSection !== 'home') {
     stopBackgroundAnimation();
@@ -322,6 +528,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('nav-commerce')?.addEventListener('click',()=>{ 
     currentSection='commerce'; 
     stopBackgroundAnimation();
+    stopHomeContentRotation();
     grid.style.display='none';
     projectsList.style.display='grid';
     breadcrumb.style.display='none';
@@ -333,6 +540,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('nav-mind')?.addEventListener('click',()=>{ 
     currentSection='mind'; 
     stopBackgroundAnimation();
+    stopHomeContentRotation();
     grid.style.display='none';
     projectsList.style.display='grid';
     breadcrumb.style.display='none';
@@ -344,6 +552,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
     currentSection='about'; 
     stopBackgroundAnimation();
+    stopHomeContentRotation();
     grid.style.display='none';
     projectsList.style.display='none';
     breadcrumb.style.display='none';
@@ -356,6 +565,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const category = categoryFromUrl.toLowerCase();
     if(category === 'commerce' || category === 'mind') {
       currentSection = category;
+      stopHomeContentRotation();
       grid.style.display='none';
       projectsList.style.display='grid';
       breadcrumb.style.display='none';
