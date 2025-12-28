@@ -12,11 +12,6 @@ body {
   min-height: 100vh;
 }
 
-html {
-  height: 100%;
-  overflow: hidden;
-}
-
 /* Override Tailwind text color classes to use #ACACAC */
 .text-gray-600,
 .text-gray-500,
@@ -280,11 +275,16 @@ img, video {
 /* =============== МОБИЛЬНАЯ ВЕРСИЯ (до 640px) =============== */
 @media (max-width: 639px) {
   /* Отключить скролл на главной странице в мобильной версии */
-  html, body {
+  body.home-page {
     height: 100%;
     overflow: hidden;
     position: fixed;
     width: 100%;
+  }
+  
+  html.home-page {
+    height: 100%;
+    overflow: hidden;
   }
   /* Главная страница - адаптация header */
   body > header {

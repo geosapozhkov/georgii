@@ -457,6 +457,9 @@ function showHome(){
     navAbout.style.display='inline';
     navAbout.style.opacity='1';
   }
+  // Добавляем класс для блокировки скролла на главной странице
+  document.body.classList.add('home-page');
+  document.documentElement.classList.add('home-page');
   // Показываем HomeContent на главной странице
   if (homeContentFiles.length > 0) {
     startHomeContentRotation();
@@ -526,6 +529,10 @@ viewerOverlay.addEventListener('click',(e)=>{
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', ()=>{
+  // Добавляем класс для главной страницы (для блокировки скролла на мобильных)
+  document.body.classList.add('home-page');
+  document.documentElement.classList.add('home-page');
+  
   // Проверяем, есть ли параметр category в URL
   const urlParams = new URLSearchParams(window.location.search);
   const categoryFromUrl = urlParams.get('category');
@@ -557,6 +564,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='none';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='none';
+    // Убираем класс для разблокировки скролла
+    document.body.classList.remove('home-page');
+    document.documentElement.classList.remove('home-page');
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='1';
@@ -583,6 +593,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='none';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='none';
+    // Убираем класс для разблокировки скролла
+    document.body.classList.remove('home-page');
+    document.documentElement.classList.remove('home-page');
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='0.35';
@@ -609,6 +622,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='block';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='flex';
+    // Убираем класс для разблокировки скролла
+    document.body.classList.remove('home-page');
+    document.documentElement.classList.remove('home-page');
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='0.35';
@@ -636,6 +652,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
       if(bioEl) bioEl.style.display='none';
       const bioContainer = document.getElementById('bio-container');
       if(bioContainer) bioContainer.style.display='none';
+      // Убираем класс для разблокировки скролла
+      document.body.classList.remove('home-page');
+      document.documentElement.classList.remove('home-page');
       if(category === 'commerce') {
         if(navCommerce) {
           navCommerce.style.display='inline';
