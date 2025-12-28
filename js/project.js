@@ -809,10 +809,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Устанавливаем заголовок
   setProjectTitle();
   
-  // Ссылка "Back to Home" всегда ведет на главную страницу без параметров
-  const backLink = document.querySelector('a[href="index.html"]');
-  if(backLink) {
-    backLink.href = 'index.html';
+  // Ссылка "Step Back" ведет на страницу категории
+  const stepBackLink = document.getElementById('step-back-link');
+  if(stepBackLink) {
+    if(projectCategory) {
+      stepBackLink.href = `index.html?category=${encodeURIComponent(projectCategory)}`;
+    } else {
+      stepBackLink.href = 'index.html';
+    }
   }
   
   // Показываем breadcrumb сразу при загрузке страницы

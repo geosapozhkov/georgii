@@ -121,7 +121,7 @@ async function loadProjects(category = null){
                 <h3 class="project-cover-title">${projectTitleFromCover}</h3>
               </div>
             ` : ''}
-          </div>
+            </div>
         </div>
       `;
       
@@ -440,6 +440,20 @@ function showHome(){
   breadcrumb.style.display='none';
   const bioEl = document.getElementById('bio');
   if(bioEl) bioEl.style.display='none';
+  const bioContainer = document.getElementById('bio-container');
+  if(bioContainer) bioContainer.style.display='none';
+  const navCommerce = document.getElementById('nav-commerce');
+  const navMind = document.getElementById('nav-mind');
+  const navAbout = document.getElementById('nav-about');
+  if(navCommerce) {
+    navCommerce.style.display='inline';
+    navCommerce.style.opacity='1';
+  }
+  if(navMind) {
+    navMind.style.display='inline';
+    navMind.style.opacity='1';
+  }
+  if(navAbout) navAbout.style.display='inline';
   // Показываем HomeContent на главной странице
   if (homeContentFiles.length > 0) {
     startHomeContentRotation();
@@ -525,6 +539,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
     logo.addEventListener('mouseleave', stopBackgroundAnimation);
   }
   
+  const navCommerce = document.getElementById('nav-commerce');
+  const navMind = document.getElementById('nav-mind');
+  const navAbout = document.getElementById('nav-about');
+  
   document.getElementById('nav-commerce')?.addEventListener('click',()=>{ 
     currentSection='commerce'; 
     stopBackgroundAnimation();
@@ -534,6 +552,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
     breadcrumb.style.display='none';
     const bioEl = document.getElementById('bio');
     if(bioEl) bioEl.style.display='none';
+    const bioContainer = document.getElementById('bio-container');
+    if(bioContainer) bioContainer.style.display='none';
+    if(navCommerce) {
+      navCommerce.style.display='inline';
+      navCommerce.style.opacity='1';
+    }
+    if(navMind) {
+      navMind.style.display='inline';
+      navMind.style.opacity='0.35';
+    }
+    if(navAbout) {
+      navAbout.style.display='inline';
+      navAbout.style.opacity='0.35';
+    }
     loadProjects('commerce');
   });
   
@@ -546,6 +578,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
     breadcrumb.style.display='none';
     const bioEl = document.getElementById('bio');
     if(bioEl) bioEl.style.display='none';
+    const bioContainer = document.getElementById('bio-container');
+    if(bioContainer) bioContainer.style.display='none';
+    if(navCommerce) {
+      navCommerce.style.display='inline';
+      navCommerce.style.opacity='0.35';
+    }
+    if(navMind) {
+      navMind.style.display='inline';
+      navMind.style.opacity='1';
+    }
+    if(navAbout) {
+      navAbout.style.display='inline';
+      navAbout.style.opacity='0.35';
+    }
     loadProjects('mind');
   });
   
@@ -558,6 +604,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
     breadcrumb.style.display='none';
     const bioEl = document.getElementById('bio');
     if(bioEl) bioEl.style.display='block';
+    const bioContainer = document.getElementById('bio-container');
+    if(bioContainer) bioContainer.style.display='flex';
+    if(navCommerce) {
+      navCommerce.style.display='inline';
+      navCommerce.style.opacity='0.35';
+    }
+    if(navMind) {
+      navMind.style.display='inline';
+      navMind.style.opacity='0.35';
+    }
+    if(navAbout) {
+      navAbout.style.display='inline';
+      navAbout.style.opacity='1';
+    }
   });
   
   // Если есть параметр category, автоматически загружаем проекты этой категории
@@ -571,12 +631,41 @@ document.addEventListener('DOMContentLoaded', ()=>{
       breadcrumb.style.display='none';
       const bioEl = document.getElementById('bio');
       if(bioEl) bioEl.style.display='none';
+      const bioContainer = document.getElementById('bio-container');
+      if(bioContainer) bioContainer.style.display='none';
+      if(category === 'commerce') {
+        if(navCommerce) {
+          navCommerce.style.display='inline';
+          navCommerce.style.opacity='1';
+        }
+        if(navMind) {
+          navMind.style.display='inline';
+          navMind.style.opacity='0.35';
+        }
+        if(navAbout) {
+          navAbout.style.display='inline';
+          navAbout.style.opacity='0.35';
+        }
+      } else if(category === 'mind') {
+        if(navCommerce) {
+          navCommerce.style.display='inline';
+          navCommerce.style.opacity='0.35';
+        }
+        if(navMind) {
+          navMind.style.display='inline';
+          navMind.style.opacity='1';
+        }
+        if(navAbout) {
+          navAbout.style.display='inline';
+          navAbout.style.opacity='0.35';
+        }
+      }
       loadProjects(category);
     } else {
       showHome();
     }
   } else {
-    showHome();
+  showHome();
   }
 });
 

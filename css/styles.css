@@ -177,7 +177,7 @@ img, video {
   color: #ACACAC;
 }
 
-/* Стили для описания на странице About me */
+/* Стили для описания на странице About me - десктоп */
 #bio {
   position: absolute;
   left: calc(40% + 200px);
@@ -186,6 +186,22 @@ img, video {
   padding-right: 1.5rem;
   padding-top: 0.3rem;
   box-sizing: border-box;
+}
+
+/* Скрыть мобильную версию на десктопе и планшете */
+#bio-mobile {
+  display: none;
+}
+
+/* Убедиться, что на планшетах мобильная версия скрыта */
+@media (min-width: 640px) {
+  #bio-mobile {
+    display: none !important;
+  }
+  
+  #bio-container {
+    display: none !important;
+  }
 }
 
 /* Стили для навигации на главной странице */
@@ -202,9 +218,17 @@ img, video {
   box-sizing: border-box;
 }
 
-/* Стили для breadcrumb на странице проекта - выровнен с описанием */
+/* Стили для breadcrumb на странице проекта - скрыт на десктопе и планшете */
 #breadcrumb {
   align-items: baseline;
+  display: none !important;
+}
+
+/* Показать breadcrumb только на мобильной версии */
+@media (max-width: 639px) {
+  #breadcrumb {
+    display: flex !important;
+  }
 }
 
 /* Стили для HomeContent */
@@ -252,43 +276,67 @@ img, video {
 @media (max-width: 639px) {
   /* Главная страница - адаптация header */
   body > header {
-    flex-direction: column !important;
+    flex-direction: row !important;
     align-items: flex-start !important;
+    justify-content: space-between !important;
   }
   
   /* Логотип на мобильных */
   #logo {
-    margin-bottom: 1rem;
+    margin-bottom: 0 !important;
     margin-right: 0 !important;
   }
   
-  /* Описание About me на мобильных */
+  /* Описание About me на мобильных - скрыть десктопную версию */
   #bio {
-    position: static !important;
-    left: auto !important;
+    display: none !important;
+  }
+  
+  /* Показать мобильную версию */
+  #bio-mobile {
+    display: block !important;
+  }
+  
+  /* Описание About me на мобильных */
+  #bio-container {
+    flex-direction: column !important;
+  }
+  
+  #bio-container > div:first-child {
+    width: 0 !important;
+    display: none !important;
+  }
+  
+  #bio-container > div:last-child {
+    width: 100% !important;
+  }
+  
+  #bio-mobile {
     width: 100% !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
-    padding-top: 0 !important;
     margin-top: 1rem;
-    margin-bottom: 1rem;
   }
   
-  /* Навигация на мобильных - под логотипом */
+  /* Навигация на мобильных - вертикально в правом верхнем углу */
   #top-nav {
     margin-left: 0 !important;
-    margin-top: 0.5rem;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    margin-top: 0 !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 0 !important;
   }
   
-  /* Страница проекта - адаптация header */
+  #top-nav button,
+  #top-nav a {
+    display: block;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  
+  /* Страница проекта - скрыть breadcrumb навигацию на мобильных */
   body > header #breadcrumb {
-    position: static !important;
-    left: auto !important;
-    padding-left: 0 !important;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    display: none !important;
   }
   
   /* Заголовок проекта на мобильных */
@@ -299,8 +347,16 @@ img, video {
   
   /* Навигация Back to Home на мобильных */
   body > header #top-nav {
+    position: static !important;
+    left: auto !important;
+    padding-left: 0 !important;
     margin-left: 0 !important;
     margin-top: 0.5rem;
+    white-space: nowrap !important;
+  }
+  
+  body > header #top-nav a {
+    white-space: nowrap !important;
   }
   
   /* Контейнер описания проекта на мобильных */
@@ -323,6 +379,31 @@ img, video {
     padding-left: 0 !important;
     padding-right: 0 !important;
     margin-top: 1rem;
+  }
+  
+  /* HomeContent на мобильных - центрирование по вертикали */
+  #home-content-container {
+    margin-top: 0 !important;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    margin-left: 0;
+    margin-right: 0;
+    z-index: 1;
+  }
+  
+  #home-content-item {
+    width: 90vw;
+    height: 60vh;
+  }
+  
+  /* Все картинки и видео на мобильных занимают все 4 колонки */
+  #file-grid > div,
+  #projects-list > div {
+    grid-column: span 4 / span 4 !important;
+    width: 100% !important;
   }
 }
 
