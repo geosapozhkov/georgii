@@ -453,7 +453,10 @@ function showHome(){
     navMind.style.display='inline';
     navMind.style.opacity='1';
   }
-  if(navAbout) navAbout.style.display='inline';
+  if(navAbout) {
+    navAbout.style.display='inline';
+    navAbout.style.opacity='1';
+  }
   // Показываем HomeContent на главной странице
   if (homeContentFiles.length > 0) {
     startHomeContentRotation();
