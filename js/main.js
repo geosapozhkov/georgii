@@ -324,11 +324,6 @@ async function loadHomeContent() {
         continue; // Пропускаем неизвестные типы
       }
       
-      // На мобильных устройствах показываем только картинки
-      if (isMobile && fileType !== 'image') {
-        continue; // Пропускаем видео и Vimeo на мобильных
-      }
-      
       homeContentFiles.push({
         path: isVimeo(file) ? file : `${basePath}/${file}`, // Для Vimeo используем URL напрямую
         type: fileType,
