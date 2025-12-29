@@ -261,6 +261,13 @@ async function loadProject(projectName, subfolder = ''){
           const vimeoContainer = document.createElement('div');
           vimeoContainer.className = 'relative w-full flex items-center justify-center';
           vimeoContainer.setAttribute('data-vimeo-id', vimeoId);
+          vimeoContainer.style.cursor = 'none';
+          vimeoContainer.style.pointerEvents = 'auto';
+          
+          // Создаем невидимый overlay поверх iframe для перехвата событий мыши
+          const mouseOverlay = document.createElement('div');
+          mouseOverlay.style.cssText = 'position:absolute; inset:0; z-index:1; cursor:none !important; pointer-events:auto;';
+          mouseOverlay.style.cursor = 'none';
           
           const iframe = document.createElement('iframe');
           // Простое зацикленное видео с автоплеем, без UI
@@ -273,7 +280,9 @@ async function loadProject(projectName, subfolder = ''){
           iframe.setAttribute('allowfullscreen', '');
           iframe.setAttribute('frameborder', '0');
           iframe.id = `vimeo-player-${vimeoId}`;
-          iframe.style.cssText = 'width:100%; height:auto; aspect-ratio:16/9; border:none; display:block;';
+          iframe.style.cssText = 'width:100%; height:auto; aspect-ratio:16/9; border:none; display:block; cursor:none !important; pointer-events:none;';
+          iframe.style.cursor = 'none';
+          iframe.style.pointerEvents = 'none';
           
           // Иконка звука (правый нижний угол)
           const volumeBtn = document.createElement('div');
@@ -365,9 +374,42 @@ async function loadProject(projectName, subfolder = ''){
             }
           });
           
+          // Размещаем элементы: iframe, затем overlay поверх него, затем кнопка звука поверх всего
           vimeoContainer.appendChild(iframe);
+          vimeoContainer.appendChild(mouseOverlay);
           vimeoContainer.appendChild(volumeBtn);
           wrap.appendChild(vimeoContainer);
+          
+          // Убеждаемся, что кнопка звука остается кликабельной (z-index выше overlay)
+          volumeBtn.style.zIndex = '20';
+          
+          // Добавляем обработчики для обновления кастомного курсора над Vimeo контейнером
+          const customCursor = document.getElementById('custom-cursor');
+          if (customCursor) {
+            const updateCursor = (e) => {
+              if (customCursor) {
+                customCursor.style.left = e.clientX + 'px';
+                customCursor.style.top = e.clientY + 'px';
+                customCursor.style.opacity = '1';
+              }
+            };
+            
+            // Обработчики на overlay для перехвата событий мыши
+            mouseOverlay.addEventListener('mousemove', updateCursor);
+            mouseOverlay.addEventListener('mouseenter', () => {
+              if (customCursor) {
+                customCursor.style.opacity = '1';
+              }
+            });
+            
+            // Также на контейнере для надежности
+            vimeoContainer.addEventListener('mousemove', updateCursor);
+            vimeoContainer.addEventListener('mouseenter', () => {
+              if (customCursor) {
+                customCursor.style.opacity = '1';
+              }
+            });
+          }
           
           // Логирование для отладки
           console.log(`🎬 Vimeo видео загружено (fullwidth, автоплей, зациклено): ID ${vimeoId}, URL: ${image.src || image.name}`);

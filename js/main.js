@@ -1273,3 +1273,75 @@ function stopBackgroundAnimation() {
   }
 }
 
+// =============== КАСТОМНЫЙ КУРСОР ===============
+const customCursor = document.getElementById('custom-cursor');
+let cursorX = 0;
+let cursorY = 0;
+let cursorVisible = false;
+let cursorAnimationFrame = null;
+
+// Обновление позиции курсора
+function updateCursor(e) {
+  cursorX = e.clientX;
+  cursorY = e.clientY;
+  
+  if (customCursor) {
+    customCursor.style.left = cursorX + 'px';
+    customCursor.style.top = cursorY + 'px';
+    
+    if (!cursorVisible) {
+      customCursor.style.opacity = '1';
+      cursorVisible = true;
+    }
+  }
+}
+
+// Анимация курсора через requestAnimationFrame для плавности
+function animateCursor() {
+  if (customCursor && cursorVisible) {
+    customCursor.style.left = cursorX + 'px';
+    customCursor.style.top = cursorY + 'px';
+  }
+  cursorAnimationFrame = requestAnimationFrame(animateCursor);
+}
+
+// Скрытие курсора при выходе за пределы окна
+function hideCursor() {
+  if (customCursor) {
+    customCursor.style.opacity = '0';
+    cursorVisible = false;
+  }
+}
+
+// Показываем курсор только на десктопе
+if (window.innerWidth >= 640) {
+  document.addEventListener('mousemove', updateCursor);
+  document.addEventListener('mouseenter', () => {
+    if (customCursor) {
+      customCursor.style.opacity = '1';
+      cursorVisible = true;
+    }
+  });
+  document.addEventListener('mouseleave', hideCursor);
+  
+  // Запускаем анимацию курсора
+  animateCursor();
+  
+  // Добавляем обработчики на все iframe и их контейнеры для обновления курсора
+  const observer = new MutationObserver(() => {
+    // Находим все контейнеры Vimeo и добавляем обработчики
+    document.querySelectorAll('[data-vimeo-id]').forEach(container => {
+      container.addEventListener('mousemove', updateCursor);
+      container.addEventListener('mouseenter', () => {
+        if (customCursor) {
+          customCursor.style.opacity = '1';
+          cursorVisible = true;
+        }
+      });
+      container.addEventListener('mouseleave', hideCursor);
+    });
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
