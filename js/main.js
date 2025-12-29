@@ -451,11 +451,7 @@ function showHomeContentItem(index) {
   if (currentVideoElement) {
     currentVideoElement.pause();
     currentVideoElement.currentTime = 0;
-    // Скрываем предыдущее видео перед очисткой
-    if (currentVideoElement.parentElement) {
-      currentVideoElement.style.opacity = '0';
-      currentVideoElement.style.transition = 'opacity 0.2s ease-out';
-    }
+    // Просто останавливаем видео без эффектов
     currentVideoElement = null;
   }
   
@@ -560,17 +556,7 @@ function showHomeContentItem(index) {
       currentVideoStopTimeout = setTimeout(() => {
         if (video && !video.paused) {
           video.pause();
-          // Скрываем видео сразу после остановки, чтобы не показывать последний кадр
-          if (video.parentElement) {
-            video.style.opacity = '0';
-            video.style.transition = 'opacity 0.3s ease-out';
-            // Полностью скрываем через небольшую задержку
-            setTimeout(() => {
-              if (video.parentElement) {
-                video.style.display = 'none';
-              }
-            }, 300);
-          }
+          // Просто останавливаем видео без эффектов
         }
       }, stopTime);
     };
@@ -651,16 +637,7 @@ function showHomeContentItem(index) {
         currentVideoStopTimeout = setTimeout(() => {
           if (video && !video.paused) {
             video.pause();
-            // Скрываем видео сразу после остановки
-            if (video.parentElement) {
-              video.style.opacity = '0';
-              video.style.transition = 'opacity 0.3s ease-out';
-              setTimeout(() => {
-                if (video.parentElement) {
-                  video.style.display = 'none';
-                }
-              }, 300);
-            }
+            // Просто останавливаем видео без эффектов
           }
         }, stopTime);
       }
@@ -676,22 +653,9 @@ function showHomeContentItem(index) {
       clearTimeout(fallbackTimeout);
     }, { once: true });
     
-    // Добавляем плавное появление для видео
-    video.style.opacity = '0';
-    video.style.transition = 'opacity 0.3s ease-in';
-    
+    // Видео появляется сразу без эффектов прозрачности
     currentVideoElement = video;
     homeContentItem.appendChild(video);
-    
-    // Плавное появление видео после начала воспроизведения
-    const showVideo = () => {
-      video.style.opacity = '1';
-    };
-    video.addEventListener('playing', showVideo, { once: true });
-    // Если видео уже воспроизводится
-    if (!video.paused) {
-      setTimeout(showVideo, 10);
-    }
   }
   
   // Предзагружаем следующий элемент
@@ -777,6 +741,25 @@ function stopHomeContentRotation() {
   homeContentItem.innerHTML = '';
 }
 
+// Функция для обновления URL без перезагрузки страницы
+function updateURL(section) {
+  const url = new URL(window.location);
+  if (section === 'home') {
+    // Для главной страницы убираем все параметры
+    url.search = '';
+  } else {
+    // Для других страниц устанавливаем параметр section
+    url.searchParams.set('section', section);
+    // Также сохраняем category для обратной совместимости
+    if (section === 'commerce' || section === 'mind') {
+      url.searchParams.set('category', section);
+    } else {
+      url.searchParams.delete('category');
+    }
+  }
+  window.history.pushState({ section }, '', url);
+}
+
 // =============== ГЛАВНАЯ СТРАНИЦА (HOME) ===============
 function showHome(){
   grid.style.display='none';
@@ -814,6 +797,9 @@ function showHome(){
   if (currentSection !== 'home') {
     stopBackgroundAnimation();
   }
+  currentSection = 'home';
+  // Обновляем URL без перезагрузки страницы
+  updateURL('home');
 }
 
 // =============== ПРОСМОТРЩИК ===============
@@ -877,9 +863,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.body.classList.add('home-page');
   document.documentElement.classList.add('home-page');
   
-  // Проверяем, есть ли параметр category в URL
+  // Проверяем параметры в URL
   const urlParams = new URLSearchParams(window.location.search);
-  const categoryFromUrl = urlParams.get('category');
+  const sectionFromUrl = urlParams.get('section');
+  const categoryFromUrl = urlParams.get('category'); // Для обратной совместимости
   
   const logo=document.getElementById('logo');
   if(logo){ 
@@ -924,6 +911,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navAbout.style.opacity='0.35';
     }
     loadProjects('commerce');
+    // Обновляем URL без перезагрузки страницы
+    updateURL('commerce');
   });
   
   document.getElementById('nav-mind')?.addEventListener('click',()=>{ 
@@ -953,6 +942,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navAbout.style.opacity='0.35';
     }
     loadProjects('mind');
+    // Обновляем URL без перезагрузки страницы
+    updateURL('mind');
   });
   
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
@@ -981,58 +972,99 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navAbout.style.display='inline';
       navAbout.style.opacity='1';
     }
+    // Обновляем URL без перезагрузки страницы
+    updateURL('about');
   });
   
-  // Если есть параметр category, автоматически загружаем проекты этой категории
-  if(categoryFromUrl) {
-    const category = categoryFromUrl.toLowerCase();
-    if(category === 'commerce' || category === 'mind') {
-      currentSection = category;
-      stopHomeContentRotation();
-      grid.style.display='none';
-      projectsList.style.display='grid';
-      breadcrumb.style.display='none';
-      const bioEl = document.getElementById('bio');
-      if(bioEl) bioEl.style.display='none';
-      const bioContainer = document.getElementById('bio-container');
-      if(bioContainer) bioContainer.style.display='none';
-      // Убираем класс для разблокировки скролла
-      document.body.classList.remove('home-page');
-      document.documentElement.classList.remove('home-page');
-      if(category === 'commerce') {
-        if(navCommerce) {
-          navCommerce.style.display='inline';
-          navCommerce.style.opacity='1';
-        }
-        if(navMind) {
-          navMind.style.display='inline';
-          navMind.style.opacity='0.35';
-        }
-        if(navAbout) {
-          navAbout.style.display='inline';
-          navAbout.style.opacity='0.35';
-        }
-      } else if(category === 'mind') {
-        if(navCommerce) {
-          navCommerce.style.display='inline';
-          navCommerce.style.opacity='0.35';
-        }
-        if(navMind) {
-          navMind.style.display='inline';
-          navMind.style.opacity='1';
-        }
-        if(navAbout) {
-          navAbout.style.display='inline';
-          navAbout.style.opacity='0.35';
-        }
-      }
-      loadProjects(category);
-    } else {
-      showHome();
+  // Восстанавливаем состояние страницы из URL
+  const section = sectionFromUrl || categoryFromUrl || 'home';
+  
+  if(section === 'about') {
+    currentSection = 'about';
+    stopHomeContentRotation();
+    grid.style.display='none';
+    projectsList.style.display='none';
+    breadcrumb.style.display='none';
+    const bioEl = document.getElementById('bio');
+    if(bioEl) bioEl.style.display='block';
+    const bioContainer = document.getElementById('bio-container');
+    if(bioContainer) bioContainer.style.display='flex';
+    // Убираем класс для разблокировки скролла
+    document.body.classList.remove('home-page');
+    document.documentElement.classList.remove('home-page');
+    if(navCommerce) {
+      navCommerce.style.display='inline';
+      navCommerce.style.opacity='0.35';
     }
+    if(navMind) {
+      navMind.style.display='inline';
+      navMind.style.opacity='0.35';
+    }
+    if(navAbout) {
+      navAbout.style.display='inline';
+      navAbout.style.opacity='1';
+    }
+  } else if(section === 'commerce' || section === 'mind') {
+    currentSection = section;
+    stopHomeContentRotation();
+    grid.style.display='none';
+    projectsList.style.display='grid';
+    breadcrumb.style.display='none';
+    const bioEl = document.getElementById('bio');
+    if(bioEl) bioEl.style.display='none';
+    const bioContainer = document.getElementById('bio-container');
+    if(bioContainer) bioContainer.style.display='none';
+    // Убираем класс для разблокировки скролла
+    document.body.classList.remove('home-page');
+    document.documentElement.classList.remove('home-page');
+    if(section === 'commerce') {
+      if(navCommerce) {
+        navCommerce.style.display='inline';
+        navCommerce.style.opacity='1';
+      }
+      if(navMind) {
+        navMind.style.display='inline';
+        navMind.style.opacity='0.35';
+      }
+      if(navAbout) {
+        navAbout.style.display='inline';
+        navAbout.style.opacity='0.35';
+      }
+    } else if(section === 'mind') {
+      if(navCommerce) {
+        navCommerce.style.display='inline';
+        navCommerce.style.opacity='0.35';
+      }
+      if(navMind) {
+        navMind.style.display='inline';
+        navMind.style.opacity='1';
+      }
+      if(navAbout) {
+        navAbout.style.display='inline';
+        navAbout.style.opacity='0.35';
+      }
+    }
+    loadProjects(section);
   } else {
+    // Главная страница (home)
   showHome();
   }
+  
+  // Обработчик для кнопки "Назад" в браузере
+  window.addEventListener('popstate', (event) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const section = urlParams.get('section') || urlParams.get('category') || 'home';
+    
+    if(section === 'about') {
+      document.getElementById('nav-about')?.click();
+    } else if(section === 'commerce') {
+      document.getElementById('nav-commerce')?.click();
+    } else if(section === 'mind') {
+      document.getElementById('nav-mind')?.click();
+    } else {
+      document.getElementById('logo')?.click();
+    }
+  });
 });
 
 // =============== ФУНКЦИИ АНИМАЦИИ ФОНА ===============
