@@ -329,6 +329,9 @@ async function loadHomeContent() {
 
 // Предзагрузка всех элементов HomeContent
 function preloadAllHomeContent() {
+  // Проверяем, мобильное ли устройство
+  const isMobile = window.innerWidth <= 639;
+  
   homeContentFiles.forEach((item, index) => {
     if (item.type === 'image') {
       // Предзагружаем изображение
@@ -338,14 +341,51 @@ function preloadAllHomeContent() {
         preloadedImages.set(item.path, img);
       }
     } else if (item.type === 'video') {
-      // Предзагружаем видео (только метаданные для начала)
+      // Предзагружаем все видео, но с разной стратегией
       if (!preloadedVideos.has(item.path)) {
         const video = document.createElement('video');
         video.src = item.path;
-        video.preload = 'auto';
+        // Используем 'auto' для более быстрой загрузки
+        // На мобильных предзагружаем первые 3 видео полностью, остальные - метаданные
+        if (isMobile && index >= 3) {
+          video.preload = 'metadata';
+        } else {
+          video.preload = 'auto'; // Полная предзагрузка для быстрого воспроизведения
+        }
         video.muted = true;
-        // Загружаем метаданные
+        video.playsInline = true;
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        
+        // Дополнительная предзагрузка через fetch для ускорения
+        // Загружаем первые байты файла, чтобы браузер начал кэширование
+        if (video.preload === 'auto') {
+          fetch(item.path, {
+            method: 'HEAD',
+            cache: 'force-cache'
+          }).catch(() => {
+            // Игнорируем ошибки, это не критично
+          });
+        }
+        
+        // Начинаем загрузку сразу
         video.load();
+        
+        // Для полной предзагрузки начинаем буферизацию
+        if (video.preload === 'auto') {
+          video.addEventListener('canplaythrough', () => {
+            console.log(`✅ Видео предзагружено: ${item.path}`);
+          }, { once: true });
+          
+          // Принудительно начинаем буферизацию
+          video.addEventListener('loadedmetadata', () => {
+            // Пытаемся загрузить больше данных
+            if (video.readyState < 4) {
+              video.currentTime = 0.1; // Небольшой сдвиг для начала буферизации
+            }
+          }, { once: true });
+        }
+        
         preloadedVideos.set(item.path, video);
       }
     }
@@ -356,6 +396,7 @@ function preloadAllHomeContent() {
 function preloadNextHomeContentItem(currentIndex) {
   if (homeContentFiles.length === 0) return;
   
+  const isMobile = window.innerWidth <= 639;
   const nextIndex = (currentIndex + 1) % homeContentFiles.length;
   const nextItem = homeContentFiles[nextIndex];
   
@@ -371,10 +412,27 @@ function preloadNextHomeContentItem(currentIndex) {
     if (!preloadedVideos.has(nextItem.path)) {
       const video = document.createElement('video');
       video.src = nextItem.path;
+      // Всегда используем 'auto' для следующего видео для быстрой смены
       video.preload = 'auto';
       video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
       video.load();
+      
+      // Начинаем буферизацию сразу
+      video.addEventListener('canplaythrough', () => {
+        console.log(`✅ Следующее видео готово: ${nextItem.path}`);
+      }, { once: true });
+      
       preloadedVideos.set(nextItem.path, video);
+    } else {
+      // Если видео уже в кэше, убеждаемся что оно загружено
+      const cachedVideo = preloadedVideos.get(nextItem.path);
+      if (cachedVideo && cachedVideo.readyState < 3) {
+        cachedVideo.preload = 'auto';
+        cachedVideo.load();
+      }
     }
   }
 }
@@ -384,7 +442,6 @@ function showHomeContentItem(index) {
   if (homeContentFiles.length === 0) return;
   
   const item = homeContentFiles[index % homeContentFiles.length];
-  homeContentItem.innerHTML = '';
   
   // Очищаем предыдущие таймеры
   if (currentVideoStopTimeout) {
@@ -394,8 +451,16 @@ function showHomeContentItem(index) {
   if (currentVideoElement) {
     currentVideoElement.pause();
     currentVideoElement.currentTime = 0;
+    // Скрываем предыдущее видео перед очисткой
+    if (currentVideoElement.parentElement) {
+      currentVideoElement.style.opacity = '0';
+      currentVideoElement.style.transition = 'opacity 0.2s ease-out';
+    }
     currentVideoElement = null;
   }
+  
+  // Очищаем контейнер
+  homeContentItem.innerHTML = '';
   
   if (item.type === 'image') {
     // Используем предзагруженное изображение, если оно есть
@@ -423,28 +488,61 @@ function showHomeContentItem(index) {
     let video;
     if (preloadedVideos.has(item.path)) {
       const preloadedVideo = preloadedVideos.get(item.path);
-      video = preloadedVideo.cloneNode(); // Клонируем предзагруженное видео
+      // Используем предзагруженное видео напрямую для максимальной скорости
+      video = preloadedVideo;
       video.currentTime = 0; // Сбрасываем время воспроизведения
+      // Если видео уже загружено, оно начнет воспроизведение мгновенно
     } else {
       video = document.createElement('video');
       video.src = item.path;
+      // Всегда используем 'auto' для быстрой загрузки
       video.preload = 'auto';
       // Сохраняем в кэш
       const preloadVideo = document.createElement('video');
       preloadVideo.src = item.path;
       preloadVideo.preload = 'auto';
       preloadVideo.muted = true;
+      preloadVideo.playsInline = true;
+      preloadVideo.setAttribute('playsinline', 'true');
+      preloadVideo.setAttribute('webkit-playsinline', 'true');
       preloadVideo.load();
       preloadedVideos.set(item.path, preloadVideo);
     }
     
+    // Настройки видео
     video.autoplay = true;
     video.loop = false;
     video.muted = true;
-    video.preload = 'auto';
+    video.controls = false; // Отключаем нативные элементы управления
+    video.disablePictureInPicture = true; // Отключаем Picture-in-Picture
     video.playsInline = true;
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('x5-playsinline', 'true'); // Для Android
+    video.setAttribute('x5-video-player-type', 'h5'); // Для Android
+    video.setAttribute('x5-video-player-fullscreen', 'false'); // Запрещаем полноэкранный режим на Android
+    
+    // Предотвращаем полноэкранный режим через обработчики событий
+    video.addEventListener('webkitbeginfullscreen', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }, { passive: false });
+    
+    video.addEventListener('webkitendfullscreen', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }, { passive: false });
+    
+    // Блокируем попытки открыть полноэкранный режим программно
+    const originalRequestFullscreen = video.requestFullscreen;
+    const originalWebkitRequestFullscreen = video.webkitRequestFullscreen;
+    const originalWebkitEnterFullscreen = video.webkitEnterFullscreen;
+    
+    video.requestFullscreen = () => {};
+    video.webkitRequestFullscreen = () => {};
+    video.webkitEnterFullscreen = () => {};
     
     // Устанавливаем минимальное время воспроизведения 5 секунд
     const MIN_VIDEO_DURATION = 5000; // 5 секунд
@@ -462,15 +560,88 @@ function showHomeContentItem(index) {
       currentVideoStopTimeout = setTimeout(() => {
         if (video && !video.paused) {
           video.pause();
+          // Скрываем видео сразу после остановки, чтобы не показывать последний кадр
+          if (video.parentElement) {
+            video.style.opacity = '0';
+            video.style.transition = 'opacity 0.3s ease-out';
+            // Полностью скрываем через небольшую задержку
+            setTimeout(() => {
+              if (video.parentElement) {
+                video.style.display = 'none';
+              }
+            }, 300);
+          }
         }
       }, stopTime);
     };
     
+    // Обработчик для начала воспроизведения
+    const handlePlay = () => {
+      // Убеждаемся, что видео воспроизводится
+      if (video.paused) {
+        video.play().catch(err => {
+          console.warn('Ошибка воспроизведения видео:', err);
+        });
+      }
+      
+      // На мобильных устройствах начинаем предзагрузку следующего видео
+      // во время воспроизведения текущего
+      const isMobile = window.innerWidth <= 639;
+      if (isMobile && item.type === 'video') {
+        const nextIndex = (index + 1) % homeContentFiles.length;
+        const nextItem = homeContentFiles[nextIndex];
+        
+        // Если следующий элемент - видео, начинаем его предзагрузку
+        if (nextItem && nextItem.type === 'video') {
+          // Проверяем, не загружено ли уже следующее видео
+          if (!preloadedVideos.has(nextItem.path)) {
+            console.log('📱 Начинаем предзагрузку следующего видео на мобильном:', nextItem.path);
+            const nextVideo = document.createElement('video');
+            nextVideo.src = nextItem.path;
+            nextVideo.preload = 'auto'; // Полная предзагрузка
+            nextVideo.muted = true;
+            nextVideo.playsInline = true;
+            nextVideo.setAttribute('playsinline', 'true');
+            nextVideo.setAttribute('webkit-playsinline', 'true');
+            nextVideo.load();
+            
+            // Начинаем буферизацию
+            nextVideo.addEventListener('canplaythrough', () => {
+              console.log('✅ Следующее видео готово к воспроизведению:', nextItem.path);
+            }, { once: true });
+            
+            preloadedVideos.set(nextItem.path, nextVideo);
+          } else {
+            // Если видео уже в кэше, убеждаемся что оно загружено
+            const cachedVideo = preloadedVideos.get(nextItem.path);
+            if (cachedVideo && cachedVideo.readyState < 3) {
+              cachedVideo.preload = 'auto';
+              cachedVideo.load();
+            }
+          }
+        }
+      }
+    };
+    
+    video.addEventListener('play', handlePlay, { once: true });
+    
     // Если метаданные уже загружены (из предзагрузки), используем их сразу
     if (video.readyState >= 2) {
       handleLoadedMetadata();
+      // Пытаемся начать воспроизведение
+      video.play().catch(err => {
+        console.warn('Ошибка автовоспроизведения видео:', err);
+        // На мобильных может потребоваться взаимодействие пользователя
+        // В этом случае видео начнет воспроизводиться при следующей попытке
+      });
     } else {
       video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+      // Пытаемся начать воспроизведение после загрузки метаданных
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(err => {
+          console.warn('Ошибка автовоспроизведения видео после загрузки:', err);
+        });
+      }, { once: true });
     }
     
     // Если метаданные не загрузились, используем минимум 5 секунд
@@ -480,8 +651,24 @@ function showHomeContentItem(index) {
         currentVideoStopTimeout = setTimeout(() => {
           if (video && !video.paused) {
             video.pause();
+            // Скрываем видео сразу после остановки
+            if (video.parentElement) {
+              video.style.opacity = '0';
+              video.style.transition = 'opacity 0.3s ease-out';
+              setTimeout(() => {
+                if (video.parentElement) {
+                  video.style.display = 'none';
+                }
+              }, 300);
+            }
           }
         }, stopTime);
+      }
+      // Пытаемся начать воспроизведение даже если метаданные не загрузились
+      if (video.paused) {
+        video.play().catch(err => {
+          console.warn('Ошибка воспроизведения видео (fallback):', err);
+        });
       }
     }, 1000);
     
@@ -489,8 +676,22 @@ function showHomeContentItem(index) {
       clearTimeout(fallbackTimeout);
     }, { once: true });
     
+    // Добавляем плавное появление для видео
+    video.style.opacity = '0';
+    video.style.transition = 'opacity 0.3s ease-in';
+    
     currentVideoElement = video;
     homeContentItem.appendChild(video);
+    
+    // Плавное появление видео после начала воспроизведения
+    const showVideo = () => {
+      video.style.opacity = '1';
+    };
+    video.addEventListener('playing', showVideo, { once: true });
+    // Если видео уже воспроизводится
+    if (!video.paused) {
+      setTimeout(showVideo, 10);
+    }
   }
   
   // Предзагружаем следующий элемент

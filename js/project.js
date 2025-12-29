@@ -14,9 +14,60 @@ const projectDescription = document.getElementById('project-description');
 let currentItems = [];
 let currentIndex = 0;
 
+// =============== LAZY LOADING ===============
+// Intersection Observer для lazy loading
+let imageObserver = null;
+
+// Инициализация Intersection Observer для lazy loading
+function initLazyLoading() {
+  // Проверяем поддержку Intersection Observer
+  if ('IntersectionObserver' in window) {
+    imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const element = entry.target;
+          
+          // Для изображений
+          if (element.tagName === 'IMG' && element.dataset.src) {
+            element.src = element.dataset.src;
+            element.removeAttribute('data-src');
+            imageObserver.unobserve(element);
+          }
+          
+          // Для видео
+          if (element.tagName === 'VIDEO' && element.dataset.src) {
+            const source = element.querySelector('source');
+            if (source) {
+              source.src = element.dataset.src;
+              element.load();
+              element.removeAttribute('data-src');
+            }
+            imageObserver.unobserve(element);
+          }
+        }
+      });
+    }, {
+      rootMargin: '50px', // Начинаем загрузку за 50px до появления в viewport
+      threshold: 0.01
+    });
+  }
+}
+
 // =============== ВСПОМОГАТЕЛЬНОЕ ===============
 const isImage = (name) => /\.(jpe?g|png|gif|webp)$/i.test(name);
 const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
+const isVimeo = (name) => /^vimeo:/i.test(name) || /vimeo\.com/i.test(name);
+
+// Извлечение ID видео из Vimeo URL
+function getVimeoId(url) {
+  // Поддерживаем форматы:
+  // - vimeo:123456789
+  // - https://vimeo.com/123456789
+  // - https://player.vimeo.com/video/123456789
+  // - 123456789 (просто ID)
+  const match = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/|^vimeo:)(\d+)/i) || url.match(/^(\d+)$/);
+  return match ? match[1] : null;
+}
 
 // Генерация случайного текста из 3 предложений
 function generateRandomDescription() {
@@ -175,19 +226,164 @@ async function loadProject(projectName, subfolder = ''){
       }
 
       if(isImage(image.name)){
-        // Для fullwidth используем полную ширину без ограничения по высоте
-        if(isFullwidth){
-          wrap.innerHTML = `<img src="${image.src}" alt="${image.name}" style="width:100%; max-width:100%; height:auto; display:block;">`;
+        const img = document.createElement('img');
+        img.alt = image.name;
+        img.style.cssText = 'width:100%; height:auto; display:block;';
+        
+        // Lazy loading для изображений
+        if (imageObserver) {
+          // Используем placeholder или data-src для lazy loading
+          img.dataset.src = image.src;
+          // Создаем placeholder (можно использовать blur или прозрачный пиксель)
+          img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
+          img.loading = 'lazy'; // Нативный lazy loading как fallback
+          imageObserver.observe(img);
         } else {
-          // Обычные изображения: ширина 100%, высота автоматическая, центрированы
-          wrap.innerHTML = `<img src="${image.src}" alt="${image.name}" style="width:100%; height:auto; display:block;">`;
+          // Fallback если Intersection Observer не поддерживается
+          img.src = image.src;
+          img.loading = 'lazy';
         }
+        
+        wrap.appendChild(img);
         // Изображения не кликабельны - убрали открытие в viewer
+      } else if(isVimeo(image.src || image.name)){
+        // Встраивание видео Vimeo - всегда fullwidth с таким же UI как у локальных видео
+        const vimeoId = getVimeoId(image.src || image.name);
+        if (vimeoId) {
+          // Устанавливаем fullwidth для Vimeo видео
+          wrap.className = 'cursor-pointer col-span-12 w-full';
+          wrap.style.width = '100%';
+          wrap.style.maxWidth = '100%';
+          // Fullwidth сбрасывает позицию - начинаем новую строку
+          currentColumn = 1;
+          
+          // Создаем контейнер для Vimeo видео - простой зацикленный автоплей с кнопкой звука
+          const vimeoContainer = document.createElement('div');
+          vimeoContainer.className = 'relative w-full flex items-center justify-center';
+          vimeoContainer.setAttribute('data-vimeo-id', vimeoId);
+          
+          const iframe = document.createElement('iframe');
+          // Простое зацикленное видео с автоплеем, без UI
+          // autoplay=1 - проигрываем сразу
+          // loop=1 - зацикливаем
+          // muted=1 - без звука
+          // quality=auto - максимальное качество
+          iframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&quality=auto`;
+          iframe.setAttribute('allow', 'autoplay');
+          iframe.setAttribute('allowfullscreen', '');
+          iframe.setAttribute('frameborder', '0');
+          iframe.id = `vimeo-player-${vimeoId}`;
+          iframe.style.cssText = 'width:100%; height:auto; aspect-ratio:16/9; border:none; display:block;';
+          
+          // Иконка звука (правый нижний угол)
+          const volumeBtn = document.createElement('div');
+          volumeBtn.className = 'video-volume-btn';
+          volumeBtn.style.cssText = 'position:absolute; bottom:12px; right:12px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:auto; z-index:10; opacity:1; transition:opacity 0.3s;';
+          
+          let vimeoPlayer = null;
+          let isMuted = true;
+          let currentVolume = 0;
+          
+          // Обновление иконки звука
+          const updateVolumeIcon = () => {
+            if(isMuted || currentVolume === 0) {
+              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+            } else if(currentVolume < 0.5) {
+              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>';
+            } else {
+              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+            }
+          };
+          
+          // Устанавливаем начальную иконку выключенного звука
+          updateVolumeIcon();
+          
+          // Клик на кнопку звука
+          volumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (vimeoPlayer) {
+              if(isMuted || currentVolume === 0) {
+                vimeoPlayer.setVolume(1).then(() => {
+                  currentVolume = 1;
+                  isMuted = false;
+                  updateVolumeIcon();
+                }).catch(() => {});
+              } else {
+                vimeoPlayer.setVolume(0).then(() => {
+                  currentVolume = 0;
+                  isMuted = true;
+                  updateVolumeIcon();
+                }).catch(() => {});
+              }
+            }
+          });
+          
+          // Инициализация Vimeo Player API для установки максимального качества и управления звуком
+          iframe.addEventListener('load', () => {
+            if (typeof Vimeo !== 'undefined' && Vimeo.Player) {
+              vimeoPlayer = new Vimeo.Player(iframe);
+              
+              // Устанавливаем максимальное качество видео
+              vimeoPlayer.getQualities().then(qualities => {
+                if(qualities && qualities.length > 0) {
+                  const maxQuality = qualities[qualities.length - 1];
+                  vimeoPlayer.setQuality(maxQuality).catch(() => {
+                    vimeoPlayer.setQuality('auto').catch(() => {});
+                  });
+                } else {
+                  vimeoPlayer.setQuality('auto').catch(() => {});
+                }
+              }).catch(() => {
+                vimeoPlayer.setQuality('auto').catch(() => {});
+              });
+              
+              // Явно устанавливаем volume = 0 и muted = true при инициализации
+              vimeoPlayer.setVolume(0).then(() => {
+                currentVolume = 0;
+                isMuted = true;
+                updateVolumeIcon();
+              }).catch(() => {
+                // Если не удалось установить, проверяем текущее состояние
+                vimeoPlayer.getVolume().then(volume => {
+                  currentVolume = volume;
+                  isMuted = volume === 0;
+                  updateVolumeIcon();
+                }).catch(() => {
+                  // Если и это не работает, оставляем начальное состояние
+                  currentVolume = 0;
+                  isMuted = true;
+                  updateVolumeIcon();
+                });
+              });
+              
+              // Слушаем изменения громкости
+              vimeoPlayer.on('volumechange', (data) => {
+                currentVolume = data.volume;
+                isMuted = data.volume === 0;
+                updateVolumeIcon();
+              });
+            }
+          });
+          
+          vimeoContainer.appendChild(iframe);
+          vimeoContainer.appendChild(volumeBtn);
+          wrap.appendChild(vimeoContainer);
+          
+          // Логирование для отладки
+          console.log(`🎬 Vimeo видео загружено (fullwidth, автоплей, зациклено): ID ${vimeoId}, URL: ${image.src || image.name}`);
+          
+          // Не добавляем в observer - загружаем сразу для быстрого отображения
+          
+          // Не добавляем в observer - загружаем сразу для быстрого отображения
+        }
       } else if(isVideo(image.name)){
         const video = document.createElement('video');
         const source = document.createElement('source');
+        
+        // Загружаем видео сразу (без lazy loading) для быстрого отображения
         source.src = image.src;
         source.type = 'video/mp4';
+        
         video.appendChild(source);
         
         // Если fullwidthRepeat - простое зацикленное видео на всю ширину без плеера
@@ -195,6 +391,7 @@ async function loadProject(projectName, subfolder = ''){
           console.log(`   🎬 Обработка fullwidthRepeat видео: ${image.name}`);
           video.className = 'w-full h-auto object-contain';
           video.style.cssText = 'width:100%; max-width:100%; height:auto; display:block;';
+          video.preload = 'auto'; // Предзагрузка для быстрого отображения
           video.autoplay = true;
           video.loop = true;
           video.muted = true;
@@ -214,255 +411,42 @@ async function loadProject(projectName, subfolder = ''){
           videoContainer.className = 'relative w-full';
           videoContainer.appendChild(video);
           wrap.appendChild(videoContainer);
-        }
-        // Если fullwidth (но не fullwidthRepeat) - создаём простой видеоплеер с минималистичным интерфейсом
-        else if(isFullwidth) {
-          // Создаём контейнер для видео
-          const videoContainer = document.createElement('div');
-          videoContainer.className = 'relative w-full flex items-center justify-center';
           
+          // Не добавляем в observer - загружаем сразу
+        }
+        // Если fullwidth (но не fullwidthRepeat) - простое зацикленное видео на всю ширину без плеера
+        else if(isFullwidth) {
+          console.log(`   🎬 Обработка fullwidth видео: ${image.name}`);
           video.className = 'w-full h-auto object-contain';
           video.style.cssText = 'width:100%; max-width:100%; height:auto; display:block;';
-          video.preload = 'auto';
+          video.preload = 'auto'; // Предзагрузка для быстрого отображения
+          video.autoplay = true;
+          video.loop = true;
           video.muted = true;
-          video.controls = false; // Отключаем стандартные контролы
           video.playsInline = true;
-          video.setAttribute('playsinline', 'true');
-          video.setAttribute('webkit-playsinline', 'true');
           
-          // Линия прогресса внизу (высота увеличена в 10 раз: 2px -> 20px)
-          const progressBar = document.createElement('div');
-          progressBar.className = 'video-progress-bar';
-          progressBar.style.cssText = 'position:absolute; bottom:0; left:0; right:0; height:20px; background:rgba(172,172,172,0.3); cursor:pointer; opacity:0; transition:opacity 0.3s;';
-          
-          const progressFill = document.createElement('div');
-          progressFill.className = 'video-progress-fill';
-          progressFill.style.cssText = 'height:100%; background:#ACACAC; width:0%; transition:width 0.1s linear;';
-          progressBar.appendChild(progressFill);
-          
-          // Иконка Play/Pause (по центру)
-          const playPauseBtn = document.createElement('div');
-          playPauseBtn.className = 'video-play-pause';
-          playPauseBtn.style.cssText = 'position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; transition:opacity 0.3s;';
-          playPauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:48px; height:48px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-          
-          // Иконка звука (правый нижний угол)
-          const volumeBtn = document.createElement('div');
-          volumeBtn.className = 'video-volume-btn';
-          volumeBtn.style.cssText = 'position:absolute; bottom:24px; right:48px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:auto; z-index:10; opacity:0; transition:opacity 0.3s;';
-          volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
-          
-          // Иконка полноэкранного режима (правый нижний угол, рядом со звуком)
-          const fullscreenBtn = document.createElement('div');
-          fullscreenBtn.className = 'video-fullscreen-btn';
-          fullscreenBtn.style.cssText = 'position:absolute; bottom:24px; right:12px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; pointer-events:auto; z-index:10; opacity:0; transition:opacity 0.3s;';
-          fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
-          
-          // Обновление иконки звука
-          const updateVolumeIcon = () => {
-            if(video.muted || video.volume === 0) {
-              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
-            } else if(video.volume < 0.5) {
-              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>';
-            } else {
-              volumeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
-            }
-          };
-          
-          // Обновление иконки Play/Pause
-          const updatePlayPauseIcon = () => {
-            if(video.paused) {
-              playPauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:48px; height:48px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-            } else {
-              playPauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:48px; height:48px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
-            }
-          };
-          
-          // Обновление иконки полноэкранного режима
-          const updateFullscreenIcon = () => {
-            if(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
-              fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
-            } else {
-              fullscreenBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; fill:#ACACAC;" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
-            }
-          };
-          
-          // Показать/скрыть UI элементов
-          let hideUITimeout = null;
-          
-          const showUI = () => {
-            // Очищаем таймер скрытия
-            if(hideUITimeout) {
-              clearTimeout(hideUITimeout);
-              hideUITimeout = null;
-            }
-            
-            // Показываем элементы UI (только если видео на паузе - показываем playPauseBtn)
-            if(video.paused) {
-              playPauseBtn.style.opacity = '1';
-            }
-            progressBar.style.opacity = '1';
-            volumeBtn.style.opacity = '1';
-            fullscreenBtn.style.opacity = '1';
-            
-            // Устанавливаем таймер на скрытие через 1 секунду
-            hideUITimeout = setTimeout(() => {
-              hideUI();
-              hideUITimeout = null;
-            }, 1000);
-          };
-          
-          const hideUI = () => {
-            playPauseBtn.style.opacity = '0';
-            progressBar.style.opacity = '0';
-            volumeBtn.style.opacity = '0';
-            fullscreenBtn.style.opacity = '0';
-            
-            if(hideUITimeout) {
-              clearTimeout(hideUITimeout);
-              hideUITimeout = null;
-            }
-          };
-          
-          // Переключение полноэкранного режима
-          const toggleFullscreen = () => {
-            // Проверяем, является ли устройство iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            
-            if(!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
-              // Войти в полноэкранный режим
-              if(isIOS) {
-                // На iOS используем webkitEnterFullscreen для видео элемента напрямую
-                if(video.webkitEnterFullscreen) {
-                  video.webkitEnterFullscreen();
-                }
-              } else if(videoContainer.requestFullscreen) {
-                videoContainer.requestFullscreen();
-              } else if(videoContainer.webkitRequestFullscreen) {
-                videoContainer.webkitRequestFullscreen();
-              } else if(videoContainer.mozRequestFullScreen) {
-                videoContainer.mozRequestFullScreen();
-              } else if(videoContainer.msRequestFullscreen) {
-                videoContainer.msRequestFullscreen();
-              }
-            } else {
-              // Выйти из полноэкранного режима
-              if(document.exitFullscreen) {
-                document.exitFullscreen();
-              } else if(document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-              } else if(document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-              } else if(document.msExitFullscreen) {
-                document.msExitFullscreen();
-              }
-            }
-          };
-          
-          // Обновление прогресса
-          const updateProgress = () => {
-            if(video.duration && video.duration > 0) {
-              const percent = (video.currentTime / video.duration) * 100;
-              progressFill.style.width = percent + '%';
-            }
-          };
-          
-          // Обновляем прогресс при воспроизведении
-          let progressInterval = null;
-          video.addEventListener('play', () => {
-            updatePlayPauseIcon();
-            progressInterval = setInterval(updateProgress, 100);
+          // Добавляем обработчики ошибок для диагностики
+          video.addEventListener('error', (e) => {
+            console.error(`   ❌ Ошибка загрузки видео ${image.name}:`, e);
+            console.error(`   URL: ${image.src}`);
           });
-          video.addEventListener('pause', () => {
-            updatePlayPauseIcon();
-            if(progressInterval) {
-              clearInterval(progressInterval);
-              progressInterval = null;
-            }
-            updateProgress();
-          });
-          video.addEventListener('loadedmetadata', updateProgress);
-          video.addEventListener('volumechange', updateVolumeIcon);
-          
-          // События полноэкранного режима
-          document.addEventListener('fullscreenchange', updateFullscreenIcon);
-          document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
-          document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
-          document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
-          
-          // Инициализация иконок
-          updatePlayPauseIcon();
-          updateVolumeIcon();
-          updateFullscreenIcon();
-          
-          // UI показывается/скрывается при наведении
-          videoContainer.addEventListener('mouseenter', () => {
-            showUI();
+          video.addEventListener('loadeddata', () => {
+            console.log(`   ✅ Видео загружено: ${image.name}`);
           });
           
-          videoContainer.addEventListener('mouseleave', () => {
-            hideUI();
-          });
-          
-          videoContainer.addEventListener('mousemove', () => {
-            // При движении мыши показываем UI и сбрасываем таймер
-            showUI();
-          });
-          
-          // Клик на видео = play/pause
-          videoContainer.addEventListener('click', (e) => {
-            // Если клик был на progress bar или кнопках, не обрабатываем здесь
-            if(e.target === progressBar || progressBar.contains(e.target) || 
-               e.target === volumeBtn || volumeBtn.contains(e.target) ||
-               e.target === fullscreenBtn || fullscreenBtn.contains(e.target)) {
-              return;
-            }
-            if(video.paused) {
-              video.play();
-            } else {
-              video.pause();
-            }
-            showUI(); // Показываем UI при клике
-          });
-          
-          // Клик на progress bar = перемотка
-          progressBar.addEventListener('click', (e) => {
-            if(!video.duration || video.duration <= 0) return;
-            const rect = progressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percent = Math.max(0, Math.min(1, clickX / rect.width));
-            video.currentTime = percent * video.duration;
-            updateProgress();
-            showUI(); // Показываем UI при клике
-          });
-          
-          // Клик на кнопку звука
-          volumeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            video.muted = !video.muted;
-            updateVolumeIcon();
-            showUI(); // Показываем UI при клике
-          });
-          
-          // Клик на кнопку полноэкранного режима
-          fullscreenBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleFullscreen();
-            showUI(); // Показываем UI при клике
-          });
-          
+          // Простой контейнер без контролов
+          const videoContainer = document.createElement('div');
+          videoContainer.className = 'relative w-full';
           videoContainer.appendChild(video);
-          videoContainer.appendChild(playPauseBtn);
-          videoContainer.appendChild(progressBar);
-          videoContainer.appendChild(volumeBtn);
-          videoContainer.appendChild(fullscreenBtn);
           wrap.appendChild(videoContainer);
-        
+          
+          // Не добавляем в observer - загружаем сразу
         } else {
           // Для обычных видео (не fullwidth) - простое автопроигрывание с зацикливанием
           // Без ограничений по высоте и без серого фона
           video.className = 'w-full h-auto object-contain';
           video.style.cssText = 'width:100%; height:auto; display:block;';
+          video.preload = 'auto'; // Предзагрузка для быстрого отображения
           video.autoplay = true;
           video.loop = true;
           video.muted = true;
@@ -473,6 +457,8 @@ async function loadProject(projectName, subfolder = ''){
           videoContainer.className = 'relative w-full';
           videoContainer.appendChild(video);
           wrap.appendChild(videoContainer);
+          
+          // Не добавляем в observer - загружаем сразу для быстрого отображения
         }
       } else {
         return; // Пропускаем неизвестные типы файлов
@@ -558,36 +544,60 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
         const escapedProjectName = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/_/g, '[\\s_]');
         const coverPattern = new RegExp(`^Cover_${escapedProjectName}_image_00|^Cover_${escapedProjectName}_00`, 'i');
         
-        for(const jsonFile of jsonFiles){
+        for(let i = 0; i < jsonFiles.length; i++){
+          const jsonFile = jsonFiles[i];
           // Пропускаем файлы с "cover" в названии или соответствующие паттерну обложки
           if(jsonFile.toLowerCase().includes('cover') || coverPattern.test(jsonFile)){
             console.log(`   ⏭️ Пропущен файл (обложка): ${jsonFile}`);
             continue;
           }
-          // Правильно кодируем имя файла для URL
+          
+          // Проверяем, является ли это Vimeo ссылкой
+          if(isVimeo(jsonFile)){
+            // Для Vimeo ссылок используем исходный URL как src
+            console.log(`   🎬 Добавлено Vimeo видео: ${jsonFile}`);
+            foundFiles.push({
+              name: jsonFile,
+              src: jsonFile, // Используем исходный URL
+              number: -1, // Vimeo видео идут первыми (отрицательное число для приоритета)
+              originalIndex: i // Сохраняем исходный индекс для сохранения порядка
+            });
+            continue;
+          }
+          
+          // Для обычных файлов формируем путь
           const encodedFile = encodeURIComponent(jsonFile).replace(/'/g, '%27');
           const fileSrc = `${basePath}/${encodedFile}`;
           console.log(`   ✅ Добавлен файл: ${jsonFile} -> ${fileSrc}`);
           foundFiles.push({
             name: jsonFile,
             src: fileSrc,
-            number: extractNumber(jsonFile)
+            number: extractNumber(jsonFile),
+            originalIndex: i // Сохраняем исходный индекс для сохранения порядка
           });
         }
         
         // Если нашли файлы через files.json, используем их
         if(foundFiles.length > 0){
-          // Сортируем файлы: сначала fullwidth видео (включая fullwidthRepeat), потом остальные
+          // Сортируем файлы: сначала Vimeo видео (сохраняя их порядок из files.json), потом остальные (сохраняя их порядок)
           foundFiles.sort((a, b) => {
+            const aIsVimeo = isVimeo(a.name);
+            const bIsVimeo = isVimeo(b.name);
+            
+            // Vimeo видео идут первыми, сохраняем их порядок из files.json
+            if(aIsVimeo && !bIsVimeo) return -1;
+            if(!aIsVimeo && bIsVimeo) return 1;
+            if(aIsVimeo && bIsVimeo) return a.originalIndex - b.originalIndex;
+            
             const aIsFullwidthVideo = (a.name.toLowerCase().includes('fullwidth') || a.name.toLowerCase().includes('fullwidthrepeat')) && isVideo(a.name);
             const bIsFullwidthVideo = (b.name.toLowerCase().includes('fullwidth') || b.name.toLowerCase().includes('fullwidthrepeat')) && isVideo(b.name);
             
-            // Fullwidth видео идут первыми
+            // Fullwidth видео идут после Vimeo
             if(aIsFullwidthVideo && !bIsFullwidthVideo) return -1;
             if(!aIsFullwidthVideo && bIsFullwidthVideo) return 1;
             
-            // Если оба fullwidth видео или оба не fullwidth видео, сортируем по номеру
-            return a.number - b.number;
+            // Если оба fullwidth видео или оба не fullwidth видео, сохраняем порядок из files.json
+            return a.originalIndex - b.originalIndex;
           });
           console.log(`✅ Найдено ${foundFiles.length} файлов для проекта ${projectName}:`, foundFiles.map(f => f.name));
           return foundFiles;
@@ -783,6 +793,9 @@ async function loadProjectDescription() {
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', ()=>{
+  // Инициализируем lazy loading
+  initLazyLoading();
+  
   if(!projectName){
     loading.textContent='Проект не указан. Вернитесь на главную страницу.';
     return;

@@ -246,6 +246,20 @@ img, video {
   padding: 0;
 }
 
+/* Центрирование HomeContent для экранов 16:10 и других широких экранов */
+@media (min-width: 640px) and (min-aspect-ratio: 16/10) {
+  #home-content-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    z-index: 1;
+  }
+}
+
 #home-content-item {
   display: flex;
   align-items: center;
@@ -270,6 +284,46 @@ img, video {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+/* Скрываем нативные элементы управления видео */
+#home-content-item video::-webkit-media-controls {
+  display: none !important;
+}
+
+#home-content-item video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+#home-content-item video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+#home-content-item video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+#home-content-item video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+#home-content-item video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
+/* Для Firefox */
+#home-content-item video::-moz-media-controls {
+  display: none !important;
+}
+
+/* Предотвращаем полноэкранный режим через CSS */
+#home-content-item video {
+  -webkit-touch-callout: none; /* Отключаем контекстное меню на iOS */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  touch-action: none; /* Отключаем жесты на мобильных */
 }
 
 /* =============== МОБИЛЬНАЯ ВЕРСИЯ (до 640px) =============== */
@@ -417,5 +471,41 @@ img, video {
     grid-column: span 4 / span 4 !important;
     width: 100% !important;
   }
+}
+
+/* =============== VIMEO VIDEO INDICATOR =============== */
+.vimeo-video-container {
+  position: relative;
+}
+
+.vimeo-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(26, 183, 234, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 10;
+  pointer-events: none;
+  font-family: Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Чтобы скрыть индикатор, раскомментируйте следующую строку: */
+/* .vimeo-indicator { display: none !important; } */
+
+/* Скрываем стандартный UI Vimeo внутри iframe */
+.vimeo-video-container iframe {
+  pointer-events: auto;
+}
+
+/* Скрываем нативные элементы управления Vimeo через CSS (если они все еще видны) */
+.vimeo-video-container iframe[src*="vimeo.com"] {
+  /* Vimeo использует iframe, поэтому мы не можем напрямую скрыть их UI через CSS */
+  /* Но параметры в URL должны скрыть все элементы управления */
 }
 
