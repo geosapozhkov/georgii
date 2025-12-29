@@ -45,6 +45,9 @@ const PROJECT_COVER_STYLE = 'image-only'; // Измените здесь сти�
 // Функция getRandomColor() удалена - больше не используем placeholder'ы с серыми обложками
 
 // =============== ЗАГРУЗКА ПРОЕКТОВ ===============
+// Кэш для обложек проектов
+const projectCoversCache = new Map();
+
 async function loadProjects(category = null){
   try{
     projectsList.innerHTML = '';
@@ -65,29 +68,42 @@ async function loadProjects(category = null){
       return;
     }
 
-    for(const project of projects){
+    // Загружаем все обложки параллельно
+    const coverPromises = projects.map(project => 
+      getCoverImageFromProject(project.name, project.category)
+    );
+    const coverInfos = await Promise.all(coverPromises);
+    
+    // Предзагружаем все изображения обложек
+    const preloadPromises = [];
+    coverInfos.forEach((coverInfo, index) => {
+      if (coverInfo.url) {
+        const img = new Image();
+        img.src = coverInfo.url;
+        preloadPromises.push(new Promise((resolve) => {
+          img.onload = () => resolve();
+          img.onerror = () => resolve(); // Продолжаем даже при ошибке
+        }));
+      }
+    });
+    
+    // Показываем проекты сразу, не дожидаясь полной загрузки всех изображений
+    projects.forEach((project, index) => {
+      const coverInfo = coverInfos[index];
+      const previewUrl = coverInfo.url;
+      const coverFileName = coverInfo.filename;
+      
+      // Пропускаем проекты без обложки
+      if(!previewUrl) {
+        console.warn(`Пропущен проект ${project.name} - обложка не найдена`);
+        return;
+      }
+      
       const projectCard = document.createElement('a');
       // Передаем категорию в URL
       const categoryParam = project.category ? `&category=${encodeURIComponent(project.category)}` : '';
       projectCard.href = `project.html?project=${encodeURIComponent(project.name)}${categoryParam}`;
       projectCard.className = 'col-span-4 sm:col-span-4 md:col-span-4 cursor-pointer';
-      
-      // Пытаемся найти обложку (cover) для превью
-      let previewUrl = '';
-      let coverFileName = '';
-      // Приводим категорию к правильному регистру (первая буква заглавная)
-      const categoryCapitalized = project.category ? project.category.charAt(0).toUpperCase() + project.category.slice(1).toLowerCase() : '';
-      const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-      
-      // Ищем файл с "cover" в названии
-      const coverInfo = await getCoverImageFromProject(project.name, project.category);
-      previewUrl = coverInfo.url;
-      coverFileName = coverInfo.filename;
-      
-      // Логирование для отладки
-      console.log(`🔍 Проект: ${project.name}, категория: ${project.category}`);
-      console.log(`   Обложка URL: ${previewUrl}`);
-      console.log(`   Имя файла обложки: ${coverFileName}`);
       
       // Используем title из projects.json, если он есть, иначе извлекаем из имени файла
       let projectTitleFromCover = project.title || project.name.replace(/_/g, ' ');
@@ -101,12 +117,6 @@ async function loadProjects(category = null){
         }
       }
       
-      // Пропускаем проекты без обложки - показываем только проекты с реальными файлами
-      if(!previewUrl) {
-        console.warn(`Пропущен проект ${project.name} - обложка не найдена`);
-        continue;
-      }
-      
       // Определяем, показывать ли текст на обложке
       const showTitle = PROJECT_COVER_STYLE !== 'image-only';
       
@@ -114,6 +124,7 @@ async function loadProjects(category = null){
         <div class="project-card project-cover-style-${PROJECT_COVER_STYLE}">
           <div class="project-cover-container">
             <img src="${previewUrl}" alt="${projectTitleFromCover}" class="project-cover-image" 
+                 loading="eager"
                  onerror="console.error('❌ Ошибка загрузки обложки:', '${previewUrl}'); this.style.display='none';"
                  onload="console.log('✅ Обложка загружена:', '${previewUrl}');">
             ${showTitle ? `
@@ -126,7 +137,12 @@ async function loadProjects(category = null){
       `;
       
       projectsList.appendChild(projectCard);
-    }
+    });
+    
+    // Ждём завершения предзагрузки в фоне (не блокируем отображение)
+    Promise.all(preloadPromises).then(() => {
+      console.log('✅ Все обложки предзагружены');
+    });
   }catch(e){
     console.error('Ошибка загрузки проектов:', e);
     projectsList.innerHTML = '<div class="col-span-12 text-center text-gray-400">Ошибка загрузки проектов</div>';
@@ -162,6 +178,14 @@ async function getProjectsList(){
 
 // Получаем обложку проекта (изображение с "cover" в названии)
 async function getCoverImageFromProject(projectName, category = null){
+  // Создаём ключ для кэша
+  const cacheKey = `${category || ''}_${projectName}`;
+  
+  // Проверяем кэш
+  if (projectCoversCache.has(cacheKey)) {
+    return projectCoversCache.get(cacheKey);
+  }
+  
   // Приводим категорию к правильному регистру (первая буква заглавная)
   const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
@@ -172,14 +196,9 @@ async function getCoverImageFromProject(projectName, category = null){
   console.log(`   Путь к files.json: ${basePath}/files.json`);
   
   try {
-    // Добавляем cache-busting параметр и заголовки для предотвращения кэширования
-    const cacheBuster = `?v=${Date.now()}`;
-    const filesResponse = await fetch(`${basePath}/files.json${cacheBuster}`, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
+    // Используем кэш браузера для files.json (убрали cache-busting для ускорения)
+    const filesResponse = await fetch(`${basePath}/files.json`, {
+      cache: 'force-cache' // Используем кэш браузера
     });
     console.log(`   Статус ответа files.json: ${filesResponse.status} ${filesResponse.statusText}`);
     
@@ -193,10 +212,13 @@ async function getCoverImageFromProject(projectName, category = null){
         const encodedCover = encodeURIComponent(filesData.cover).replace(/'/g, '%27');
         const coverUrl = `${basePath}/${encodedCover}`;
         console.log(`   📋 Найдена обложка в files.json: ${filesData.cover} -> ${coverUrl}`);
-        return {
+        const result = {
           url: coverUrl,
           filename: filesData.cover
         };
+        // Сохраняем в кэш
+        projectCoversCache.set(cacheKey, result);
+        return result;
       }
       
       // Fallback: ищем в списке files (для обратной совместимости)
@@ -215,10 +237,13 @@ async function getCoverImageFromProject(projectName, category = null){
       if(coverFile) {
         // Правильно кодируем имя файла для URL
         const encodedCover = encodeURIComponent(coverFile).replace(/'/g, '%27');
-        return {
+        const result = {
           url: `${basePath}/${encodedCover}`,
           filename: coverFile
         };
+        // Сохраняем в кэш
+        projectCoversCache.set(cacheKey, result);
+        return result;
       }
     }
   } catch(e) {
@@ -226,7 +251,10 @@ async function getCoverImageFromProject(projectName, category = null){
     console.error(`   ❌ Ошибка загрузки files.json для проекта ${projectName}:`, e);
   }
   
-  return { url: '', filename: '' };
+  const emptyResult = { url: '', filename: '' };
+  // Сохраняем пустой результат в кэш, чтобы не запрашивать повторно
+  projectCoversCache.set(cacheKey, emptyResult);
+  return emptyResult;
 }
 
 // Получаем первое изображение из проекта (для обратной совместимости)
@@ -241,6 +269,8 @@ let homeContentIndex = 0;
 let homeContentInterval = null;
 let currentVideoElement = null;
 let currentVideoStopTimeout = null;
+let preloadedImages = new Map(); // Кэш предзагруженных изображений
+let preloadedVideos = new Map(); // Кэш предзагруженных видео
 
 // Загрузка файлов из HomeContent
 async function loadHomeContent() {
@@ -286,10 +316,66 @@ async function loadHomeContent() {
     }
     
     console.log(`Загружено ${homeContentFiles.length} файлов из HomeContent`);
+    
+    // Предзагружаем все элементы для быстрой смены
+    preloadAllHomeContent();
+    
     startHomeContentRotation();
   } catch (e) {
     console.error('Ошибка загрузки HomeContent:', e);
     homeContentContainer.style.display = 'none';
+  }
+}
+
+// Предзагрузка всех элементов HomeContent
+function preloadAllHomeContent() {
+  homeContentFiles.forEach((item, index) => {
+    if (item.type === 'image') {
+      // Предзагружаем изображение
+      if (!preloadedImages.has(item.path)) {
+        const img = new Image();
+        img.src = item.path;
+        preloadedImages.set(item.path, img);
+      }
+    } else if (item.type === 'video') {
+      // Предзагружаем видео (только метаданные для начала)
+      if (!preloadedVideos.has(item.path)) {
+        const video = document.createElement('video');
+        video.src = item.path;
+        video.preload = 'auto';
+        video.muted = true;
+        // Загружаем метаданные
+        video.load();
+        preloadedVideos.set(item.path, video);
+      }
+    }
+  });
+}
+
+// Предзагрузка следующего элемента
+function preloadNextHomeContentItem(currentIndex) {
+  if (homeContentFiles.length === 0) return;
+  
+  const nextIndex = (currentIndex + 1) % homeContentFiles.length;
+  const nextItem = homeContentFiles[nextIndex];
+  
+  if (nextItem.type === 'image') {
+    // Предзагружаем следующее изображение, если еще не загружено
+    if (!preloadedImages.has(nextItem.path)) {
+      const img = new Image();
+      img.src = nextItem.path;
+      preloadedImages.set(nextItem.path, img);
+    }
+  } else if (nextItem.type === 'video') {
+    // Предзагружаем следующее видео, если еще не загружено
+    if (!preloadedVideos.has(nextItem.path)) {
+      const video = document.createElement('video');
+      video.src = nextItem.path;
+      video.preload = 'auto';
+      video.muted = true;
+      video.load();
+      preloadedVideos.set(nextItem.path, video);
+    }
   }
 }
 
@@ -312,21 +398,59 @@ function showHomeContentItem(index) {
   }
   
   if (item.type === 'image') {
-    const img = document.createElement('img');
-    img.src = item.path;
+    // Используем предзагруженное изображение, если оно есть
+    let img;
+    if (preloadedImages.has(item.path)) {
+      const preloadedImg = preloadedImages.get(item.path);
+      img = document.createElement('img');
+      img.src = preloadedImg.src; // Используем уже загруженное изображение
+      // Если изображение уже загружено, оно отобразится мгновенно
+      if (preloadedImg.complete) {
+        img.onload = null; // Изображение уже загружено
+      }
+    } else {
+      img = document.createElement('img');
+      img.src = item.path;
+      // Сохраняем в кэш
+      const preloadImg = new Image();
+      preloadImg.src = item.path;
+      preloadedImages.set(item.path, preloadImg);
+    }
+    img.loading = 'eager'; // Приоритетная загрузка
     homeContentItem.appendChild(img);
   } else if (item.type === 'video') {
-    const video = document.createElement('video');
-    video.src = item.path;
+    // Используем предзагруженное видео, если оно есть
+    let video;
+    if (preloadedVideos.has(item.path)) {
+      const preloadedVideo = preloadedVideos.get(item.path);
+      video = preloadedVideo.cloneNode(); // Клонируем предзагруженное видео
+      video.currentTime = 0; // Сбрасываем время воспроизведения
+    } else {
+      video = document.createElement('video');
+      video.src = item.path;
+      video.preload = 'auto';
+      // Сохраняем в кэш
+      const preloadVideo = document.createElement('video');
+      preloadVideo.src = item.path;
+      preloadVideo.preload = 'auto';
+      preloadVideo.muted = true;
+      preloadVideo.load();
+      preloadedVideos.set(item.path, preloadVideo);
+    }
+    
     video.autoplay = true;
     video.loop = false;
     video.muted = true;
+    video.preload = 'auto';
+    video.playsInline = true;
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
     
     // Устанавливаем минимальное время воспроизведения 5 секунд
     const MIN_VIDEO_DURATION = 5000; // 5 секунд
     
     // Когда видео загрузится, проверяем его длительность
-    video.addEventListener('loadedmetadata', () => {
+    const handleLoadedMetadata = () => {
       const videoDuration = video.duration * 1000; // в миллисекундах
       // Используем максимум из длительности видео и минимума 5 секунд
       const playDuration = Math.max(videoDuration, MIN_VIDEO_DURATION);
@@ -340,7 +464,14 @@ function showHomeContentItem(index) {
           video.pause();
         }
       }, stopTime);
-    });
+    };
+    
+    // Если метаданные уже загружены (из предзагрузки), используем их сразу
+    if (video.readyState >= 2) {
+      handleLoadedMetadata();
+    } else {
+      video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+    }
     
     // Если метаданные не загрузились, используем минимум 5 секунд
     const fallbackTimeout = setTimeout(() => {
@@ -356,11 +487,14 @@ function showHomeContentItem(index) {
     
     video.addEventListener('loadedmetadata', () => {
       clearTimeout(fallbackTimeout);
-    });
+    }, { once: true });
     
     currentVideoElement = video;
     homeContentItem.appendChild(video);
   }
+  
+  // Предзагружаем следующий элемент
+  preloadNextHomeContentItem(index);
 }
 
 // Запуск ротации HomeContent
@@ -404,6 +538,9 @@ function startHomeContentRotation() {
     }, delay);
   }
   
+  // Предзагружаем следующий элемент сразу после показа первого
+  preloadNextHomeContentItem(0);
+  
   // Запускаем первую ротацию
   scheduleNext();
 }
@@ -427,6 +564,12 @@ function stopHomeContentRotation() {
     currentVideoElement.currentTime = 0;
     currentVideoElement = null;
   }
+  
+  // Останавливаем все предзагруженные видео
+  preloadedVideos.forEach(video => {
+    video.pause();
+    video.currentTime = 0;
+  });
   
   // Скрываем контейнер
   homeContentContainer.style.display = 'none';
