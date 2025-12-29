@@ -363,14 +363,14 @@ img, video {
 
 /* =============== МОБИЛЬНАЯ ВЕРСИЯ (до 640px) =============== */
 @media (max-width: 639px) {
-  /* Отключить скролл на главной странице в мобильной версии */
+  /* Блокировка скролла только на мобильных устройствах для главной страницы */
   body.home-page {
     height: 100%;
     overflow: hidden;
     position: fixed;
     width: 100%;
   }
-  
+
   html.home-page {
     height: 100%;
     overflow: hidden;

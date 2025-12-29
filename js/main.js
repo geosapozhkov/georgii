@@ -33,6 +33,7 @@ const BACKGROUND_RETURN_DURATION = 3000; // 3 секунды для возвра
 // =============== ВСПОМОГАТЕЛЬНОЕ ===============
 const isImage = (name) => /\.(jpe?g|png|gif|webp)$/i.test(name);
 const isVideo = (name) => /\.(mp4|mov|avi|mkv|webm)$/i.test(name);
+const isVimeo = (name) => /^vimeo:/i.test(name) || /vimeo\.com/i.test(name);
 
 // =============== НАСТРОЙКИ ОБЛОЖЕК ===============
 // Доступные стили:
@@ -311,13 +312,26 @@ async function loadHomeContent() {
     // Создаем список файлов с типами
     homeContentFiles = [];
     for (const file of files) {
-      // На мобильных устройствах показываем только картинки
-      if (isMobile && !isImage(file)) {
-        continue; // Пропускаем видео на мобильных
+      // Определяем тип файла
+      let fileType;
+      if (isImage(file)) {
+        fileType = 'image';
+      } else if (isVimeo(file)) {
+        fileType = 'vimeo';
+      } else if (isVideo(file)) {
+        fileType = 'video';
+      } else {
+        continue; // Пропускаем неизвестные типы
       }
+      
+      // На мобильных устройствах показываем только картинки
+      if (isMobile && fileType !== 'image') {
+        continue; // Пропускаем видео и Vimeo на мобильных
+      }
+      
       homeContentFiles.push({
-        path: `${basePath}/${file}`,
-        type: isImage(file) ? 'image' : 'video',
+        path: isVimeo(file) ? file : `${basePath}/${file}`, // Для Vimeo используем URL напрямую
+        type: fileType,
         name: file
       });
     }
@@ -331,12 +345,17 @@ async function loadHomeContent() {
     console.log(`Загружено ${homeContentFiles.length} файлов из HomeContent (перемешано случайным образом${isMobile ? ', только картинки на мобильном' : ''})`);
     
     // Предзагружаем все элементы для быстрой смены
-    preloadAllHomeContent();
-    
-    startHomeContentRotation();
+    try {
+      preloadAllHomeContent();
+      startHomeContentRotation();
+    } catch (e) {
+      console.error('Ошибка предзагрузки или запуска HomeContent:', e);
+      homeContentContainer.style.display = 'none';
+    }
   } catch (e) {
     console.error('Ошибка загрузки HomeContent:', e);
     homeContentContainer.style.display = 'none';
+    // Не блокируем выполнение остального кода
   }
 }
 
@@ -352,6 +371,72 @@ function preloadAllHomeContent() {
         const img = new Image();
         img.src = item.path;
         preloadedImages.set(item.path, img);
+      }
+    } else if (item.type === 'vimeo') {
+      // Предзагружаем Vimeo видео - создаем iframe заранее для быстрой загрузки
+      const getVimeoId = (url) => {
+        const match = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/|^vimeo:)(\d+)/i) || url.match(/^(\d+)$/);
+        return match ? match[1] : null;
+      };
+      
+      const vimeoId = getVimeoId(item.path);
+      if (vimeoId) {
+        // Создаем скрытый iframe для предзагрузки
+        const preloadIframe = document.createElement('iframe');
+        preloadIframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=0&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&quality=auto`;
+        preloadIframe.style.cssText = 'position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;';
+        preloadIframe.style.display = 'none';
+        document.body.appendChild(preloadIframe);
+        
+        console.log(`📥 Начата предзагрузка Vimeo видео: ${item.path} (ID: ${vimeoId})`);
+        
+        // Сохраняем информацию о предзагруженном Vimeo с флагом готовности
+        if (!preloadedVideos.has(item.path)) {
+          const vimeoData = { 
+            type: 'vimeo', 
+            iframe: preloadIframe, 
+            id: vimeoId,
+            ready: false // Флаг готовности видео
+          };
+          
+          // Проверяем готовность видео через Vimeo Player API
+          preloadIframe.addEventListener('load', () => {
+            if (typeof Vimeo !== 'undefined' && Vimeo.Player) {
+              const vimeoPlayer = new Vimeo.Player(preloadIframe);
+              
+              // Устанавливаем максимальное качество
+              vimeoPlayer.getQualities().then(qualities => {
+                if(qualities && qualities.length > 0) {
+                  const maxQuality = qualities[qualities.length - 1];
+                  vimeoPlayer.setQuality(maxQuality).catch(() => {
+                    vimeoPlayer.setQuality('auto').catch(() => {});
+                  });
+                } else {
+                  vimeoPlayer.setQuality('auto').catch(() => {});
+                }
+              }).catch(() => {
+                vimeoPlayer.setQuality('auto').catch(() => {});
+              });
+              
+              // Слушаем событие готовности видео к воспроизведению
+              vimeoPlayer.on('play', () => {
+                vimeoData.ready = true;
+                console.log(`✅ Vimeo видео готово к воспроизведению: ${item.path}`);
+              });
+              
+              // Также проверяем через loaded
+              vimeoPlayer.on('loaded', () => {
+                vimeoData.ready = true;
+                console.log(`✅ Vimeo видео загружено: ${item.path}`);
+              });
+              
+              // Устанавливаем volume = 0
+              vimeoPlayer.setVolume(0).catch(() => {});
+            }
+          });
+          
+          preloadedVideos.set(item.path, vimeoData);
+        }
       }
     } else if (item.type === 'video') {
       // Предзагружаем все видео полностью, особенно на мобильных
@@ -511,26 +596,31 @@ function preloadNextHomeContentItem(currentIndex) {
 
 // Отображение текущего элемента HomeContent
 function showHomeContentItem(index) {
-  if (homeContentFiles.length === 0) return;
-  
-  const item = homeContentFiles[index % homeContentFiles.length];
-  
-  // Очищаем предыдущие таймеры
-  if (currentVideoStopTimeout) {
-    clearTimeout(currentVideoStopTimeout);
-    currentVideoStopTimeout = null;
-  }
-  if (currentVideoElement) {
-    currentVideoElement.pause();
-    currentVideoElement.currentTime = 0;
-    // Просто останавливаем видео без эффектов
-    currentVideoElement = null;
-  }
-  
-  // Очищаем контейнер
-  homeContentItem.innerHTML = '';
-  
-  if (item.type === 'image') {
+  try {
+    if (homeContentFiles.length === 0) return;
+    
+    const item = homeContentFiles[index % homeContentFiles.length];
+    if (!item) {
+      console.error('Элемент не найден по индексу:', index);
+      return;
+    }
+    
+    // Очищаем предыдущие таймеры
+    if (currentVideoStopTimeout) {
+      clearTimeout(currentVideoStopTimeout);
+      currentVideoStopTimeout = null;
+    }
+    if (currentVideoElement) {
+      currentVideoElement.pause();
+      currentVideoElement.currentTime = 0;
+      // Просто останавливаем видео без эффектов
+      currentVideoElement = null;
+    }
+    
+    // Очищаем контейнер
+    homeContentItem.innerHTML = '';
+    
+    if (item.type === 'image') {
     // Используем предзагруженное изображение, если оно есть
     let img;
     if (preloadedImages.has(item.path)) {
@@ -551,6 +641,134 @@ function showHomeContentItem(index) {
     }
     img.loading = 'eager'; // Приоритетная загрузка
     homeContentItem.appendChild(img);
+  } else if (item.type === 'vimeo') {
+    // Обработка Vimeo видео
+    const getVimeoId = (url) => {
+      const match = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/|^vimeo:)(\d+)/i) || url.match(/^(\d+)$/);
+      return match ? match[1] : null;
+    };
+    
+    const vimeoId = getVimeoId(item.path);
+    if (!vimeoId) {
+      console.error('Не удалось извлечь ID из Vimeo URL:', item.path);
+      // Пропускаем это видео и переходим к следующему элементу
+      preloadNextHomeContentItem(index);
+      return;
+    }
+    
+    // Проверяем, есть ли предзагруженный iframe и готов ли он
+    let preloadedVimeo = null;
+    let isVimeoReady = false;
+    if (preloadedVideos.has(item.path)) {
+      preloadedVimeo = preloadedVideos.get(item.path);
+      isVimeoReady = preloadedVimeo.ready || false;
+    }
+    
+    // Если видео не готово, не показываем его, остаемся на текущем элементе
+    if (!isVimeoReady) {
+      console.log(`⏳ Vimeo видео еще не готово, остаемся на текущем элементе: ${item.path}`);
+      // Не очищаем контейнер, остаемся на предыдущем элементе
+      // Запускаем проверку готовности
+      checkVimeoReady(item.path, vimeoId, index);
+      return;
+    }
+    
+    // Видео готово, показываем его
+    // Создаем контейнер для Vimeo видео
+    const vimeoContainer = document.createElement('div');
+    vimeoContainer.className = 'relative w-full flex items-center justify-center';
+    vimeoContainer.setAttribute('data-vimeo-id', vimeoId);
+    vimeoContainer.style.cssText = 'width:100%; height:100%; position:relative;';
+    
+    // Создаем невидимый overlay поверх iframe для перехвата событий мыши
+    const mouseOverlay = document.createElement('div');
+    mouseOverlay.style.cssText = 'position:absolute; inset:0; z-index:1; cursor:none !important; pointer-events:auto;';
+    mouseOverlay.style.cursor = 'none';
+    
+    // Используем предзагруженный iframe или создаем новый
+    let iframe;
+    if (preloadedVimeo && preloadedVimeo.iframe) {
+      // Используем предзагруженный iframe
+      iframe = preloadedVimeo.iframe;
+      // Обновляем src для автоплея
+      iframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&quality=auto`;
+      iframe.style.cssText = 'width:100%; height:auto; aspect-ratio:16/9; border:none; display:block; cursor:none !important; pointer-events:none;';
+      iframe.style.cursor = 'none';
+      iframe.style.pointerEvents = 'none';
+      // Перемещаем iframe из body в контейнер, если он там
+      if (iframe.parentElement && iframe.parentElement !== vimeoContainer) {
+        iframe.parentElement.removeChild(iframe);
+      }
+    } else {
+      // Создаем новый iframe
+      iframe = document.createElement('iframe');
+      iframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&quality=auto`;
+      iframe.setAttribute('allow', 'autoplay');
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('frameborder', '0');
+      iframe.id = `vimeo-player-${vimeoId}`;
+      iframe.style.cssText = 'width:100%; height:auto; aspect-ratio:16/9; border:none; display:block; cursor:none !important; pointer-events:none;';
+      iframe.style.cursor = 'none';
+      iframe.style.pointerEvents = 'none';
+    }
+    
+    // Инициализация Vimeo Player API для установки максимального качества
+    iframe.addEventListener('load', () => {
+      if (typeof Vimeo !== 'undefined' && Vimeo.Player) {
+        const vimeoPlayer = new Vimeo.Player(iframe);
+        
+        // Устанавливаем максимальное качество видео
+        vimeoPlayer.getQualities().then(qualities => {
+          if(qualities && qualities.length > 0) {
+            const maxQuality = qualities[qualities.length - 1];
+            vimeoPlayer.setQuality(maxQuality).catch(() => {
+              vimeoPlayer.setQuality('auto').catch(() => {});
+            });
+          } else {
+            vimeoPlayer.setQuality('auto').catch(() => {});
+          }
+        }).catch(() => {
+          vimeoPlayer.setQuality('auto').catch(() => {});
+        });
+        
+        // Явно устанавливаем volume = 0 при инициализации
+        vimeoPlayer.setVolume(0).catch(() => {});
+      }
+    });
+    
+    // Размещаем элементы
+    vimeoContainer.appendChild(iframe);
+    vimeoContainer.appendChild(mouseOverlay);
+    homeContentItem.appendChild(vimeoContainer);
+    
+    // Добавляем обработчики для обновления кастомного курсора
+    const customCursor = document.getElementById('custom-cursor');
+    if (customCursor) {
+      const updateCursor = (e) => {
+        if (customCursor) {
+          customCursor.style.left = e.clientX + 'px';
+          customCursor.style.top = e.clientY + 'px';
+          customCursor.style.opacity = '1';
+        }
+      };
+      
+      mouseOverlay.addEventListener('mousemove', updateCursor);
+      mouseOverlay.addEventListener('mouseenter', () => {
+        if (customCursor) {
+          customCursor.style.opacity = '1';
+        }
+      });
+    }
+    
+    // Устанавливаем таймер для смены видео (5-10 секунд)
+    const MIN_VIDEO_DURATION = 5000;
+    const MAX_VIDEO_DURATION = 10000;
+    const stopTime = MIN_VIDEO_DURATION + Math.random() * (MAX_VIDEO_DURATION - MIN_VIDEO_DURATION);
+    
+    currentVideoStopTimeout = setTimeout(() => {
+      // Видео будет заменено автоматически через ротацию
+    }, stopTime);
+    
   } else if (item.type === 'video') {
     // Используем предзагруженное видео, если оно есть
     let video;
@@ -728,10 +946,18 @@ function showHomeContentItem(index) {
     // Видео появляется сразу без эффектов прозрачности
     currentVideoElement = video;
     homeContentItem.appendChild(video);
+    }
+    
+    // Предзагружаем следующий элемент
+    preloadNextHomeContentItem(index);
+  } catch (error) {
+    console.error('Ошибка в showHomeContentItem:', error);
+    // Пытаемся показать следующий элемент
+    const nextIndex = (index + 1) % homeContentFiles.length;
+    if (nextIndex !== index && homeContentFiles.length > 0) {
+      setTimeout(() => showHomeContentItem(nextIndex), 1000);
+    }
   }
-  
-  // Предзагружаем следующий элемент
-  preloadNextHomeContentItem(index);
 }
 
 // Запуск ротации HomeContent
@@ -749,10 +975,25 @@ function startHomeContentRotation() {
   // Функция для перехода к следующему элементу
   function moveToNext() {
     const currentItem = homeContentFiles[homeContentIndex % homeContentFiles.length];
+    const nextIndex = (homeContentIndex + 1) % homeContentFiles.length;
+    const nextItem = homeContentFiles[nextIndex];
+    
+    // Проверяем готовность следующего элемента, если это Vimeo видео
+    if (nextItem && nextItem.type === 'vimeo') {
+      const nextVimeo = preloadedVideos.get(nextItem.path);
+      if (nextVimeo && !nextVimeo.ready) {
+        // Видео еще не готово, ждем еще немного
+        console.log('⏳ Следующее Vimeo видео еще не готово, ждем...');
+        return 1000; // Проверяем каждую секунду
+      }
+    }
     
     if (currentItem.type === 'image') {
       // Для изображений - 3 секунды
       return 3000;
+    } else if (currentItem.type === 'vimeo') {
+      // Для Vimeo видео - минимум 5 секунд, максимум 10 секунд
+      return 5000 + Math.random() * 5000;
     } else if (currentItem.type === 'video') {
       // Для видео - минимум 5 секунд, но проверяем длительность видео
       if (currentVideoElement && currentVideoElement.readyState >= 2) {
@@ -797,15 +1038,31 @@ function stopHomeContentRotation() {
   
   // Останавливаем текущее видео, если оно есть
   if (currentVideoElement) {
-    currentVideoElement.pause();
-    currentVideoElement.currentTime = 0;
+    if (typeof currentVideoElement.pause === 'function') {
+      currentVideoElement.pause();
+      if (typeof currentVideoElement.currentTime !== 'undefined') {
+        currentVideoElement.currentTime = 0;
+      }
+    }
     currentVideoElement = null;
   }
   
   // Останавливаем все предзагруженные видео
   preloadedVideos.forEach(video => {
-    video.pause();
-    video.currentTime = 0;
+    if (video) {
+      // Проверяем, это обычное видео или объект Vimeo
+      if (video.type === 'vimeo') {
+        // Для Vimeo ничего не делаем, просто пропускаем
+        return;
+      }
+      // Для обычных видео проверяем наличие метода pause
+      if (typeof video.pause === 'function') {
+        video.pause();
+        if (typeof video.currentTime !== 'undefined') {
+          video.currentTime = 0;
+        }
+      }
+    }
   });
   
   // Скрываем контейнер
