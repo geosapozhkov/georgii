@@ -331,18 +331,25 @@ async function loadHomeContent() {
       });
     }
     
-    // Перемешиваем файлы случайным образом (Fisher-Yates shuffle)
-    for (let i = homeContentFiles.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [homeContentFiles[i], homeContentFiles[j]] = [homeContentFiles[j], homeContentFiles[i]];
-    }
+    console.log(`Загружено ${homeContentFiles.length} файлов из HomeContent`);
     
-    console.log(`Загружено ${homeContentFiles.length} файлов из HomeContent (перемешано случайным образом${isMobile ? ', только картинки на мобильном' : ''})`);
-    
-    // Предзагружаем все элементы для быстрой смены
+    // Сначала предзагружаем все элементы для быстрой смены
     try {
       preloadAllHomeContent();
-      startHomeContentRotation();
+      
+      // Ждем немного, чтобы началась предзагрузка, затем перемешиваем
+      setTimeout(() => {
+        // Перемешиваем файлы случайным образом (Fisher-Yates shuffle) ПОСЛЕ начала предзагрузки
+        for (let i = homeContentFiles.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [homeContentFiles[i], homeContentFiles[j]] = [homeContentFiles[j], homeContentFiles[i]];
+        }
+        
+        console.log(`Файлы перемешаны случайным образом`);
+        
+        // Запускаем ротацию после перемешивания
+        startHomeContentRotation();
+      }, 100); // Небольшая задержка для начала предзагрузки
     } catch (e) {
       console.error('Ошибка предзагрузки или запуска HomeContent:', e);
       homeContentContainer.style.display = 'none';
@@ -424,6 +431,46 @@ function preloadAllHomeContent() {
                 vimeoData.ready = true;
                 console.log(`✅ Vimeo видео загружено: ${item.path}`);
               });
+              
+              // Проверяем готовность через canplay
+              vimeoPlayer.on('playbackratechange', () => {
+                if (!vimeoData.ready) {
+                  vimeoData.ready = true;
+                  console.log(`✅ Vimeo видео готово (playbackratechange): ${item.path}`);
+                }
+              });
+              
+              // Пытаемся получить длительность видео - это означает, что оно загружено
+              vimeoPlayer.getDuration().then((duration) => {
+                if (duration > 0 && !vimeoData.ready) {
+                  vimeoData.ready = true;
+                  console.log(`✅ Vimeo видео готово (getDuration): ${item.path}`);
+                }
+              }).catch(() => {
+                // Если не удалось получить длительность сразу, пробуем через время
+                setTimeout(() => {
+                  vimeoPlayer.getDuration().then((duration) => {
+                    if (duration > 0 && !vimeoData.ready) {
+                      vimeoData.ready = true;
+                      console.log(`✅ Vimeo видео готово (getDuration delayed): ${item.path}`);
+                    }
+                  }).catch(() => {});
+                }, 2000);
+              });
+              
+              // Пытаемся начать воспроизведение для проверки готовности (после небольшой задержки)
+              setTimeout(() => {
+                vimeoPlayer.play().then(() => {
+                  if (!vimeoData.ready) {
+                    vimeoData.ready = true;
+                    console.log(`✅ Vimeo видео готово (play): ${item.path}`);
+                  }
+                  // Сразу останавливаем
+                  vimeoPlayer.pause().catch(() => {});
+                }).catch(() => {
+                  // Если не удалось воспроизвести, это нормально - видео может быть еще не готово
+                });
+              }, 1000);
               
               // Устанавливаем volume = 0
               vimeoPlayer.setVolume(0).catch(() => {});
