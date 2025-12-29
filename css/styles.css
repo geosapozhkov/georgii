@@ -14,7 +14,9 @@ body {
 }
 
 /* Убираем все стандартные курсоры - везде только точка */
-* {
+*,
+*::before,
+*::after {
   cursor: none !important;
 }
 
@@ -24,6 +26,27 @@ iframe *,
 [data-vimeo-id],
 [data-vimeo-id] * {
   cursor: none !important;
+}
+
+/* Дополнительные правила для macOS */
+html,
+body,
+a,
+button,
+input,
+select,
+textarea,
+div,
+span,
+p,
+h1, h2, h3, h4, h5, h6,
+img,
+video {
+  cursor: none !important;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* Кастомный курсор - точка */
