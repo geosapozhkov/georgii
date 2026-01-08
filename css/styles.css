@@ -408,13 +408,6 @@ img, video {
     justify-content: space-between !important;
   }
   
-  /* Логотип на мобильных */
-  #logo {
-    margin-bottom: 0 !important;
-    margin-right: 0 !important;
-    cursor: pointer;
-  }
-  
   /* Логотип - изображение */
   #logo {
     cursor: pointer;
@@ -422,10 +415,22 @@ img, video {
     display: block;
     max-width: 100%;
     height: auto;
+    mix-blend-mode: multiply;
+    -webkit-mix-blend-mode: multiply; /* Для Safari и мобильных браузеров */
   }
   
   #logo:hover {
     opacity: 0.7;
+  }
+  
+  /* Логотип на мобильных */
+  @media (max-width: 639px) {
+    #logo {
+      margin-bottom: 0 !important;
+      margin-right: 0 !important;
+      mix-blend-mode: multiply !important;
+      -webkit-mix-blend-mode: multiply !important;
+    }
   }
   
   /* Описание About me на мобильных - скрыть десктопную версию */
