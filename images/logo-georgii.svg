@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 70" width="240" height="70">
+  <!-- G - более рукописный стиль -->
+  <path d="M 15 20 Q 12 18 10 20 L 10 35 Q 10 40 12 42 L 20 42 L 20 32 L 15 32 L 15 25 L 25 25 L 25 20 Q 20 15 15 20 Z" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- e -->
+  <path d="M 35 30 Q 35 25 38 23 L 45 23 Q 48 25 48 30 L 48 35 Q 48 40 45 42 L 38 42 Q 35 40 35 35 L 40 35 L 40 30 Z" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- o -->
+  <ellipse cx="60" cy="32" rx="8" ry="13" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- r -->
+  <path d="M 75 20 L 75 45 L 82 45 L 82 38 Q 85 35 88 38 L 88 20" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- g -->
+  <path d="M 95 30 Q 95 25 98 23 L 105 23 Q 108 25 108 30 L 108 45 Q 108 50 105 52 L 98 52 Q 95 50 95 45 L 100 45 L 100 30 Z" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- i (первая) - с квадратной точкой -->
+  <path d="M 115 20 L 115 45" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="112" y="8" width="6" height="6" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- i (вторая) - с квадратной точкой -->
+  <path d="M 130 20 L 130 45" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="127" y="8" width="6" height="6" fill="none" stroke="#ACACAC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
