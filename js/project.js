@@ -860,6 +860,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         if(project && project.title) {
           projectTitle.textContent = project.title;
           document.title = project.title;
+          projectTitle.style.display = 'block'; // Показываем заголовок после загрузки
           return;
         }
       }
@@ -869,6 +870,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     // Fallback: используем название из URL
     projectTitle.textContent = projectName.replace(/_/g, ' ');
     document.title = projectName.replace(/_/g, ' ');
+    projectTitle.style.display = 'block'; // Показываем заголовок после загрузки
   }
   
   // Устанавливаем заголовок
