@@ -1371,10 +1371,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navMind.style.display='inline';
       navMind.style.opacity='0.35';
     }
-    if(navAbout) {
-      navAbout.style.display='inline';
-      navAbout.style.opacity='1';
-    }
+      if(navAbout) {
+        navAbout.style.display='inline';
+        navAbout.style.opacity='1';
+      }
+    updateTimerVisibility();
   } else if(section === 'commerce' || section === 'mind') {
     currentSection = section;
     stopHomeContentRotation();

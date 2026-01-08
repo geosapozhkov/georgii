@@ -317,13 +317,13 @@ async function loadProject(projectName, subfolder = ''){
                   isMuted = false;
                   updateVolumeIcon();
                 }).catch(() => {});
-              } else {
+            } else {
                 vimeoPlayer.setVolume(0).then(() => {
                   currentVolume = 0;
                   isMuted = true;
                   updateVolumeIcon();
                 }).catch(() => {});
-              }
+            }
             }
           });
           
@@ -345,7 +345,7 @@ async function loadProject(projectName, subfolder = ''){
               }).catch(() => {
                 vimeoPlayer.setQuality('auto').catch(() => {});
               });
-              
+            
               // Явно устанавливаем volume = 0 и muted = true при инициализации
               vimeoPlayer.setVolume(0).then(() => {
                 currentVolume = 0;
@@ -364,7 +364,7 @@ async function loadProject(projectName, subfolder = ''){
                   updateVolumeIcon();
                 });
               });
-              
+          
               // Слушаем изменения громкости
               vimeoPlayer.on('volumechange', (data) => {
                 currentVolume = data.volume;
@@ -391,15 +391,15 @@ async function loadProject(projectName, subfolder = ''){
                 customCursor.style.left = e.clientX + 'px';
                 customCursor.style.top = e.clientY + 'px';
                 customCursor.style.opacity = '1';
-              }
-            };
-            
+            }
+          };
+          
             // Обработчики на overlay для перехвата событий мыши
             mouseOverlay.addEventListener('mousemove', updateCursor);
             mouseOverlay.addEventListener('mouseenter', () => {
               if (customCursor) {
                 customCursor.style.opacity = '1';
-              }
+            }
             });
             
             // Также на контейнере для надежности
@@ -427,7 +427,7 @@ async function loadProject(projectName, subfolder = ''){
         source.type = 'video/mp4';
         
         video.appendChild(source);
-        
+          
         // Если fullwidthRepeat - простое зацикленное видео на всю ширину без плеера
         if(isFullwidthRepeat) {
           console.log(`   🎬 Обработка fullwidthRepeat видео: ${image.name}`);
@@ -481,7 +481,7 @@ async function loadProject(projectName, subfolder = ''){
           videoContainer.className = 'relative w-full';
           videoContainer.appendChild(video);
           wrap.appendChild(videoContainer);
-          
+        
           // Не добавляем в observer - загружаем сразу
         } else {
           // Для обычных видео (не fullwidth) - простое автопроигрывание с зацикливанием

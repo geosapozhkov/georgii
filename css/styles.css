@@ -1,16 +1,17 @@
-@font-face {
-  font-family: 'Booklet';
-  src: url('https://raw.githubusercontent.com/geosapozhkov/georgii/main/BookletSans-regular.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-}
+/* Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 body {
   background: #FAFAFA;
-  font-family: 'Booklet', sans-serif;
+  font-family: 'Inter', sans-serif !important;
   color: #ACACAC;
   min-height: 100vh;
   cursor: none !important; /* Скрываем стандартный курсор */
+}
+
+/* Принудительно применяем Inter ко всем элементам */
+* {
+  font-family: 'Inter', sans-serif !important;
 }
 
 /* Убираем все стандартные курсоры - везде только точка */
@@ -80,11 +81,12 @@ video {
   color: #ACACAC !important;
 }
 
-/* Ensure all text elements use the specified color */
+/* Ensure all text elements use the specified color and font */
 h1, h2, h3, h4, h5, h6,
 p, span, div, a, button,
 nav, footer, header {
   color: #ACACAC;
+  font-family: 'Inter', sans-serif !important;
 }
 
 /* Allow images and videos to keep their natural appearance */
@@ -233,6 +235,7 @@ img, video {
 .description-text {
   line-height: 1.1;
   color: #ACACAC;
+  font-family: 'Inter', sans-serif !important;
 }
 
 /* Стили для описания на странице About me - десктоп */
@@ -562,8 +565,6 @@ img, video {
 }
 
 /* Скрываем нативные элементы управления Vimeo через CSS (если они все еще видны) */
-.vimeo-video-container iframe[src*="vimeo.com"] {
-  /* Vimeo использует iframe, поэтому мы не можем напрямую скрыть их UI через CSS */
-  /* Но параметры в URL должны скрыть все элементы управления */
-}
+/* Vimeo использует iframe, поэтому мы не можем напрямую скрыть их UI через CSS */
+/* Но параметры в URL должны скрыть все элементы управления */
 
