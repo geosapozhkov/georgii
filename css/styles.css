@@ -415,8 +415,6 @@ img, video {
     display: block;
     max-width: 100%;
     height: auto;
-    mix-blend-mode: multiply;
-    -webkit-mix-blend-mode: multiply; /* Для Safari и мобильных браузеров */
   }
   
   #logo:hover {
@@ -428,8 +426,6 @@ img, video {
     #logo {
       margin-bottom: 0 !important;
       margin-right: 0 !important;
-      mix-blend-mode: multiply !important;
-      -webkit-mix-blend-mode: multiply !important;
     }
   }
   
