@@ -64,6 +64,15 @@ video {
   display: none; /* Скрыт по умолчанию, показывается через JS */
 }
 
+/* Canvas для рисования - плавное сглаживание */
+#drawing-canvas {
+  image-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
 /* Показываем курсор только на десктопе */
 @media (min-width: 640px) {
   #custom-cursor {
@@ -398,6 +407,19 @@ img, video {
   }
 
   html.home-page {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  /* Блокировка скролла для страницы About me на мобильных устройствах */
+  body.about-page {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+
+  html.about-page {
     height: 100%;
     overflow: hidden;
   }

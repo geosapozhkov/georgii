@@ -1158,6 +1158,9 @@ function showHome(){
   // Добавляем класс для блокировки скролла на главной странице
   document.body.classList.add('home-page');
   document.documentElement.classList.add('home-page');
+  // Убираем класс about-page если он был
+  document.body.classList.remove('about-page');
+  document.documentElement.classList.remove('about-page');
   // Показываем HomeContent на главной странице
   if (homeContentFiles.length > 0) {
     startHomeContentRotation();
@@ -1168,6 +1171,8 @@ function showHome(){
   if (currentSection !== 'home') {
     stopBackgroundAnimation();
   }
+  // Отключаем рисование при переходе на главную страницу
+  disableDrawing();
   currentSection = 'home';
   // Обновляем URL без перезагрузки страницы
   updateURL('home');
@@ -1266,9 +1271,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='none';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='none';
-    // Убираем класс для разблокировки скролла
+    // Убираем классы для разблокировки скролла
     document.body.classList.remove('home-page');
     document.documentElement.classList.remove('home-page');
+    document.body.classList.remove('about-page');
+    document.documentElement.classList.remove('about-page');
+    // Отключаем рисование при переходе на Commerce
+    disableDrawing();
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='1';
@@ -1297,9 +1306,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='none';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='none';
-    // Убираем класс для разблокировки скролла
+    // Убираем классы для разблокировки скролла
     document.body.classList.remove('home-page');
     document.documentElement.classList.remove('home-page');
+    document.body.classList.remove('about-page');
+    document.documentElement.classList.remove('about-page');
+    // Отключаем рисование при переходе на Mind
+    disableDrawing();
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='0.35';
@@ -1328,9 +1341,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='block';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='flex';
-    // Убираем класс для разблокировки скролла
+    // Добавляем класс для блокировки скролла на мобильных для страницы About me
     document.body.classList.remove('home-page');
     document.documentElement.classList.remove('home-page');
+    document.body.classList.add('about-page');
+    document.documentElement.classList.add('about-page');
+    // Включаем рисование на странице About me
+    enableDrawing();
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='0.35';
@@ -1360,9 +1377,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='block';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='flex';
-    // Убираем класс для разблокировки скролла
+    // Добавляем класс для блокировки скролла на мобильных для страницы About me
     document.body.classList.remove('home-page');
     document.documentElement.classList.remove('home-page');
+    document.body.classList.add('about-page');
+    document.documentElement.classList.add('about-page');
+    // Включаем рисование на странице About me
+    enableDrawing();
     if(navCommerce) {
       navCommerce.style.display='inline';
       navCommerce.style.opacity='0.35';
@@ -1375,8 +1396,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
         navAbout.style.display='inline';
         navAbout.style.opacity='1';
       }
-    updateTimerVisibility();
   } else if(section === 'commerce' || section === 'mind') {
+    // Отключаем рисование при переходе на Commerce или Mind
+    disableDrawing();
+    // Убираем классы для разблокировки скролла
+    document.body.classList.remove('home-page');
+    document.documentElement.classList.remove('home-page');
+    document.body.classList.remove('about-page');
+    document.documentElement.classList.remove('about-page');
     currentSection = section;
     stopHomeContentRotation();
     grid.style.display='none';
@@ -1386,9 +1413,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(bioEl) bioEl.style.display='none';
     const bioContainer = document.getElementById('bio-container');
     if(bioContainer) bioContainer.style.display='none';
-    // Убираем класс для разблокировки скролла
+    // Убираем классы для разблокировки скролла
     document.body.classList.remove('home-page');
     document.documentElement.classList.remove('home-page');
+    document.body.classList.remove('about-page');
+    document.documentElement.classList.remove('about-page');
     if(section === 'commerce') {
       if(navCommerce) {
         navCommerce.style.display='inline';
