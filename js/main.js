@@ -1,5 +1,7 @@
 // Главная страница - работа с локальными файлами
 let currentSection = 'home';
+// Делаем currentSection доступной глобально для drawing.js
+window.currentSection = currentSection;
 
 const grid = document.getElementById('file-grid');
 const loading = document.getElementById('loading');
@@ -710,8 +712,17 @@ function showHomeContentItem(index) {
     if (!isVimeoReady) {
       console.log(`⏳ Vimeo видео еще не готово, остаемся на текущем элементе: ${item.path}`);
       // Не очищаем контейнер, остаемся на предыдущем элементе
-      // Запускаем проверку готовности
-      checkVimeoReady(item.path, vimeoId, index);
+      // Запускаем проверку готовности через setTimeout
+      setTimeout(() => {
+        const preloadedVimeo = preloadedVideos.get(item.path);
+        if (preloadedVimeo && preloadedVimeo.ready) {
+          // Видео готово, показываем его
+          showHomeContentItem(index);
+        } else {
+          // Видео все еще не готово, проверяем еще раз через секунду
+          setTimeout(() => showHomeContentItem(index), 1000);
+        }
+      }, 1000);
       return;
     }
     
@@ -1331,7 +1342,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
-    currentSection='about'; 
+    currentSection='about';
+    window.currentSection = 'about'; // Обновляем глобальную переменную для drawing.js
     stopBackgroundAnimation();
     stopHomeContentRotation();
     grid.style.display='none';
@@ -1346,6 +1358,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     document.documentElement.classList.remove('home-page');
     document.body.classList.add('about-page');
     document.documentElement.classList.add('about-page');
+    // Обновляем URL ПЕРЕД включением рисования, чтобы enableDrawing мог правильно определить секцию
+    updateURL('about');
     // Включаем рисование на странице About me
     enableDrawing();
     if(navCommerce) {
@@ -1360,8 +1374,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navAbout.style.display='inline';
       navAbout.style.opacity='1';
     }
-    // Обновляем URL без перезагрузки страницы
-    updateURL('about');
   });
   
   // Восстанавливаем состояние страницы из URL

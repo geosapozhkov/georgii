@@ -41,16 +41,75 @@ function setupCanvasSize(canvas) {
 
 // Создание canvas для рисования
 function createDrawingCanvas() {
-  // Если canvas уже существует и находится в DOM, просто показываем его и пересоздаем обработчики
+  console.log('🟡 createDrawingCanvas вызвана');
+  // Если canvas уже существует и находится в DOM, просто показываем его и очищаем
   if (drawingCanvas && drawingCanvas.parentNode) {
+    console.log('🟡 Canvas уже существует в DOM');
     // Убеждаемся, что canvas видим и активен
     drawingCanvas.style.display = 'block';
+    drawingCanvas.style.visibility = 'visible';
+    drawingCanvas.style.opacity = '1';
     drawingCanvas.style.pointerEvents = 'auto';
     drawingCanvas.style.touchAction = 'none';
     drawingCanvas.style.webkitTouchCallout = 'none';
     drawingCanvas.style.zIndex = '9998';
+    
+    // Очищаем canvas при каждом возврате на страницу About me
+    if (drawingContext && drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+      drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    }
+    
+    // Восстанавливаем настройки контекста
+    if (drawingContext) {
+      drawingContext.imageSmoothingEnabled = true;
+      drawingContext.imageSmoothingQuality = 'high';
+      drawingContext.lineCap = 'round';
+      drawingContext.lineJoin = 'round';
+      drawingContext.strokeStyle = DRAWING_COLOR;
+      drawingContext.lineWidth = isMobileDevice() ? MOBILE_LINE_WIDTH : currentLineWidth;
+      drawingContext.shadowBlur = 0.5;
+      drawingContext.shadowColor = DRAWING_COLOR;
+    } else if (drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+      // Только если контекст действительно потерян - восстанавливаем его
+      drawingContext = drawingCanvas.getContext('2d');
+      // НЕ вызываем scale() повторно - масштаб уже был применен при создании canvas
+      // Просто восстанавливаем настройки
+      drawingContext.imageSmoothingEnabled = true;
+      drawingContext.imageSmoothingQuality = 'high';
+      drawingContext.lineCap = 'round';
+      drawingContext.lineJoin = 'round';
+      drawingContext.strokeStyle = DRAWING_COLOR;
+      drawingContext.lineWidth = isMobileDevice() ? MOBILE_LINE_WIDTH : currentLineWidth;
+      drawingContext.shadowBlur = 0.5;
+      drawingContext.shadowColor = DRAWING_COLOR;
+    }
+    
+    // Обновляем размер курсора
+    updateCursorSize();
+    return;
+  }
+  
+  // Если canvas существует, но не в DOM, добавляем его обратно и очищаем
+  if (drawingCanvas && !drawingCanvas.parentNode) {
+    document.body.appendChild(drawingCanvas);
+    drawingCanvas.style.display = 'block';
     drawingCanvas.style.visibility = 'visible';
     drawingCanvas.style.opacity = '1';
+    drawingCanvas.style.pointerEvents = 'auto';
+    drawingCanvas.style.touchAction = 'none';
+    drawingCanvas.style.webkitTouchCallout = 'none';
+    drawingCanvas.style.zIndex = '9998';
+    
+    // Восстанавливаем контекст, если он потерян (НЕ меняем размеры canvas!)
+    if (!drawingContext && drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+      drawingContext = drawingCanvas.getContext('2d');
+      // НЕ вызываем scale() повторно - масштаб уже был применен при создании canvas
+    }
+    
+    // Очищаем canvas при каждом возврате на страницу About me
+    if (drawingContext && drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+      drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    }
     
     // Восстанавливаем настройки контекста
     if (drawingContext) {
@@ -63,45 +122,6 @@ function createDrawingCanvas() {
       drawingContext.shadowBlur = 0.5;
       drawingContext.shadowColor = DRAWING_COLOR;
     }
-    
-    // ВСЕГДА пересоздаем обработчики событий при восстановлении
-    // Это критически важно для работы после переключения страниц
-    setupDrawingHandlers();
-    
-    // Обновляем размер курсора
-    updateCursorSize();
-    return;
-  }
-  
-  // Если canvas существует, но не в DOM, добавляем его обратно
-  if (drawingCanvas && !drawingCanvas.parentNode) {
-    document.body.appendChild(drawingCanvas);
-    drawingCanvas.style.display = 'block';
-    drawingCanvas.style.pointerEvents = 'auto';
-    drawingCanvas.style.touchAction = 'none';
-    drawingCanvas.style.webkitTouchCallout = 'none';
-    drawingCanvas.style.zIndex = '9998';
-    
-    // Пересоздаем контекст с учетом DPR
-    const dpr = getDevicePixelRatio();
-    const rect = drawingCanvas.getBoundingClientRect();
-    drawingCanvas.width = rect.width * dpr;
-    drawingCanvas.height = rect.height * dpr;
-    drawingContext = drawingCanvas.getContext('2d');
-    drawingContext.scale(dpr, dpr);
-    
-    // Восстанавливаем настройки контекста
-    drawingContext.imageSmoothingEnabled = true;
-    drawingContext.imageSmoothingQuality = 'high';
-    drawingContext.lineCap = 'round';
-    drawingContext.lineJoin = 'round';
-    drawingContext.strokeStyle = DRAWING_COLOR;
-    drawingContext.lineWidth = isMobileDevice() ? MOBILE_LINE_WIDTH : currentLineWidth;
-    drawingContext.shadowBlur = 0.5;
-    drawingContext.shadowColor = DRAWING_COLOR;
-    
-    // ВСЕГДА пересоздаем обработчики событий
-    setupDrawingHandlers();
     
     // Обновляем размер курсора
     updateCursorSize();
@@ -144,21 +164,21 @@ function createDrawingCanvas() {
   drawingContext.shadowBlur = 0.5;
   drawingContext.shadowColor = DRAWING_COLOR;
   
-  // Добавляем canvas в body
-  document.body.appendChild(drawingCanvas);
-  
-  // Обработчики событий
-  setupDrawingHandlers();
-  
+  // НЕ вызываем setupDrawingHandlers() здесь - это будет сделано в enableDrawing()
   // Обновляем размер курсора
   updateCursorSize();
 }
 
-// Скрытие canvas для рисования (сохраняем для восстановления)
+// Скрытие canvas для рисования (очищаем содержимое)
 function hideDrawingCanvas() {
   if (drawingCanvas) {
-    // Скрываем canvas вместо удаления, чтобы сохранить рисунок
-    drawingCanvas.style.display = 'none';
+    // Очищаем содержимое canvas при переходе на другую страницу
+    if (drawingContext && drawingCanvas.width > 0 && drawingCanvas.height > 0) {
+      drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    }
+    
+    // Скрываем canvas
+    drawingCanvas.style.opacity = '0';
     drawingCanvas.style.pointerEvents = 'none';
     // Удаляем обработчики событий
     removeDrawingHandlers();
@@ -196,22 +216,39 @@ let drawingHandlers = {
 
 // Настройка обработчиков событий для рисования
 function setupDrawingHandlers() {
-  if (!drawingCanvas) return;
+  console.log('🟢 setupDrawingHandlers вызвана');
+  if (!drawingCanvas) {
+    console.error('🟢 setupDrawingHandlers: drawingCanvas не существует');
+    return;
+  }
+  
+  if (!drawingCanvas.parentNode) {
+    console.log('🟢 setupDrawingHandlers: canvas не в DOM, добавляем...');
+    // Если canvas не в DOM, добавляем его
+    document.body.appendChild(drawingCanvas);
+  }
   
   // Сначала удаляем старые обработчики, если они есть
+  console.log('🟢 setupDrawingHandlers: удаляем старые обработчики...');
   removeDrawingHandlers();
   
   // Включаем pointer-events и touch-action
   drawingCanvas.style.pointerEvents = 'auto';
   drawingCanvas.style.touchAction = 'none';
   drawingCanvas.style.webkitTouchCallout = 'none';
+  drawingCanvas.style.zIndex = '9998';
+  
+  console.log('🟢 setupDrawingHandlers: создаем новые обработчики...');
   
   // Начало рисования
   drawingHandlers.mousedown = (e) => {
+    console.log('🟣 mousedown обработчик вызван!', e);
     // Проверяем, что мы на странице About me
     const urlParams = new URLSearchParams(window.location.search);
     const section = urlParams.get('section') || 'home';
+    console.log('🟣 Текущая секция в mousedown:', section);
     if (section !== 'about') {
+      console.log('🟣 Секция не about, отключаем рисование');
       disableDrawing();
       return;
     }
@@ -252,6 +289,7 @@ function setupDrawingHandlers() {
       }
     }
     
+    console.log('🟣 Проверка интерактивных элементов пройдена, вызываем startDrawing...');
     startDrawing(e);
   };
   drawingCanvas.addEventListener('mousedown', drawingHandlers.mousedown);
@@ -389,58 +427,73 @@ function setupDrawingHandlers() {
   };
   window.addEventListener('resize', handleResize);
   drawingHandlers.resize = handleResize;
+  
+  console.log('🟢 setupDrawingHandlers: все обработчики успешно прикреплены');
+  console.log('🟢 drawingCanvas:', drawingCanvas);
+  console.log('🟢 drawingContext:', drawingContext);
+  console.log('🟢 drawingCanvas.parentNode:', drawingCanvas.parentNode);
+  console.log('🟢 drawingCanvas.style.pointerEvents:', drawingCanvas.style.pointerEvents);
 }
 
 // Удаление обработчиков событий
 function removeDrawingHandlers() {
-  if (!drawingCanvas) return;
+  // Удаляем обработчики даже если canvas скрыт или не существует
+  // Это важно для полной очистки всех обработчиков
   
-  // Безопасно удаляем обработчики, проверяя их наличие
+  // Безопасно удаляем обработчики с canvas, если он существует
+  if (drawingCanvas) {
+    try {
+      if (drawingHandlers.mousedown) {
+        drawingCanvas.removeEventListener('mousedown', drawingHandlers.mousedown);
+        drawingHandlers.mousedown = null;
+      }
+      if (drawingHandlers.mousedownRight) {
+        drawingCanvas.removeEventListener('mousedown', drawingHandlers.mousedownRight);
+        drawingHandlers.mousedownRight = null;
+      }
+      if (drawingHandlers.mousemove) {
+        drawingCanvas.removeEventListener('mousemove', drawingHandlers.mousemove);
+        drawingHandlers.mousemove = null;
+      }
+      if (drawingHandlers.mouseup) {
+        drawingCanvas.removeEventListener('mouseup', drawingHandlers.mouseup);
+        drawingHandlers.mouseup = null;
+      }
+      if (drawingHandlers.mouseleave) {
+        drawingCanvas.removeEventListener('mouseleave', drawingHandlers.mouseleave);
+        drawingHandlers.mouseleave = null;
+      }
+      if (drawingHandlers.touchstart) {
+        drawingCanvas.removeEventListener('touchstart', drawingHandlers.touchstart);
+        drawingHandlers.touchstart = null;
+      }
+      if (drawingHandlers.touchmove) {
+        drawingCanvas.removeEventListener('touchmove', drawingHandlers.touchmove);
+        drawingHandlers.touchmove = null;
+      }
+      if (drawingHandlers.touchend) {
+        drawingCanvas.removeEventListener('touchend', drawingHandlers.touchend);
+        drawingHandlers.touchend = null;
+      }
+      if (drawingHandlers.touchcancel) {
+        drawingCanvas.removeEventListener('touchcancel', drawingHandlers.touchcancel);
+        drawingHandlers.touchcancel = null;
+      }
+      if (drawingHandlers.wheel) {
+        drawingCanvas.removeEventListener('wheel', drawingHandlers.wheel);
+        drawingHandlers.wheel = null;
+      }
+      if (drawingHandlers.contextmenu) {
+        drawingCanvas.removeEventListener('contextmenu', drawingHandlers.contextmenu);
+        drawingHandlers.contextmenu = null;
+      }
+    } catch (e) {
+      // Игнорируем ошибки при удалении обработчиков с canvas
+    }
+  }
+  
+  // ВСЕГДА удаляем обработчики с window и document, даже если canvas не существует
   try {
-    if (drawingHandlers.mousedown) {
-      drawingCanvas.removeEventListener('mousedown', drawingHandlers.mousedown);
-      drawingHandlers.mousedown = null;
-    }
-    if (drawingHandlers.mousedownRight) {
-      drawingCanvas.removeEventListener('mousedown', drawingHandlers.mousedownRight);
-      drawingHandlers.mousedownRight = null;
-    }
-    if (drawingHandlers.mousemove) {
-      drawingCanvas.removeEventListener('mousemove', drawingHandlers.mousemove);
-      drawingHandlers.mousemove = null;
-    }
-    if (drawingHandlers.mouseup) {
-      drawingCanvas.removeEventListener('mouseup', drawingHandlers.mouseup);
-      drawingHandlers.mouseup = null;
-    }
-    if (drawingHandlers.mouseleave) {
-      drawingCanvas.removeEventListener('mouseleave', drawingHandlers.mouseleave);
-      drawingHandlers.mouseleave = null;
-    }
-    if (drawingHandlers.touchstart) {
-      drawingCanvas.removeEventListener('touchstart', drawingHandlers.touchstart);
-      drawingHandlers.touchstart = null;
-    }
-    if (drawingHandlers.touchmove) {
-      drawingCanvas.removeEventListener('touchmove', drawingHandlers.touchmove);
-      drawingHandlers.touchmove = null;
-    }
-    if (drawingHandlers.touchend) {
-      drawingCanvas.removeEventListener('touchend', drawingHandlers.touchend);
-      drawingHandlers.touchend = null;
-    }
-    if (drawingHandlers.touchcancel) {
-      drawingCanvas.removeEventListener('touchcancel', drawingHandlers.touchcancel);
-      drawingHandlers.touchcancel = null;
-    }
-    if (drawingHandlers.wheel) {
-      drawingCanvas.removeEventListener('wheel', drawingHandlers.wheel);
-      drawingHandlers.wheel = null;
-    }
-    if (drawingHandlers.contextmenu) {
-      drawingCanvas.removeEventListener('contextmenu', drawingHandlers.contextmenu);
-      drawingHandlers.contextmenu = null;
-    }
     if (drawingHandlers.resize) {
       window.removeEventListener('resize', drawingHandlers.resize);
       drawingHandlers.resize = null;
@@ -450,8 +503,7 @@ function removeDrawingHandlers() {
       drawingHandlers.documentWheel = null;
     }
   } catch (e) {
-    // Игнорируем ошибки при удалении обработчиков
-    console.warn('Ошибка при удалении обработчиков:', e);
+    // Игнорируем ошибки при удалении обработчиков с window/document
   }
 }
 
@@ -471,7 +523,13 @@ function getEventCoordinates(e) {
 
 // Начало рисования
 function startDrawing(e) {
-  if (!drawingContext) return;
+  console.log('🟠 startDrawing вызвана', e);
+  if (!drawingContext) {
+    console.error('🟠 startDrawing: drawingContext не существует!');
+    return;
+  }
+  
+  console.log('🟠 startDrawing: drawingContext существует');
   
   // Предотвращаем стандартное поведение для touch-событий
   if (e.preventDefault) {
@@ -479,6 +537,7 @@ function startDrawing(e) {
   }
   
   const coords = getEventCoordinates(e);
+  console.log('🟠 startDrawing: координаты', coords);
   
   // Проверяем, не кликнул ли пользователь по интерактивному элементу (только для mouse-событий)
   if (e.type === 'mousedown' && drawingCanvas) {
@@ -522,27 +581,36 @@ function startDrawing(e) {
   }
   
   isDrawing = true;
+  console.log('🟠 startDrawing: isDrawing установлен в true');
   
   drawingContext.beginPath();
   drawingContext.moveTo(coords.x, coords.y);
+  console.log('🟠 startDrawing: начата линия в', coords.x, coords.y);
   
   // Если стирание, используем режим destination-out
   if (isErasing) {
+    console.log('🟠 startDrawing: режим стирания');
     drawingContext.globalCompositeOperation = 'destination-out';
     const lineWidth = isMobileDevice() ? MOBILE_LINE_WIDTH : currentLineWidth;
     drawingContext.lineWidth = lineWidth * 2; // Стирание чуть больше
     drawingContext.shadowBlur = 0; // Убираем тень при стирании
   } else {
+    console.log('🟠 startDrawing: режим рисования');
     drawingContext.globalCompositeOperation = 'source-over';
     drawingContext.lineWidth = isMobileDevice() ? MOBILE_LINE_WIDTH : currentLineWidth;
     drawingContext.shadowBlur = 0.5; // Восстанавливаем тень для плавных краев
     drawingContext.shadowColor = DRAWING_COLOR;
   }
+  console.log('🟠 startDrawing завершена');
 }
 
 // Рисование
 function draw(e) {
-  if (!isDrawing || !drawingContext) return;
+  if (!isDrawing || !drawingContext) {
+    if (!isDrawing) console.log('🟡 draw: isDrawing = false, пропускаем');
+    if (!drawingContext) console.log('🟡 draw: drawingContext отсутствует, пропускаем');
+    return;
+  }
   
   // Предотвращаем стандартное поведение для touch-событий
   if (e.preventDefault) {
@@ -553,6 +621,7 @@ function draw(e) {
   
   drawingContext.lineTo(coords.x, coords.y);
   drawingContext.stroke();
+  console.log('🟡 draw: линия нарисована в', coords.x, coords.y);
 }
 
 // Остановка рисования
@@ -586,12 +655,13 @@ function handleWheel(e) {
   }
   
   // Изменяем размер линии в зависимости от направления скролла
+  // Увеличена скорость изменения в 1.5 раза (с 0.5 до 0.75)
   if (e.deltaY > 0) {
     // Скролл вниз - уменьшаем размер
-    currentLineWidth = Math.max(MIN_LINE_WIDTH, currentLineWidth - 0.5);
+    currentLineWidth = Math.max(MIN_LINE_WIDTH, currentLineWidth - 0.75);
   } else {
     // Скролл вверх - увеличиваем размер
-    currentLineWidth = Math.min(MAX_LINE_WIDTH, currentLineWidth + 0.5);
+    currentLineWidth = Math.min(MAX_LINE_WIDTH, currentLineWidth + 0.75);
   }
   
   // Обновляем размер линии в контексте
@@ -610,32 +680,62 @@ function handleWheel(e) {
 
 // Включение рисования (только на странице About me)
 function enableDrawing() {
+  console.log('🔵 enableDrawing вызвана');
   // Проверяем текущую секцию через URL
   const urlParams = new URLSearchParams(window.location.search);
-  const section = urlParams.get('section') || 'home';
+  let section = urlParams.get('section') || 'home';
+  
+  // Если секция из URL не 'about', но мы знаем что должны быть на about (через window.currentSection),
+  // используем это как запасной вариант
+  if (section !== 'about' && typeof window !== 'undefined' && window.currentSection === 'about') {
+    console.log('🔵 URL еще не обновлен, используем window.currentSection:', window.currentSection);
+    section = 'about';
+  }
+  
+  console.log('🔵 Текущая секция:', section);
   
   if (section === 'about') {
-    // Принудительно пересоздаем canvas и обработчики
+    console.log('🔵 Секция about, создаем canvas...');
+    // Сначала удаляем все старые обработчики, чтобы избежать конфликтов
+    removeDrawingHandlers();
+    
+    // Принудительно пересоздаем canvas (он будет очищен)
     createDrawingCanvas();
     
     // Убеждаемся, что canvas видим и активен
     if (drawingCanvas) {
+      console.log('🔵 Canvas существует, настраиваем стили и обработчики...');
       drawingCanvas.style.display = 'block';
+      drawingCanvas.style.visibility = 'visible';
+      drawingCanvas.style.opacity = '1';
       drawingCanvas.style.pointerEvents = 'auto';
       drawingCanvas.style.touchAction = 'none';
       drawingCanvas.style.webkitTouchCallout = 'none';
       drawingCanvas.style.zIndex = '9998';
-      drawingCanvas.style.visibility = 'visible';
-      drawingCanvas.style.opacity = '1';
       
-      // Принудительно пересоздаем обработчики с небольшой задержкой
-      // чтобы убедиться, что DOM обновился
-      setTimeout(() => {
-        if (drawingCanvas && drawingCanvas.parentNode) {
-          setupDrawingHandlers();
-        }
-      }, 0);
+      // Убеждаемся, что canvas находится в DOM
+      if (!drawingCanvas.parentNode) {
+        console.log('🔵 Canvas не в DOM, добавляем...');
+        document.body.appendChild(drawingCanvas);
+      }
+      
+      // КРИТИЧЕСКИ ВАЖНО: Пересоздаем обработчики СРАЗУ и СИНХРОННО
+      // Убеждаемся, что canvas и контекст готовы перед прикреплением обработчиков
+      console.log('🔵 Вызываем setupDrawingHandlers() синхронно...');
+      if (drawingCanvas && drawingCanvas.parentNode && drawingContext) {
+        setupDrawingHandlers();
+        console.log('🔵 enableDrawing завершена');
+      } else {
+        console.error('🔴 Canvas или контекст не готовы!');
+        console.error('🔴 drawingCanvas:', drawingCanvas);
+        console.error('🔴 drawingCanvas.parentNode:', drawingCanvas?.parentNode);
+        console.error('🔴 drawingContext:', drawingContext);
+      }
+    } else {
+      console.error('🔴 Canvas не создан!');
     }
+  } else {
+    console.log('🔵 Секция не about, рисование не включается');
   }
 }
 
