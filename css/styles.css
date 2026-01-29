@@ -9,6 +9,11 @@ body {
   cursor: none !important; /* Скрываем стандартный курсор */
 }
 
+/* Базовые размеры типографики (используется для соотношений) */
+:root {
+  --description-font-size: 1rem;
+}
+
 /* Принудительно применяем Inter ко всем элементам */
 * {
   font-family: 'Inter', sans-serif !important;
@@ -183,8 +188,8 @@ img, video {
   color: #ACACAC;
   background: rgba(255, 255, 255, 0.95);
   padding: 8px 12px;
-  font-size: 1.25rem;
-  font-weight: normal;
+  font-size: calc(var(--description-font-size) * 2);
+  font-weight: 600;
   text-align: left;
 }
 
@@ -195,8 +200,8 @@ img, video {
 
 .project-cover-style-classic .project-cover-title {
   color: white;
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: calc(var(--description-font-size) * 2);
+  font-weight: 600;
   text-align: center;
   padding: 0 16px;
 }
@@ -211,8 +216,8 @@ img, video {
 
 .project-cover-style-gradient .project-cover-title {
   color: white;
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: calc(var(--description-font-size) * 2);
+  font-weight: 600;
   text-align: left;
   padding: 0;
 }
@@ -242,9 +247,17 @@ img, video {
 
 /* =============== СТИЛИ ДЛЯ ОПИСАНИЙ =============== */
 .description-text {
+  font-size: var(--description-font-size);
   line-height: 1.1;
   color: #ACACAC;
   font-family: 'Inter', sans-serif !important;
+}
+
+/* Заголовок проекта на странице проекта:
+   2× кегль относительно описания + Semibold, позиционирование не трогаем */
+#project-title {
+  font-size: calc(var(--description-font-size) * 2) !important;
+  font-weight: 600 !important;
 }
 
 /* Стили для описания на странице About me - десктоп */
