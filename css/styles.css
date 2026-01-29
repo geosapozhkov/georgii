@@ -248,7 +248,7 @@ img, video {
 /* =============== СТИЛИ ДЛЯ ОПИСАНИЙ =============== */
 .description-text {
   font-size: var(--description-font-size);
-  line-height: 1.1;
+  line-height: 1.15;
   color: #ACACAC;
   font-family: 'Inter', sans-serif !important;
 }
