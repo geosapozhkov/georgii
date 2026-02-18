@@ -305,6 +305,17 @@ body.project-page {
   box-sizing: border-box;
 }
 
+/* About Me — описание на одной линии с Commerce Mind About me (одинаковое расстояние от верха) */
+@media (min-width: 640px) {
+  body.about-page #bio {
+    display: block !important;
+    top: 0 !important;
+  }
+  body.about-page #bio-container {
+    display: none !important;
+  }
+}
+
 /* Скрыть мобильную версию на десктопе и планшете */
 #bio-mobile {
   display: none;
