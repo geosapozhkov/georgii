@@ -315,7 +315,7 @@ body.project-page {
 @media (min-width: 640px) {
   body.about-page #bio {
     display: block !important;
-    top: 0 !important;
+    top: -3px !important;
   }
   body.about-page #bio-container {
     display: none !important;
@@ -557,6 +557,9 @@ body {
     padding-left: 0 !important;
     padding-right: 0 !important;
     margin-top: 1rem;
+  }
+  body.about-page #bio-mobile {
+    margin-top: calc(1rem - 3px) !important;
   }
   
   /* Навигация на мобильных - вертикально в правом верхнем углу */
