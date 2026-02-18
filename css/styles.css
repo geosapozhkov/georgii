@@ -41,6 +41,7 @@ body {
 /* Базовые размеры типографики (используется для соотношений) */
 :root {
   --description-font-size: 1rem;
+  --mobile-edge: 0.5rem;
 }
 
 /* Принудительно применяем Booklet Sans ко всем элементам */
@@ -285,8 +286,13 @@ img, video {
 /* Заголовок проекта на странице проекта:
    2× кегль относительно описания + Semibold, позиционирование не трогаем */
 #project-title {
-  font-size: calc(var(--description-font-size) * 1.3333333) !important;
-  font-weight: 600 !important;
+  font-size: var(--description-font-size) !important;
+  font-weight: 400 !important;
+}
+
+/* Страница проекта — название и Step Back чуть ниже */
+body.project-page > header {
+  margin-top: 0.35rem;
 }
 
 /* Страница проекта — минимальный отступ сверху */
@@ -337,7 +343,7 @@ body > header {
   padding-left: 0 !important;
 }
 body {
-  padding-left: 0.5rem !important;
+  padding-left: var(--mobile-edge) !important;
 }
 
 /* Стили для навигации на главной странице */
@@ -494,6 +500,7 @@ body {
     flex-direction: row !important;
     align-items: flex-start !important;
     justify-content: space-between !important;
+    padding-right: 0 !important;
   }
   
   /* Логотип - изображение */
@@ -509,7 +516,11 @@ body {
     opacity: 0.7;
   }
   
-  /* Логотип на мобильных */
+  /* Логотип на мобильных — в той же зоне, что и название проекта на странице проекта */
+  .logo-container {
+    width: calc(40% + 200px);
+    margin-top: -0.15rem;
+  }
   @media (max-width: 639px) {
     #logo {
       margin-bottom: 0 !important;
@@ -651,6 +662,16 @@ body {
   #projects-list > div {
     grid-column: span 4 / span 4 !important;
     width: 100% !important;
+  }
+  
+  /* Одинаковое расстояние от краёв до обложек (projects-list) и до медиа в проекте (file-grid) */
+  body {
+    padding-left: var(--mobile-edge) !important;
+    padding-right: var(--mobile-edge) !important;
+  }
+  main {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
