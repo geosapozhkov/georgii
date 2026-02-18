@@ -1,9 +1,38 @@
-/* Inter font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+/* Booklet Sans — локальные шрифты */
+@font-face {
+  font-family: 'Booklet Sans';
+  src: url('../fonts/BOOKLETSANS-LIGHT.OTF') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Booklet Sans';
+  src: url('../fonts/BOOKLETSANS-REGULAR.OTF') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Booklet Sans';
+  src: url('../fonts/BOOKLETSANS-MEDIUM.OTF') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Booklet Sans';
+  src: url('../fonts/BOOKLETSANS-BOLD.OTF') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Booklet Sans';
+  src: url('../fonts/BOOKLETSANS-BLACK.OTF') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
 
 body {
   background: #FAFAFA;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Booklet Sans', sans-serif !important;
   color: #ACACAC;
   min-height: 100vh;
   cursor: none !important; /* Скрываем стандартный курсор */
@@ -14,9 +43,9 @@ body {
   --description-font-size: 1rem;
 }
 
-/* Принудительно применяем Inter ко всем элементам */
+/* Принудительно применяем Booklet Sans ко всем элементам */
 * {
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Booklet Sans', sans-serif !important;
 }
 
 /* Убираем все стандартные курсоры - везде только точка */
@@ -100,7 +129,7 @@ h1, h2, h3, h4, h5, h6,
 p, span, div, a, button,
 nav, footer, header {
   color: #ACACAC;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Booklet Sans', sans-serif !important;
 }
 
 /* Allow images and videos to keep their natural appearance */
@@ -188,7 +217,7 @@ img, video {
   color: #ACACAC;
   background: rgba(255, 255, 255, 0.95);
   padding: 8px 12px;
-  font-size: calc(var(--description-font-size) * 2);
+  font-size: calc(var(--description-font-size) * 1.3333333);
   font-weight: 600;
   text-align: left;
 }
@@ -200,7 +229,7 @@ img, video {
 
 .project-cover-style-classic .project-cover-title {
   color: white;
-  font-size: calc(var(--description-font-size) * 2);
+  font-size: calc(var(--description-font-size) * 1.3333333);
   font-weight: 600;
   text-align: center;
   padding: 0 16px;
@@ -216,7 +245,7 @@ img, video {
 
 .project-cover-style-gradient .project-cover-title {
   color: white;
-  font-size: calc(var(--description-font-size) * 2);
+  font-size: calc(var(--description-font-size) * 1.3333333);
   font-weight: 600;
   text-align: left;
   padding: 0;
@@ -250,14 +279,19 @@ img, video {
   font-size: var(--description-font-size);
   line-height: 1.2;
   color: #ACACAC;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Booklet Sans', sans-serif !important;
 }
 
 /* Заголовок проекта на странице проекта:
    2× кегль относительно описания + Semibold, позиционирование не трогаем */
 #project-title {
-  font-size: calc(var(--description-font-size) * 2) !important;
+  font-size: calc(var(--description-font-size) * 1.3333333) !important;
   font-weight: 600 !important;
+}
+
+/* Страница проекта — минимальный отступ сверху */
+body.project-page {
+  padding-top: 0 !important;
 }
 
 /* Стили для описания на странице About me - десктоп */
