@@ -332,6 +332,14 @@ body.project-page {
   }
 }
 
+/* Логотип и футер — одинаковый отступ слева (0.5rem = left-2) */
+body > header {
+  padding-left: 0 !important;
+}
+body {
+  padding-left: 0.5rem !important;
+}
+
 /* Стили для навигации на главной странице */
 #top-nav {
   margin-top: 0 !important;
@@ -581,6 +589,17 @@ body.project-page {
     white-space: nowrap !important;
   }
   
+  /* Страница проекта на мобильных — Step Back и название на одной базовой линии */
+  body.project-page > header {
+    align-items: baseline !important;
+  }
+  body.project-page #project-title {
+    margin-bottom: 0 !important;
+  }
+  body.project-page > header #top-nav {
+    margin-top: 0 !important;
+  }
+  
   /* Контейнер описания проекта на мобильных */
   main > div.flex.items-baseline {
     flex-direction: column !important;
@@ -619,6 +638,12 @@ body.project-page {
   #home-content-item {
     width: 90vw;
     height: 60vh;
+  }
+  
+  /* Главная страница на мобильных — изображения и видео в 1.2 раза меньше */
+  body.home-page #home-content-item {
+    width: 75vw;
+    height: 50vh;
   }
   
   /* Все картинки и видео на мобильных занимают все 4 колонки */
