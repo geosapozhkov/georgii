@@ -346,6 +346,16 @@ body {
   padding-left: var(--mobile-edge) !important;
 }
 
+/* Логотип и навигация — тот же кегль, что и основной текст */
+#logo {
+  font-size: var(--description-font-size) !important;
+}
+#top-nav,
+#top-nav button,
+#top-nav a {
+  font-size: var(--description-font-size) !important;
+}
+
 /* Стили для навигации на главной странице */
 #top-nav {
   margin-top: 0 !important;
