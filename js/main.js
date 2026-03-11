@@ -62,8 +62,11 @@ async function loadProjects(category = null){
     let projects = await getProjectsList();
     
     // Фильтруем по категории, если указана
-    if(category){
+    if (category) {
       projects = projects.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
+    } else {
+      // Для главной страницы берём только проекты категорий Mind и Commerce
+      projects = projects.filter(p => p.category && ['mind', 'commerce'].includes(p.category.toLowerCase()));
     }
     
     if(projects.length === 0){
@@ -292,7 +295,7 @@ async function loadHomeContent() {
     
     if (!filesResponse.ok) {
       console.warn('files.json не найден в HomeContent');
-      homeContentContainer.style.display = 'none';
+      homeContentContainer?.style && (homeContentContainer.style.display = 'none');
       return;
     }
     
@@ -301,7 +304,7 @@ async function loadHomeContent() {
     
     if (files.length === 0) {
       console.warn('Нет файлов в files.json');
-      homeContentContainer.style.display = 'none';
+      homeContentContainer?.style && (homeContentContainer.style.display = 'none');
       return;
     }
     
@@ -354,11 +357,11 @@ async function loadHomeContent() {
       }, 100); // Небольшая задержка для начала предзагрузки
     } catch (e) {
       console.error('Ошибка предзагрузки или запуска HomeContent:', e);
-      homeContentContainer.style.display = 'none';
+      homeContentContainer?.style && (homeContentContainer.style.display = 'none');
     }
   } catch (e) {
     console.error('Ошибка загрузки HomeContent:', e);
-    homeContentContainer.style.display = 'none';
+    homeContentContainer?.style && (homeContentContainer.style.display = 'none');
     // Не блокируем выполнение остального кода
   }
 }
@@ -641,14 +644,12 @@ function preloadNextHomeContentItem(currentIndex) {
 // Отображение текущего элемента HomeContent
 function showHomeContentItem(index) {
   try {
-    if (homeContentFiles.length === 0) return;
-    
+    if (!homeContentItem || homeContentFiles.length === 0) return;
     const item = homeContentFiles[index % homeContentFiles.length];
     if (!item) {
       console.error('Элемент не найден по индексу:', index);
       return;
     }
-    
     // Очищаем предыдущие таймеры
     if (currentVideoStopTimeout) {
       clearTimeout(currentVideoStopTimeout);
@@ -1013,15 +1014,11 @@ function showHomeContentItem(index) {
   }
 }
 
-// Запуск ротации HomeContent
+// Запуск ротации HomeContent (не используется: главная показывает только обложки)
 function startHomeContentRotation() {
-  // Останавливаем предыдущую ротацию, если она была
+  if (!homeContentContainer || !homeContentItem) return;
   stopHomeContentRotation();
-  
-  // Показываем контейнер
   homeContentContainer.style.display = 'flex';
-  
-  // Показываем первый элемент
   homeContentIndex = 0;
   showHomeContentItem(homeContentIndex);
   
@@ -1119,8 +1116,8 @@ function stopHomeContentRotation() {
   });
   
   // Скрываем контейнер
-  homeContentContainer.style.display = 'none';
-  homeContentItem.innerHTML = '';
+  if (homeContentContainer) homeContentContainer.style.display = 'none';
+  if (homeContentItem) homeContentItem.innerHTML = '';
 }
 
 // Функция для обновления URL без перезагрузки страницы
@@ -1144,8 +1141,18 @@ function updateURL(section) {
 
 // =============== ГЛАВНАЯ СТРАНИЦА (HOME) ===============
 function showHome(){
+  // На главной показываем только обложки проектов (Mind + Commerce)
+  // Останавливаем и скрываем старый HomeContent (картинки и анимации)
+  stopHomeContentRotation();
+  if (homeContentContainer) {
+    homeContentContainer.style.display = 'none';
+  }
+  if (homeContentItem) {
+    homeContentItem.innerHTML = '';
+  }
+
   grid.style.display='none';
-  projectsList.style.display='none';
+  projectsList.style.display='grid';
   breadcrumb.style.display='none';
   const bioEl = document.getElementById('bio');
   if(bioEl) bioEl.style.display='none';
@@ -1155,16 +1162,15 @@ function showHome(){
   const navMind = document.getElementById('nav-mind');
   const navAbout = document.getElementById('nav-about');
   if(navCommerce) {
-    navCommerce.style.display='inline';
-    navCommerce.style.opacity='1';
+    navCommerce.style.display='none';
   }
   if(navMind) {
-    navMind.style.display='inline';
-    navMind.style.opacity='1';
+    navMind.style.display='none';
   }
   if(navAbout) {
     navAbout.style.display='inline';
-    navAbout.style.opacity='1';
+    // На главной About me "неактивна"
+    navAbout.style.opacity='0.35';
   }
   // Добавляем класс для блокировки скролла на главной странице
   document.body.classList.add('home-page');
@@ -1184,6 +1190,8 @@ function showHome(){
   }
   // Отключаем рисование при переходе на главную страницу
   disableDrawing();
+  // Загружаем обложки всех проектов Mind и Commerce
+  loadProjects(null);
   currentSection = 'home';
   // Обновляем URL без перезагрузки страницы
   updateURL('home');
@@ -1408,59 +1416,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
         navAbout.style.display='inline';
         navAbout.style.opacity='1';
       }
-  } else if(section === 'commerce' || section === 'mind') {
-    // Отключаем рисование при переходе на Commerce или Mind
-    disableDrawing();
-    // Убираем классы для разблокировки скролла
-    document.body.classList.remove('home-page');
-    document.documentElement.classList.remove('home-page');
-    document.body.classList.remove('about-page');
-    document.documentElement.classList.remove('about-page');
-    currentSection = section;
-    stopHomeContentRotation();
-    grid.style.display='none';
-    projectsList.style.display='grid';
-    breadcrumb.style.display='none';
-    const bioEl = document.getElementById('bio');
-    if(bioEl) bioEl.style.display='none';
-    const bioContainer = document.getElementById('bio-container');
-    if(bioContainer) bioContainer.style.display='none';
-    // Убираем классы для разблокировки скролла
-    document.body.classList.remove('home-page');
-    document.documentElement.classList.remove('home-page');
-    document.body.classList.remove('about-page');
-    document.documentElement.classList.remove('about-page');
-    if(section === 'commerce') {
-      if(navCommerce) {
-        navCommerce.style.display='inline';
-        navCommerce.style.opacity='1';
-      }
-      if(navMind) {
-        navMind.style.display='inline';
-        navMind.style.opacity='0.35';
-      }
-      if(navAbout) {
-        navAbout.style.display='inline';
-        navAbout.style.opacity='0.35';
-      }
-    } else if(section === 'mind') {
-      if(navCommerce) {
-        navCommerce.style.display='inline';
-        navCommerce.style.opacity='0.35';
-      }
-      if(navMind) {
-        navMind.style.display='inline';
-        navMind.style.opacity='1';
-      }
-      if(navAbout) {
-        navAbout.style.display='inline';
-        navAbout.style.opacity='0.35';
-      }
-    }
-    loadProjects(section);
   } else {
-    // Главная страница (home)
-  showHome();
+    // Любые другие секции (включая устаревшие commerce/mind) считаем главной
+    showHome();
   }
   
   // Обработчик для кнопки "Назад" в браузере
@@ -1470,11 +1428,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     
     if(section === 'about') {
       document.getElementById('nav-about')?.click();
-    } else if(section === 'commerce') {
-      document.getElementById('nav-commerce')?.click();
-    } else if(section === 'mind') {
-      document.getElementById('nav-mind')?.click();
     } else {
+      // Для всех остальных секций (включая устаревшие commerce/mind) возвращаемся на главную
       document.getElementById('logo')?.click();
     }
   });
