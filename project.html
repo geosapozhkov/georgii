@@ -9,9 +9,25 @@
   <link rel="stylesheet" href="css/styles.css?v=49">
 </head>
 <body class="p-1.5 project-page">
-  <header class="flex items-baseline mb-12 relative">
-    <div style="width: calc(40% + 200px); display: flex; align-items: baseline;">
-      <h1 id="project-title" class="tracking-tight mr-4" style="display: none;"></h1>
+  <script>
+  (function(){
+    try {
+      if (sessionStorage.getItem('fadeInProject')) {
+        sessionStorage.removeItem('fadeInProject');
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.45s ease';
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            document.body.style.opacity = '1';
+          });
+        });
+      }
+    } catch(e) {}
+  })();
+  </script>
+  <header class="flex items-start mb-12 px-1.5 relative">
+    <div class="logo-container" style="display: flex; align-items: baseline;">
+      <h1 id="project-title" class="mr-4 text-base text-gray-600" style="display: none;"></h1>
     </div>
     <nav id="breadcrumb" class="text-gray-500 flex flex-wrap gap-2" style="display: none; padding-left: 1.5rem; align-items: baseline;"></nav>
     <nav id="top-nav" class="text-gray-600" style="padding-left: 1.5rem;">

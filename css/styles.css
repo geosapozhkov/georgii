@@ -283,16 +283,18 @@ img, video {
   font-family: 'Booklet Sans', sans-serif !important;
 }
 
-/* Заголовок проекта на странице проекта:
-   2× кегль относительно описания + Semibold, позиционирование не трогаем */
+/* Название проекта — как georgii: тот же кегль и отступы */
 #project-title {
   font-size: var(--description-font-size) !important;
   font-weight: 400 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: 0 !important;
 }
 
-/* Страница проекта — название и Step Back чуть ниже */
+/* Страница проекта — шапка на той же высоте, что и на главной (без лишнего margin-top) */
 body.project-page > header {
-  margin-top: 0.35rem;
+  margin-top: 0 !important;
 }
 
 /* Страница проекта — минимальный отступ сверху */
@@ -363,6 +365,16 @@ body.about-page main {
   padding-top: 5rem !important; /* место под фиксированную шапку */
 }
 
+/* На главной странице скрываем почту и инстаграм */
+body.home-page footer {
+  display: none !important;
+}
+
+/* На About me выравниваем почту и инсту по левому краю описания (тот же left, что у #bio) */
+body.about-page footer {
+  left: calc(var(--mobile-edge) + (100vw - 2 * var(--mobile-edge)) * 0.4 + 200px + 1.5rem) !important;
+}
+
 /* Логотип и навигация — тот же кегль, что и основной текст */
 #logo {
   font-size: var(--description-font-size) !important;
@@ -375,7 +387,7 @@ body.about-page main {
 
 /* Стили для навигации на главной странице */
 #top-nav {
-  margin-top: 0.25rem !important;
+  margin-top: calc(0.1rem - 2px) !important;
   padding-top: 0;
 }
 
@@ -495,6 +507,37 @@ body.about-page main {
   touch-action: none; /* Отключаем жесты на мобильных */
 }
 
+/* =============== ДЕСКТОП: ПЛАВАЮЩИЕ НАЗВАНИЯ ПРОЕКТОВ НА ГЛАВНОЙ =============== */
+.home-project-names {
+  display: none;
+  pointer-events: none;
+}
+.home-project-names a {
+  pointer-events: auto;
+  position: absolute;
+  font-size: var(--description-font-size) !important;
+  color: #ACACAC;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.4s ease;
+  cursor: pointer;
+}
+@media (min-width: 640px) {
+  body.home-page .home-project-names {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    z-index: 10;
+  }
+  body.home-page #projects-list {
+    display: none !important;
+  }
+}
+
 /* =============== МОБИЛЬНАЯ ВЕРСИЯ (до 640px) =============== */
 @media (max-width: 639px) {
   /* Главная страница — скролл разрешён (обложки можно пролистывать) */
@@ -511,6 +554,11 @@ body.about-page main {
     height: 100%;
     overflow: hidden;
   }
+  /* На главной в мобильной версии скрываем почту и инстаграм */
+  body.home-page footer {
+    display: none !important;
+  }
+  
   /* Главная страница - адаптация header */
   body > header {
     flex-direction: row !important;

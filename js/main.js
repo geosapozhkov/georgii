@@ -9,6 +9,7 @@ const breadcrumb = document.getElementById('breadcrumb');
 const viewerOverlay = document.getElementById('viewerOverlay');
 const viewerContent = document.getElementById('viewerContent');
 const projectsList = document.getElementById('projects-list');
+const homeProjectNamesContainer = document.getElementById('home-project-names');
 const homeContentContainer = document.getElementById('home-content-container');
 const homeContentItem = document.getElementById('home-content-item');
 
@@ -267,6 +268,172 @@ async function getCoverImageFromProject(projectName, category = null){
 async function getFirstImageFromProject(projectName, category = null){
   const coverInfo = await getCoverImageFromProject(projectName, category);
   return coverInfo.url;
+}
+
+// =============== ДЕСКТОП: ПЛАВАЮЩИЕ НАЗВАНИЯ ПРОЕКТОВ НА ГЛАВНОЙ ===============
+const DESKTOP_NAMES_PADDING = 24;
+const DESKTOP_NAMES_SPEED_MIN = 0.3;
+const DESKTOP_NAMES_SPEED_MAX = 0.8;
+const DESKTOP_NAMES_HOVER_SLOW = 0.45;
+const DESKTOP_NAMES_HOVER_CHANCE = 0.85;
+const DESKTOP_NAMES_RUN_CHANCE = 0.25;
+const DESKTOP_NAMES_RUN_MULT = 2.4;
+let desktopHomeNamesAnimationId = null;
+let desktopHomeItems = [];
+
+function getRandomInRange(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function getRandomSign() {
+  return Math.random() < 0.5 ? -1 : 1;
+}
+
+async function getProjectsForDesktopHome() {
+  const projects = await getProjectsList();
+  const filtered = projects.filter(p => p.category && ['mind', 'commerce'].includes(p.category.toLowerCase()));
+  return filtered.map(p => {
+    const title = p.title || p.name.replace(/_/g, ' ');
+    const categoryParam = p.category ? `&category=${encodeURIComponent(p.category)}` : '';
+    const href = `project.html?project=${encodeURIComponent(p.name)}${categoryParam}`;
+    return { title, href };
+  });
+}
+
+function createDesktopHomeNames() {
+  if (!homeProjectNamesContainer) return;
+  homeProjectNamesContainer.innerHTML = '';
+  desktopHomeItems = [];
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  getProjectsForDesktopHome().then(projects => {
+    if (!homeProjectNamesContainer || !document.body.classList.contains('home-page')) return;
+    projects.forEach(({ title, href }) => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = title;
+      a.className = 'home-project-name-link';
+      a.dataset.href = href;
+      const itemW = 120;
+      const itemH = 24;
+      const x = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, w - itemW - DESKTOP_NAMES_PADDING));
+      const y = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, h - itemH - DESKTOP_NAMES_PADDING));
+      const vx = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
+      const vy = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
+      const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false, runAway: false };
+      desktopHomeItems.push(item);
+      a.style.left = x + 'px';
+      a.style.top = y + 'px';
+      a.addEventListener('mouseenter', (e) => {
+        const r = Math.random();
+        const centerX = item.x + item.w / 2;
+        const centerY = item.y + item.h / 2;
+        const cursorX = e.clientX;
+        const cursorY = e.clientY;
+        if (r < DESKTOP_NAMES_RUN_CHANCE) {
+          // Убегаем от курсора: задаём направление от курсора к центру
+          const dx = centerX - cursorX;
+          const dy = centerY - cursorY;
+          const signX = dx === 0 ? getRandomSign() : (dx > 0 ? 1 : -1);
+          const signY = dy === 0 ? getRandomSign() : (dy > 0 ? 1 : -1);
+          item.vx = Math.max(DESKTOP_NAMES_SPEED_MIN, Math.abs(item.vx)) * signX;
+          item.vy = Math.max(DESKTOP_NAMES_SPEED_MIN, Math.abs(item.vy)) * signY;
+          item.runAway = true;
+          item.slowDown = false;
+        } else if (r < DESKTOP_NAMES_RUN_CHANCE + DESKTOP_NAMES_HOVER_CHANCE) {
+          // Замедляемся (но продолжаем двигаться)
+          item.slowDown = true;
+          item.runAway = false;
+        }
+      });
+      a.addEventListener('mouseleave', () => { item.slowDown = false; item.runAway = false; });
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = a.dataset.href || a.getAttribute('href');
+        // Плавно скрываем все названия одновременно
+        desktopHomeItems.forEach(it => {
+          it.el.style.transition = 'opacity 0.4s ease';
+          it.el.style.opacity = '0';
+        });
+        setTimeout(() => {
+          try { sessionStorage.setItem('fadeInProject', '1'); } catch (_) {}
+          window.location.href = url;
+        }, 420);
+      });
+      homeProjectNamesContainer.appendChild(a);
+    });
+    requestAnimationFrame(measureAndAnimateDesktopNames);
+  });
+}
+
+function measureAndAnimateDesktopNames() {
+  desktopHomeItems.forEach(item => {
+    const rect = item.el.getBoundingClientRect();
+    item.w = rect.width;
+    item.h = rect.height;
+  });
+  startDesktopHomeNamesAnimation();
+}
+
+function startDesktopHomeNamesAnimation() {
+  if (desktopHomeNamesAnimationId != null) return;
+  const padding = DESKTOP_NAMES_PADDING;
+  function tick() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    for (let i = 0; i < desktopHomeItems.length; i++) {
+      const it = desktopHomeItems[i];
+      let vx = it.vx;
+      let vy = it.vy;
+      if (it.slowDown) {
+        vx *= DESKTOP_NAMES_HOVER_SLOW;
+        vy *= DESKTOP_NAMES_HOVER_SLOW;
+      }
+      if (it.runAway) {
+        vx *= DESKTOP_NAMES_RUN_MULT;
+        vy *= DESKTOP_NAMES_RUN_MULT;
+      }
+      it.x += vx;
+      it.y += vy;
+      if (it.x <= padding) { it.x = padding; it.vx = Math.abs(it.vx); }
+      if (it.x + it.w >= W - padding) { it.x = W - padding - it.w; it.vx = -Math.abs(it.vx); }
+      if (it.y <= padding) { it.y = padding; it.vy = Math.abs(it.vy); }
+      if (it.y + it.h >= H - padding) { it.y = H - padding - it.h; it.vy = -Math.abs(it.vy); }
+      it.el.style.left = it.x + 'px';
+      it.el.style.top = it.y + 'px';
+      for (let j = i + 1; j < desktopHomeItems.length; j++) {
+        const jt = desktopHomeItems[j];
+        const dx = (it.x + it.w / 2) - (jt.x + jt.w / 2);
+        const dy = (it.y + it.h / 2) - (jt.y + jt.h / 2);
+        const gapX = it.w / 2 + jt.w / 2 + 8;
+        const gapY = it.h / 2 + jt.h / 2 + 4;
+        if (Math.abs(dx) < gapX && Math.abs(dy) < gapY) {
+          if (Math.abs(dx) > Math.abs(dy)) {
+            it.vx = -it.vx;
+            jt.vx = -jt.vx;
+            const overlap = gapX - Math.abs(dx);
+            it.x += (dx > 0 ? 1 : -1) * overlap / 2;
+            jt.x -= (dx > 0 ? 1 : -1) * overlap / 2;
+          } else {
+            it.vy = -it.vy;
+            jt.vy = -jt.vy;
+            const overlap = gapY - Math.abs(dy);
+            it.y += (dy > 0 ? 1 : -1) * overlap / 2;
+            jt.y -= (dy > 0 ? 1 : -1) * overlap / 2;
+          }
+        }
+      }
+    }
+    desktopHomeNamesAnimationId = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function stopDesktopHomeNamesAnimation() {
+  if (desktopHomeNamesAnimationId != null) {
+    cancelAnimationFrame(desktopHomeNamesAnimationId);
+    desktopHomeNamesAnimationId = null;
+  }
 }
 
 // =============== HOME CONTENT ===============
@@ -1172,28 +1339,22 @@ function showHome(){
     // На главной About me "неактивна"
     navAbout.style.opacity='0.35';
   }
-  // Добавляем класс для блокировки скролла на главной странице
   document.body.classList.add('home-page');
   document.documentElement.classList.add('home-page');
-  // Убираем класс about-page если он был
   document.body.classList.remove('about-page');
   document.documentElement.classList.remove('about-page');
-  // Показываем HomeContent на главной странице
-  if (homeContentFiles.length > 0) {
-    startHomeContentRotation();
-  } else {
-    loadHomeContent();
-  }
-  // Останавливаем анимацию фона при переходе на главную (если она была запущена на другой странице)
-  if (currentSection !== 'home') {
-    stopBackgroundAnimation();
-  }
-  // Отключаем рисование при переходе на главную страницу
+  if (currentSection !== 'home') stopBackgroundAnimation();
   disableDrawing();
-  // Загружаем обложки всех проектов Mind и Commerce
-  loadProjects(null);
+  const isDesktop = window.innerWidth >= 640;
+  if (isDesktop && homeProjectNamesContainer) {
+    projectsList.style.display = 'none';
+    createDesktopHomeNames();
+  } else {
+    stopDesktopHomeNamesAnimation();
+    projectsList.style.display = 'grid';
+    loadProjects(null);
+  }
   currentSection = 'home';
-  // Обновляем URL без перезагрузки страницы
   updateURL('home');
 }
 
@@ -1351,9 +1512,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
     currentSection='about';
-    window.currentSection = 'about'; // Обновляем глобальную переменную для drawing.js
+    window.currentSection = 'about';
     stopBackgroundAnimation();
     stopHomeContentRotation();
+    stopDesktopHomeNamesAnimation();
     grid.style.display='none';
     projectsList.style.display='none';
     breadcrumb.style.display='none';
