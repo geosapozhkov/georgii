@@ -636,6 +636,11 @@ body.about-page footer {
     margin-top: calc(1rem - 3px) !important;
   }
   
+  /* Почта и инста на About me (мобильная): по левому краю описания */
+  body.about-page footer {
+    left: var(--mobile-edge) !important;
+  }
+  
   /* Навигация на мобильных - вертикально в правом верхнем углу */
   #top-nav {
     margin-left: 0 !important;
