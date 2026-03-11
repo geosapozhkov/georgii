@@ -297,6 +297,16 @@ body.project-page > header {
   margin-top: 0 !important;
 }
 
+/* Step Back — по левому краю описания: первая колонка той же ширины, что и под заголовком */
+@media (min-width: 640px) {
+  body.project-page > header .logo-container {
+    width: calc(40% + 200px);
+  }
+}
+body.project-page > header #top-nav {
+  padding-left: calc(1.5rem + 2px) !important;
+}
+
 /* Страница проекта — минимальный отступ сверху */
 body.project-page {
   padding-top: 0 !important;

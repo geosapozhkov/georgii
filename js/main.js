@@ -277,9 +277,18 @@ const DESKTOP_NAMES_SPEED_MAX = 0.8;
 const DESKTOP_NAMES_HOVER_SLOW = 0.45;
 const DESKTOP_NAMES_HOVER_CHANCE = 0.85;
 const DESKTOP_NAMES_RUN_CHANCE = 0.25;
-const DESKTOP_NAMES_RUN_MULT = 2.4;
+const DESKTOP_NAMES_RUN_MULT = 7.2;
+const DESKTOP_NAMES_RUN_ZONE = 200; /* радиус зоны (px): внутри неё название плавно ускоряется от курсора */
+const DESKTOP_NAMES_RUN_SMOOTH = 0.06; /* плавность подстройки скорости (0.05–0.15) */
 let desktopHomeNamesAnimationId = null;
 let desktopHomeItems = [];
+let desktopHomeMouseX = -1e4;
+let desktopHomeMouseY = -1e4;
+
+function desktopHomeMouseMove(e) {
+  desktopHomeMouseX = e.clientX;
+  desktopHomeMouseY = e.clientY;
+}
 
 function getRandomInRange(min, max) {
   return min + Math.random() * (max - min);
@@ -320,33 +329,17 @@ function createDesktopHomeNames() {
       const y = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, h - itemH - DESKTOP_NAMES_PADDING));
       const vx = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
       const vy = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
-      const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false, runAway: false };
+      const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false };
       desktopHomeItems.push(item);
       a.style.left = x + 'px';
       a.style.top = y + 'px';
-      a.addEventListener('mouseenter', (e) => {
+      a.addEventListener('mouseenter', () => {
         const r = Math.random();
-        const centerX = item.x + item.w / 2;
-        const centerY = item.y + item.h / 2;
-        const cursorX = e.clientX;
-        const cursorY = e.clientY;
-        if (r < DESKTOP_NAMES_RUN_CHANCE) {
-          // Убегаем от курсора: задаём направление от курсора к центру
-          const dx = centerX - cursorX;
-          const dy = centerY - cursorY;
-          const signX = dx === 0 ? getRandomSign() : (dx > 0 ? 1 : -1);
-          const signY = dy === 0 ? getRandomSign() : (dy > 0 ? 1 : -1);
-          item.vx = Math.max(DESKTOP_NAMES_SPEED_MIN, Math.abs(item.vx)) * signX;
-          item.vy = Math.max(DESKTOP_NAMES_SPEED_MIN, Math.abs(item.vy)) * signY;
-          item.runAway = true;
-          item.slowDown = false;
-        } else if (r < DESKTOP_NAMES_RUN_CHANCE + DESKTOP_NAMES_HOVER_CHANCE) {
-          // Замедляемся (но продолжаем двигаться)
+        if (r < DESKTOP_NAMES_HOVER_CHANCE) {
           item.slowDown = true;
-          item.runAway = false;
         }
       });
-      a.addEventListener('mouseleave', () => { item.slowDown = false; item.runAway = false; });
+      a.addEventListener('mouseleave', () => { item.slowDown = false; });
       a.addEventListener('click', (e) => {
         e.preventDefault();
         const url = a.dataset.href || a.getAttribute('href');
@@ -362,6 +355,7 @@ function createDesktopHomeNames() {
       });
       homeProjectNamesContainer.appendChild(a);
     });
+    document.addEventListener('mousemove', desktopHomeMouseMove);
     requestAnimationFrame(measureAndAnimateDesktopNames);
   });
 }
@@ -389,10 +383,24 @@ function startDesktopHomeNamesAnimation() {
         vx *= DESKTOP_NAMES_HOVER_SLOW;
         vy *= DESKTOP_NAMES_HOVER_SLOW;
       }
-      if (it.runAway) {
-        vx *= DESKTOP_NAMES_RUN_MULT;
-        vy *= DESKTOP_NAMES_RUN_MULT;
+      /* Зона убегания: плавное ускорение от курсора в зависимости от близости */
+      const cx = it.x + it.w / 2;
+      const cy = it.y + it.h / 2;
+      const dx = cx - desktopHomeMouseX;
+      const dy = cy - desktopHomeMouseY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < DESKTOP_NAMES_RUN_ZONE && dist > 2) {
+        const influence = 1 - dist / DESKTOP_NAMES_RUN_ZONE;
+        const invLen = 1 / dist;
+        const dirX = dx * invLen;
+        const dirY = dy * invLen;
+        const runSpeed = DESKTOP_NAMES_SPEED_MIN * DESKTOP_NAMES_RUN_MULT * influence;
+        const blend = DESKTOP_NAMES_RUN_SMOOTH * influence;
+        vx += (dirX * runSpeed - vx) * blend;
+        vy += (dirY * runSpeed - vy) * blend;
       }
+      it.vx = vx;
+      it.vy = vy;
       it.x += vx;
       it.y += vy;
       if (it.x <= padding) { it.x = padding; it.vx = Math.abs(it.vx); }
@@ -434,6 +442,7 @@ function stopDesktopHomeNamesAnimation() {
     cancelAnimationFrame(desktopHomeNamesAnimationId);
     desktopHomeNamesAnimationId = null;
   }
+  document.removeEventListener('mousemove', desktopHomeMouseMove);
 }
 
 // =============== HOME CONTENT ===============
