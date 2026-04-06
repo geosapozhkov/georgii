@@ -66,8 +66,8 @@ async function loadProjects(category = null){
     if (category) {
       projects = projects.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
     } else {
-      // Для главной страницы берём только проекты категорий Mind и Commerce
-      projects = projects.filter(p => p.category && ['mind', 'commerce'].includes(p.category.toLowerCase()));
+      // Для главной страницы берём проекты категорий Mind, Commerce и RND
+      projects = projects.filter(p => p.category && ['mind', 'commerce', 'rnd'].includes(p.category.toLowerCase()));
     }
     
     if(projects.length === 0){
@@ -196,7 +196,10 @@ async function getCoverImageFromProject(projectName, category = null){
   // Приводим категорию к правильному регистру (первая буква заглавная)
   const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-  const basePath = `projects/${categoryPath}${projectName}/images`;
+  const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
+  const basePath = isRootFolderProject
+    ? `${projectName}`
+    : `projects/${categoryPath}${projectName}/images`;
   
   // Проверяем files.json для получения обложки
   console.log(`🔍 Поиск обложки для проекта: ${projectName}, категория: ${category || 'нет'}`);
@@ -300,7 +303,7 @@ function getRandomSign() {
 
 async function getProjectsForDesktopHome() {
   const projects = await getProjectsList();
-  const filtered = projects.filter(p => p.category && ['mind', 'commerce'].includes(p.category.toLowerCase()));
+  const filtered = projects.filter(p => p.category && ['mind', 'commerce', 'rnd'].includes(p.category.toLowerCase()));
   return filtered.map(p => {
     const title = p.title || p.name.replace(/_/g, ' ');
     const categoryParam = p.category ? `&category=${encodeURIComponent(p.category)}` : '';

@@ -17,6 +17,12 @@
       "title": "Red Structure",
       "description": "This place is ambiguous, neither religious nor rational, it acts as a conduit between two entities. Upon first noticing its tower protruding from the tree crowns, one might think it's a chimney pipe, but approaching closer, you realize you're dealing with something greater.",
       "category": "mind"
+    },
+    {
+      "name": "RND",
+      "title": "R&D",
+      "description": "RND experiments and drafts.",
+      "category": "rnd"
     }
   ]
 }

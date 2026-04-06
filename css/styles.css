@@ -169,6 +169,12 @@ img, video {
   [data-grid-start="10"] { grid-column-start: 10 !important; }
   [data-grid-start="11"] { grid-column-start: 11 !important; }
   [data-grid-start="12"] { grid-column-start: 12 !important; }
+
+  /* Случайная сетка для обычных медиа на странице проекта (десктоп 12 колонок) */
+  #file-grid > .project-grid-random {
+    grid-column-start: var(--gc-start, 1) !important;
+    grid-column-end: span var(--gc-span, 4) !important;
+  }
 }
 
 /* =============== СТИЛИ ДЛЯ ОБЛОЖЕК ПРОЕКТОВ =============== */

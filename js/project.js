@@ -69,6 +69,119 @@ function getVimeoId(url) {
   return match ? match[1] : null;
 }
 
+/** Равномерный рандом (лучше, чем Math.random, для раскладки сетки) */
+function randomUint32() {
+  const buf = new Uint32Array(1);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(buf);
+    return buf[0];
+  }
+  return Math.floor(Math.random() * 0xffffffff);
+}
+function randomInt(maxExclusive) {
+  return maxExclusive <= 0 ? 0 : randomUint32() % maxExclusive;
+}
+
+/** Категория R&D в URL — `rnd` (см. projects.json) */
+function isRndCategory(category) {
+  return String(category || '').trim().toLowerCase() === 'rnd';
+}
+
+/** Порядковый номер из имени файла: последний фрагмент вида _01 / _02 перед расширением */
+function getFilenameOrderIndex(name) {
+  const m = name.match(/_(\d+)(?=\.[^.]+$)/i);
+  return m ? parseInt(m[1], 10) : Number.POSITIVE_INFINITY;
+}
+
+/** Сохраняем заданную в именах последовательность (_00, _01, …); без суффикса — в конце, по имени */
+function sortProjectMediaByOrder(arr) {
+  return arr.slice().sort((a, b) => {
+    const na = getFilenameOrderIndex(a.name);
+    const nb = getFilenameOrderIndex(b.name);
+    if (na !== nb) return na - nb;
+    return String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
+/** Проекты, где все видео (и Vimeo) должны идти перед картинками */
+function isVideosFirstProject(projectName) {
+  const n = String(projectName || '').trim().toLowerCase();
+  return n === 'red_structure' || n === 'type_oclock';
+}
+
+function isVideoMediaItem(item) {
+  const n = item.name || '';
+  const s = item.src || '';
+  return isVideo(n) || isVimeo(n) || isVimeo(s);
+}
+
+/** Сначала все видео, затем остальное; внутри групп — по _01, _02 … */
+function sortProjectMediaVideosFirstOrder(arr) {
+  return arr.slice().sort((a, b) => {
+    const va = isVideoMediaItem(a);
+    const vb = isVideoMediaItem(b);
+    if (va !== vb) return va ? -1 : 1;
+    const na = getFilenameOrderIndex(a.name);
+    const nb = getFilenameOrderIndex(b.name);
+    if (na !== nb) return na - nb;
+    return String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
+/** Случайный порядок медиа (для категории R&D) */
+function shuffleProjectMedia(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    const t = a[i];
+    a[i] = a[j];
+    a[j] = t;
+  }
+  return a;
+}
+
+/**
+ * Случайная колонка (равномерно по допустимому диапазону) и ширина в колонках
+ * с взвешенным выбором span — без фиксированного ритма.
+ * @param {{ minSpan?: number, maxSpan?: number }} [options]
+ * @param {number} [options.minSpan=2] — минимум колонок (например 4 для highres в имени файла)
+ * @param {number} [options.maxSpan=11] — максимум колонок (например 4 для lowres)
+ */
+function pickRandomGridLayout(options = {}) {
+  const maxSpan = options.maxSpan != null ? options.maxSpan : 11;
+  const minSpan = options.minSpan != null ? options.minSpan : 2;
+  let cap = Math.min(11, Math.max(2, maxSpan));
+  let floor = Math.min(11, Math.max(2, minSpan));
+  if (floor > cap) {
+    floor = cap;
+  }
+  const u = randomUint32() / 0xffffffff;
+  let span;
+  if (u < 0.18) {
+    span = 2 + randomInt(3);
+  } else if (u < 0.45) {
+    span = 3 + randomInt(4);
+  } else if (u < 0.72) {
+    span = 5 + randomInt(3);
+  } else if (u < 0.9) {
+    span = 7 + randomInt(3);
+  } else {
+    span = 9 + randomInt(3);
+  }
+  span = Math.min(11, Math.max(2, span));
+  span = Math.min(cap, Math.max(floor, span));
+  const maxStart = 12 - span + 1;
+  const start = maxStart <= 1 ? 1 : 1 + randomInt(maxStart);
+  return { start, span };
+}
+
+/** С вероятностью 50% даёт ~3× вертикальный ритм относительно одного gap-y-24 (6rem): row-gap + по 6rem сверху и снизу ≈ 18rem между рядами. */
+function applyRandomProjectGridVerticalMargin(el) {
+  if (randomInt(2) === 0) return;
+  el.style.marginTop = '6rem';
+  el.style.marginBottom = '6rem';
+}
+
 // Генерация случайного текста из 3 предложений
 function generateRandomDescription() {
   const sentences = [
@@ -181,51 +294,42 @@ async function loadProject(projectName, subfolder = ''){
     }
 
     currentItems = [];
-    // Отслеживаем текущую позицию в grid (для десктопа - 12 колонок)
-    let currentColumn = 1; // Начинаем с первой колонки
-    const columnsPerImage = 4; // Обычное изображение занимает 4 колонки
-    const gapColumns = 1; // Пропускаем 1 колонку между картинками
+    const mediaToRender = isRndCategory(projectCategory)
+      ? shuffleProjectMedia(images)
+      : isVideosFirstProject(projectName)
+        ? sortProjectMediaVideosFirstOrder(images)
+        : sortProjectMediaByOrder(images);
     
-    images.forEach((image, idx) => {
+    mediaToRender.forEach((image, idx) => {
       const wrap = document.createElement('div');
       
       // Проверяем, есть ли "fullwidth" в имени файла (включая fullwidthRepeat)
-      const isFullwidth = image.name.toLowerCase().includes('fullwidth');
-      const isFullwidthRepeat = image.name.toLowerCase().includes('fullwidthrepeat');
+      const nameLower = image.name.toLowerCase();
+      const isFullwidth = nameLower.includes('fullwidth');
+      const isFullwidthRepeat = nameLower.includes('fullwidthrepeat');
+      const isLowres = nameLower.includes('lowres');
+      const isHighres = nameLower.includes('highres');
+      const isImg = isImage(image.name);
+      const isVid = isVideo(image.name);
       
       // Если fullwidth, элемент занимает все колонки на всех размерах экрана
       if(isFullwidth){
         wrap.className = 'cursor-pointer col-span-12 w-full';
         wrap.style.width = '100%';
         wrap.style.maxWidth = '100%';
-        // Fullwidth сбрасывает позицию - начинаем новую строку
-        currentColumn = 1;
       } else {
-        // Проверяем, поместится ли изображение с отступом в текущей строке
-        // Изображение занимает columnsPerImage колонок, плюс нужен gapColumns отступ после него
-        const totalNeeded = columnsPerImage + gapColumns;
-        const endColumn = currentColumn + columnsPerImage - 1; // Последняя колонка изображения
-        const remainingColumns = 12 - endColumn; // Колонки после изображения
-        
-        // Если не помещается (не хватает места для картинки + отступа), переносим на новую строку
-        if(remainingColumns < gapColumns && currentColumn > 1){
-          currentColumn = 1;
-        }
-        
-        // Устанавливаем позицию для десктопа (md+)
-        wrap.className = 'cursor-pointer col-span-4 md:col-span-4 flex items-center justify-center';
-        // Сохраняем позицию в data-атрибуте для использования в CSS
-        wrap.setAttribute('data-grid-start', currentColumn);
-        
-        // Обновляем позицию для следующего элемента: текущая позиция + ширина картинки + отступ
-        currentColumn += columnsPerImage + gapColumns;
-        // Если вышли за пределы, начинаем новую строку
-        if(currentColumn > 12) {
-          currentColumn = 1;
-        }
+        let minSpan = isHighres ? 4 : 2;
+        if (isImg || isVid) minSpan = Math.max(3, minSpan);
+        const { start, span } = pickRandomGridLayout({
+          minSpan,
+          maxSpan: isLowres ? 4 : 11,
+        });
+        wrap.className = 'cursor-pointer col-span-4 project-grid-random flex items-center justify-center';
+        wrap.style.setProperty('--gc-start', String(start));
+        wrap.style.setProperty('--gc-span', String(span));
       }
 
-      if(isImage(image.name)){
+      if(isImg){
         const img = document.createElement('img');
         img.alt = image.name;
         img.style.cssText = 'width:100%; height:auto; display:block;';
@@ -254,8 +358,6 @@ async function loadProject(projectName, subfolder = ''){
           wrap.className = 'cursor-pointer col-span-12 w-full';
           wrap.style.width = '100%';
           wrap.style.maxWidth = '100%';
-          // Fullwidth сбрасывает позицию - начинаем новую строку
-          currentColumn = 1;
           
           // Создаем контейнер для Vimeo видео - простой зацикленный автоплей с кнопкой звука
           const vimeoContainer = document.createElement('div');
@@ -418,7 +520,7 @@ async function loadProject(projectName, subfolder = ''){
           
           // Не добавляем в observer - загружаем сразу для быстрого отображения
         }
-      } else if(isVideo(image.name)){
+      } else if(isVid){
         const video = document.createElement('video');
         const source = document.createElement('source');
         
@@ -505,7 +607,8 @@ async function loadProject(projectName, subfolder = ''){
       } else {
         return; // Пропускаем неизвестные типы файлов
       }
-      
+
+      applyRandomProjectGridVerticalMargin(wrap);
       grid.appendChild(wrap);
     });
 
@@ -550,9 +653,12 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
   // Приводим категорию к правильному регистру (первая буква заглавная)
   const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-  const basePath = subfolder 
-    ? `projects/${categoryPath}${projectName}${subfolder}/images` 
-    : `projects/${categoryPath}${projectName}/images`;
+  const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
+  const basePath = isRootFolderProject
+    ? `${projectName}${subfolder || ''}`
+    : (subfolder
+      ? `projects/${categoryPath}${projectName}${subfolder}/images`
+      : `projects/${categoryPath}${projectName}/images`);
   
   const foundFiles = [];
   
