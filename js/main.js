@@ -10,6 +10,8 @@ const viewerOverlay = document.getElementById('viewerOverlay');
 const viewerContent = document.getElementById('viewerContent');
 const projectsList = document.getElementById('projects-list');
 const homeProjectNamesContainer = document.getElementById('home-project-names');
+const homeProjectHoverPreview = document.getElementById('home-project-hover-preview');
+const homeProjectHoverPreviewImg = document.getElementById('home-project-hover-preview-img');
 const homeContentContainer = document.getElementById('home-content-container');
 const homeContentItem = document.getElementById('home-content-item');
 
@@ -283,10 +285,121 @@ const DESKTOP_NAMES_RUN_CHANCE = 0.25;
 const DESKTOP_NAMES_RUN_MULT = 7.2;
 const DESKTOP_NAMES_RUN_ZONE = 200; /* радиус зоны (px): внутри неё название плавно ускоряется от курсора */
 const DESKTOP_NAMES_RUN_SMOOTH = 0.06; /* плавность подстройки скорости (0.05–0.15) */
+/** Сдвиг превью вверх относительно центра по вертикали рядом с названием */
+const DESKTOP_HOVER_PREVIEW_RAISE_PX = 62;
+/** При клике превью гаснет чуть быстрее, чем названия */
+const DESKTOP_CLICK_FADE_PREVIEW_SEC = 0.28;
+const DESKTOP_CLICK_FADE_NAMES_SEC = 0.4;
 let desktopHomeNamesAnimationId = null;
 let desktopHomeItems = [];
 let desktopHomeMouseX = -1e4;
 let desktopHomeMouseY = -1e4;
+
+const projectPreviewImageUrlsCache = new Map();
+let homeHoverPreviewGeneration = 0;
+/** Элемент desktopHomeItems, на чьё название наведён курсор (превью следует за ним) */
+let desktopHoverPreviewItem = null;
+
+function isRasterImageFilename(name) {
+  return typeof name === 'string' && /\.(jpe?g|png|gif|webp)$/i.test(name);
+}
+
+/** Список URL картинок из files.json проекта (кэш по category+name) */
+async function getProjectPreviewImageUrls(projectName, category) {
+  const key = `${String(category || '').toLowerCase()}_${projectName}`;
+  if (projectPreviewImageUrlsCache.has(key)) {
+    return projectPreviewImageUrlsCache.get(key);
+  }
+  const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
+  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
+  const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
+  const basePath = isRootFolderProject
+    ? `${projectName}`
+    : `projects/${categoryPath}${projectName}/images`;
+
+  const urls = [];
+  try {
+    const response = await fetch(`${basePath}/files.json?v=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    });
+    if (!response.ok) {
+      projectPreviewImageUrlsCache.set(key, urls);
+      return urls;
+    }
+    const data = await response.json();
+    const pushFile = (f) => {
+      if (!f || typeof f !== 'string') return;
+      if (/^https?:\/\//i.test(f)) return;
+      if (!isRasterImageFilename(f)) return;
+      const enc = encodeURIComponent(f).replace(/'/g, '%27');
+      urls.push(`${basePath}/${enc}`);
+    };
+    if (data.cover) pushFile(data.cover);
+    const files = data.files || [];
+    files.forEach(pushFile);
+    const unique = [...new Set(urls)];
+    projectPreviewImageUrlsCache.set(key, unique);
+    return unique;
+  } catch (e) {
+    projectPreviewImageUrlsCache.set(key, []);
+    return [];
+  }
+}
+
+function hideHomeProjectHoverPreview() {
+  desktopHoverPreviewItem = null;
+  if (!homeProjectHoverPreview || !homeProjectHoverPreviewImg) return;
+  homeProjectHoverPreview.classList.remove('is-visible');
+  homeProjectHoverPreviewImg.removeAttribute('src');
+  homeProjectHoverPreview.style.left = '';
+  homeProjectHoverPreview.style.top = '';
+  homeProjectHoverPreview.style.opacity = '';
+  homeProjectHoverPreview.style.transition = '';
+}
+
+function updateHomeProjectHoverPreviewPosition() {
+  if (!homeProjectHoverPreview || !desktopHoverPreviewItem || !homeProjectHoverPreview.classList.contains('is-visible')) return;
+  if (window.innerWidth < 640) return;
+  const el = desktopHoverPreviewItem.el;
+  if (!el || !el.isConnected) return;
+  const rect = el.getBoundingClientRect();
+  const gap = 10;
+  const pad = 8;
+  const pw = homeProjectHoverPreview.offsetWidth || 200;
+  const ph = homeProjectHoverPreview.offsetHeight || 140;
+  let left = rect.right + gap;
+  let top = rect.top + (rect.height - ph) / 2 - DESKTOP_HOVER_PREVIEW_RAISE_PX;
+  if (left + pw + pad > window.innerWidth) {
+    left = rect.left - gap - pw;
+  }
+  if (left < pad) left = pad;
+  if (top < pad) top = pad;
+  if (top + ph + pad > window.innerHeight) top = window.innerHeight - ph - pad;
+  homeProjectHoverPreview.style.left = `${Math.round(left)}px`;
+  homeProjectHoverPreview.style.top = `${Math.round(top)}px`;
+}
+
+async function showHomeProjectHoverPreview(projectName, category) {
+  if (!homeProjectHoverPreview || !homeProjectHoverPreviewImg || window.innerWidth < 640) return;
+  const gen = ++homeHoverPreviewGeneration;
+  const list = await getProjectPreviewImageUrls(projectName, category);
+  if (gen !== homeHoverPreviewGeneration || list.length === 0) return;
+  const url = list[Math.floor(Math.random() * list.length)];
+  const img = homeProjectHoverPreviewImg;
+  img.onload = () => {
+    if (gen !== homeHoverPreviewGeneration) return;
+    homeProjectHoverPreview.style.opacity = '';
+    homeProjectHoverPreview.style.transition = '';
+    homeProjectHoverPreview.classList.add('is-visible');
+    requestAnimationFrame(() => updateHomeProjectHoverPreviewPosition());
+  };
+  img.onerror = () => {
+    if (gen !== homeHoverPreviewGeneration) return;
+    hideHomeProjectHoverPreview();
+  };
+  img.src = url;
+}
 
 function desktopHomeMouseMove(e) {
   desktopHomeMouseX = e.clientX;
@@ -308,7 +421,7 @@ async function getProjectsForDesktopHome() {
     const title = p.title || p.name.replace(/_/g, ' ');
     const categoryParam = p.category ? `&category=${encodeURIComponent(p.category)}` : '';
     const href = `project.html?project=${encodeURIComponent(p.name)}${categoryParam}`;
-    return { title, href };
+    return { title, href, name: p.name, category: p.category || '' };
   });
 }
 
@@ -320,12 +433,14 @@ function createDesktopHomeNames() {
   const h = window.innerHeight;
   getProjectsForDesktopHome().then(projects => {
     if (!homeProjectNamesContainer || !document.body.classList.contains('home-page')) return;
-    projects.forEach(({ title, href }) => {
+    projects.forEach(({ title, href, name, category }) => {
       const a = document.createElement('a');
       a.href = href;
       a.textContent = title;
       a.className = 'home-project-name-link';
       a.dataset.href = href;
+      a.dataset.projectName = name;
+      a.dataset.projectCategory = category;
       const itemW = 120;
       const itemH = 24;
       const x = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, w - itemW - DESKTOP_NAMES_PADDING));
@@ -341,20 +456,37 @@ function createDesktopHomeNames() {
         if (r < DESKTOP_NAMES_HOVER_CHANCE) {
           item.slowDown = true;
         }
+        if (window.innerWidth < 640) return;
+        desktopHoverPreviewItem = item;
+        const pn = a.dataset.projectName;
+        const cat = a.dataset.projectCategory;
+        if (pn) showHomeProjectHoverPreview(pn, cat);
       });
-      a.addEventListener('mouseleave', () => { item.slowDown = false; });
+      a.addEventListener('mouseleave', () => {
+        item.slowDown = false;
+        if (window.innerWidth >= 640) {
+          homeHoverPreviewGeneration += 1;
+          hideHomeProjectHoverPreview();
+        }
+      });
       a.addEventListener('click', (e) => {
         e.preventDefault();
         const url = a.dataset.href || a.getAttribute('href');
-        // Плавно скрываем все названия одновременно
+        if (window.innerWidth >= 640 && homeProjectHoverPreview && homeProjectHoverPreview.classList.contains('is-visible')) {
+          desktopHoverPreviewItem = null;
+          homeHoverPreviewGeneration += 1;
+          homeProjectHoverPreview.style.transition = `opacity ${DESKTOP_CLICK_FADE_PREVIEW_SEC}s ease`;
+          homeProjectHoverPreview.style.opacity = '0';
+        }
+        // Плавно скрываем все названия одновременно (чуть медленнее превью)
         desktopHomeItems.forEach(it => {
-          it.el.style.transition = 'opacity 0.4s ease';
+          it.el.style.transition = `opacity ${DESKTOP_CLICK_FADE_NAMES_SEC}s ease`;
           it.el.style.opacity = '0';
         });
         setTimeout(() => {
           try { sessionStorage.setItem('fadeInProject', '1'); } catch (_) {}
           window.location.href = url;
-        }, 420);
+        }, Math.round(DESKTOP_CLICK_FADE_NAMES_SEC * 1000) + 20);
       });
       homeProjectNamesContainer.appendChild(a);
     });
@@ -435,6 +567,7 @@ function startDesktopHomeNamesAnimation() {
         }
       }
     }
+    updateHomeProjectHoverPreviewPosition();
     desktopHomeNamesAnimationId = requestAnimationFrame(tick);
   }
   tick();
@@ -1320,6 +1453,8 @@ function updateURL(section) {
 
 // =============== ГЛАВНАЯ СТРАНИЦА (HOME) ===============
 function showHome(){
+  homeHoverPreviewGeneration += 1;
+  hideHomeProjectHoverPreview();
   // На главной показываем только обложки проектов (Mind + Commerce)
   // Останавливаем и скрываем старый HomeContent (картинки и анимации)
   stopHomeContentRotation();
