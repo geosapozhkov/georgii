@@ -198,7 +198,7 @@ async function getCoverImageFromProject(projectName, category = null){
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
   const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
   const basePath = isRootFolderProject
-    ? `${projectName}`
+    ? `projects/HomeContent`
     : `projects/${categoryPath}${projectName}/images`;
   
   // Проверяем files.json для получения обложки
