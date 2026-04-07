@@ -409,7 +409,7 @@ body.about-page footer {
 
 /* Кнопка R&D — только для мобильной навигации */
 #nav-rnd {
-  display: none;
+  display: none !important;
 }
 
 /* Стили для описания на странице проекта */
@@ -562,7 +562,7 @@ body.about-page footer {
 /* =============== МОБИЛЬНАЯ ВЕРСИЯ (до 640px) =============== */
 @media (max-width: 639px) {
   #nav-rnd {
-    display: block;
+    display: block !important;
     margin-left: 0;
   }
 
