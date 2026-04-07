@@ -1309,7 +1309,7 @@ function updateURL(section) {
     // Для других страниц устанавливаем параметр section
     url.searchParams.set('section', section);
     // Также сохраняем category для обратной совместимости
-    if (section === 'commerce' || section === 'mind') {
+    if (section === 'commerce' || section === 'mind' || section === 'rnd') {
       url.searchParams.set('category', section);
     } else {
       url.searchParams.delete('category');
@@ -1340,6 +1340,7 @@ function showHome(){
   const navCommerce = document.getElementById('nav-commerce');
   const navMind = document.getElementById('nav-mind');
   const navAbout = document.getElementById('nav-about');
+  const navRnd = document.getElementById('nav-rnd');
   if(navCommerce) {
     navCommerce.style.display='none';
   }
@@ -1350,6 +1351,10 @@ function showHome(){
     navAbout.style.display='inline';
     // На главной About me "неактивна"
     navAbout.style.opacity='0.35';
+  }
+  if(navRnd) {
+    navRnd.style.display='inline';
+    navRnd.style.opacity='0.35';
   }
   document.body.classList.add('home-page');
   document.documentElement.classList.add('home-page');
@@ -1451,6 +1456,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const navCommerce = document.getElementById('nav-commerce');
   const navMind = document.getElementById('nav-mind');
   const navAbout = document.getElementById('nav-about');
+  const navRnd = document.getElementById('nav-rnd');
   
   document.getElementById('nav-commerce')?.addEventListener('click',()=>{ 
     currentSection='commerce'; 
@@ -1481,6 +1487,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(navAbout) {
       navAbout.style.display='inline';
       navAbout.style.opacity='0.35';
+    }
+    if(navRnd) {
+      navRnd.style.display='inline';
+      navRnd.style.opacity='0.35';
     }
     loadProjects('commerce');
     // Обновляем URL без перезагрузки страницы
@@ -1517,9 +1527,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navAbout.style.display='inline';
       navAbout.style.opacity='0.35';
     }
+    if(navRnd) {
+      navRnd.style.display='inline';
+      navRnd.style.opacity='0.35';
+    }
     loadProjects('mind');
     // Обновляем URL без перезагрузки страницы
     updateURL('mind');
+  });
+
+  document.getElementById('nav-rnd')?.addEventListener('click',()=>{ 
+    // На мобильной вкладке R&D сразу открываем страницу проекта,
+    // где показывается полный контент и edge-to-edge сетка медиа.
+    window.location.href = 'project.html?project=RND&category=rnd';
   });
   
   document.getElementById('nav-about')?.addEventListener('click',()=>{ 
@@ -1556,6 +1576,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
       navAbout.style.display='inline';
       navAbout.style.opacity='1';
     }
+    if(navRnd) {
+      navRnd.style.display='inline';
+      navRnd.style.opacity='0.35';
+    }
   });
   
   // Восстанавливаем состояние страницы из URL
@@ -1589,6 +1613,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
       if(navAbout) {
         navAbout.style.display='inline';
         navAbout.style.opacity='1';
+      }
+      if(navRnd) {
+        navRnd.style.display='inline';
+        navRnd.style.opacity='0.35';
       }
   } else {
     // Любые другие секции (включая устаревшие commerce/mind) считаем главной
