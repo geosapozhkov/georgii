@@ -655,7 +655,7 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
   const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
   const basePath = isRootFolderProject
-    ? `projects/HomeContent`
+    ? `projects/RND/images`
     : (subfolder
       ? `projects/${categoryPath}${projectName}${subfolder}/images`
       : `projects/${categoryPath}${projectName}/images`);

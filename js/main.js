@@ -198,7 +198,7 @@ async function getCoverImageFromProject(projectName, category = null){
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
   const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
   const basePath = isRootFolderProject
-    ? `projects/HomeContent`
+    ? `projects/RND/images`
     : `projects/${categoryPath}${projectName}/images`;
   
   // Проверяем files.json для получения обложки
@@ -460,7 +460,7 @@ let preloadedVideos = new Map(); // Кэш предзагруженных вид
 // Загрузка файлов из HomeContent
 async function loadHomeContent() {
   try {
-    const basePath = 'projects/HomeContent';
+    const basePath = 'projects/RND/images';
     
     // Загружаем files.json
     const cacheBuster = `?v=${Date.now()}`;
