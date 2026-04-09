@@ -281,10 +281,12 @@ const DESKTOP_NAMES_SPEED_MIN = 0.3;
 const DESKTOP_NAMES_SPEED_MAX = 0.8;
 const DESKTOP_NAMES_HOVER_SLOW = 0.45;
 const DESKTOP_NAMES_HOVER_CHANCE = 0.85;
-const DESKTOP_NAMES_RUN_CHANCE = 0.25;
-const DESKTOP_NAMES_RUN_MULT = 7.2;
-const DESKTOP_NAMES_RUN_ZONE = 200; /* радиус зоны (px): внутри неё название плавно ускоряется от курсора */
-const DESKTOP_NAMES_RUN_SMOOTH = 0.06; /* плавность подстройки скорости (0.05–0.15) */
+const DESKTOP_NAMES_FLEE_CHANCE = 0.1;
+const DESKTOP_NAMES_FLEE_MULT = 7.2;
+const DESKTOP_NAMES_FLEE_SMOOTH = 0.06;
+const DESKTOP_NAMES_ATTRACT_MULT = 6.5;
+const DESKTOP_NAMES_ATTRACT_ZONE = 200; /* px: зона реакции на курсор (притяжение или убегание) */
+const DESKTOP_NAMES_ATTRACT_SMOOTH = 0.07;
 /** Сдвиг превью вверх относительно центра по вертикали рядом с названием */
 const DESKTOP_HOVER_PREVIEW_RAISE_PX = 62;
 /** При клике превью гаснет чуть быстрее, чем названия */
@@ -447,7 +449,8 @@ function createDesktopHomeNames() {
       const y = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, h - itemH - DESKTOP_NAMES_PADDING));
       const vx = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
       const vy = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
-      const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false };
+      const fleesFromCursor = Math.random() < DESKTOP_NAMES_FLEE_CHANCE;
+      const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false, fleesFromCursor };
       desktopHomeItems.push(item);
       a.style.left = x + 'px';
       a.style.top = y + 'px';
@@ -518,21 +521,32 @@ function startDesktopHomeNamesAnimation() {
         vx *= DESKTOP_NAMES_HOVER_SLOW;
         vy *= DESKTOP_NAMES_HOVER_SLOW;
       }
-      /* Зона убегания: плавное ускорение от курсора в зависимости от близости */
+      /* Зона у курсора: чаще притяжение, с вероятностью FLEE_CHANCE — убегание */
       const cx = it.x + it.w / 2;
       const cy = it.y + it.h / 2;
-      const dx = cx - desktopHomeMouseX;
-      const dy = cy - desktopHomeMouseY;
+      const mx = desktopHomeMouseX;
+      const my = desktopHomeMouseY;
+      let dx;
+      let dy;
+      if (it.fleesFromCursor) {
+        dx = cx - mx;
+        dy = cy - my;
+      } else {
+        dx = mx - cx;
+        dy = my - cy;
+      }
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < DESKTOP_NAMES_RUN_ZONE && dist > 2) {
-        const influence = 1 - dist / DESKTOP_NAMES_RUN_ZONE;
+      if (dist < DESKTOP_NAMES_ATTRACT_ZONE && dist > 2) {
+        const influence = 1 - dist / DESKTOP_NAMES_ATTRACT_ZONE;
         const invLen = 1 / dist;
         const dirX = dx * invLen;
         const dirY = dy * invLen;
-        const runSpeed = DESKTOP_NAMES_SPEED_MIN * DESKTOP_NAMES_RUN_MULT * influence;
-        const blend = DESKTOP_NAMES_RUN_SMOOTH * influence;
-        vx += (dirX * runSpeed - vx) * blend;
-        vy += (dirY * runSpeed - vy) * blend;
+        const mult = it.fleesFromCursor ? DESKTOP_NAMES_FLEE_MULT : DESKTOP_NAMES_ATTRACT_MULT;
+        const smooth = it.fleesFromCursor ? DESKTOP_NAMES_FLEE_SMOOTH : DESKTOP_NAMES_ATTRACT_SMOOTH;
+        const speed = DESKTOP_NAMES_SPEED_MIN * mult * influence;
+        const blend = smooth * influence;
+        vx += (dirX * speed - vx) * blend;
+        vy += (dirY * speed - vy) * blend;
       }
       it.vx = vx;
       it.vy = vy;
