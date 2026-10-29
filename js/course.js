@@ -132,10 +132,13 @@ async function initCoursePage() {
   const group = groupId && course.groups ? course.groups[groupId] : null;
   if (group) {
     renderDetail(course, groupId, group);
+    const session = { courseId: course.id, groupId };
     if (admin) {
-      const session = { courseId: course.id, groupId };
       window.__courseAdminPending = session;
       if (window.startCourseAdmin) window.startCourseAdmin(session);
+    } else {
+      window.__courseLayoutPending = session;
+      if (window.showSavedCourseLayout) window.showSavedCourseLayout(session);
     }
     return;
   }

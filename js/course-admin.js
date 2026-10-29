@@ -1,6 +1,48 @@
 const ADMIN_PASSWORD = 'Sapozhka';
 const ADMIN_SNAP = 8;
 
+function layoutKey(courseId, groupId) {
+  return `georgii-course-layout:${courseId}:${groupId}`;
+}
+
+function readCourseLayout(courseId, groupId) {
+  try {
+    const data = JSON.parse(localStorage.getItem(layoutKey(courseId, groupId)) || '{"images":[]}');
+    return Array.isArray(data.images) ? data.images.filter((item) => item && item.src) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function extendPageForImages(items) {
+  const bottom = items.reduce((max, item) => Math.max(max, (Number(item.y) || 0) + (Number(item.h) || 0)), 0);
+  if (bottom > 0) document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+}
+
+function showSavedCourseLayout(session) {
+  if (!session || document.getElementById('course-layout') || document.getElementById('admin-layer')) return;
+  const stored = readCourseLayout(session.courseId, session.groupId);
+  if (!stored.length) return;
+  const layer = document.createElement('div');
+  layer.id = 'course-layout';
+  stored.forEach((item) => {
+    const box = document.createElement('div');
+    box.className = 'course-layout-image';
+    box.style.left = `${Number(item.x) || 0}px`;
+    box.style.top = `${Number(item.y) || 0}px`;
+    box.style.width = `${Number(item.w) || 0}px`;
+    box.style.height = `${Number(item.h) || 0}px`;
+    const img = document.createElement('img');
+    img.src = item.src;
+    img.alt = '';
+    img.draggable = false;
+    box.appendChild(img);
+    layer.appendChild(box);
+  });
+  document.body.appendChild(layer);
+  extendPageForImages(stored);
+}
+
 const HANDLE_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
 function startCourseAdmin(session) {
@@ -37,7 +79,6 @@ function askAdminPassword(session) {
 }
 
 function openAdminEditor(session) {
-  const storageKey = `georgii-course-layout:${session.courseId}:${session.groupId}`;
   const images = [];
   let selected = null;
   let metrics = null;
@@ -71,15 +112,6 @@ function openAdminEditor(session) {
   layer.append(canvas, guides, board);
   document.body.append(layer, file, tools);
 
-  function readStored() {
-    try {
-      const data = JSON.parse(localStorage.getItem(storageKey) || '{"images":[]}');
-      return Array.isArray(data.images) ? data.images : [];
-    } catch (_) {
-      return [];
-    }
-  }
-
   function save() {
     const payload = {
       images: images.map((item) => ({
@@ -92,23 +124,40 @@ function openAdminEditor(session) {
       }))
     };
     try {
-      localStorage.setItem(storageKey, JSON.stringify(payload));
+      localStorage.setItem(layoutKey(session.courseId, session.groupId), JSON.stringify(payload));
       return true;
     } catch (_) {
       return false;
     }
   }
 
-  let saveTimer = null;
-  saveButton.addEventListener('click', () => {
-    const ok = save();
-    saveButton.textContent = ok ? 'saved' : 'save';
-    if (saveTimer) clearTimeout(saveTimer);
-    if (!ok) return;
-    saveTimer = setTimeout(() => {
-      saveButton.textContent = 'save';
-    }, 1200);
-  });
+  function leaveAdmin() {
+    if (!save()) return;
+    document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointerup', onPointerUp);
+    document.removeEventListener('pointerdown', onPointerDown);
+    document.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('resize', drawGrid);
+    canvas.remove();
+    guides.remove();
+    tools.remove();
+    file.remove();
+    images.forEach((item) => {
+      item.el.querySelectorAll('.admin-handle').forEach((handle) => handle.remove());
+      const view = item.el.cloneNode(true);
+      view.className = 'course-layout-image';
+      item.el.replaceWith(view);
+      item.el = view;
+    });
+    layer.id = 'course-layout';
+    board.removeAttribute('id');
+    extendPageForImages(images);
+    const course = encodeURIComponent(session.courseId);
+    const group = encodeURIComponent(session.groupId);
+    history.replaceState(null, '', `course.html?course=${course}&group=${group}`);
+  }
+
+  saveButton.addEventListener('click', leaveAdmin);
 
   function computeMetrics() {
     const width = document.documentElement.clientWidth;
@@ -407,13 +456,12 @@ function openAdminEditor(session) {
     });
   });
 
-  document.addEventListener('pointermove', onPointerMove);
-  document.addEventListener('pointerup', onPointerUp);
-  document.addEventListener('pointerdown', (event) => {
+  function onPointerDown(event) {
     if (event.target.closest('.admin-image') || event.target.closest('#admin-tools')) return;
     select(null);
-  });
-  document.addEventListener('keydown', (event) => {
+  }
+
+  function onKeyDown(event) {
     if (!selected || event.target.closest('input, textarea')) return;
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
@@ -431,15 +479,19 @@ function openAdminEditor(session) {
     applyBox(selected);
     showGuides(selected);
     save();
-  });
+  }
+
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+  document.addEventListener('pointerdown', onPointerDown);
+  document.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', drawGrid);
 
-  readStored().forEach((data) => {
-    if (!data.src) return;
-    addImage(data);
-  });
+  readCourseLayout(session.courseId, session.groupId).forEach((data) => addImage(data));
   drawGrid();
 }
 
 window.startCourseAdmin = startCourseAdmin;
+window.showSavedCourseLayout = showSavedCourseLayout;
 if (window.__courseAdminPending) startCourseAdmin(window.__courseAdminPending);
+if (window.__courseLayoutPending) showSavedCourseLayout(window.__courseLayoutPending);
