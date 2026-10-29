@@ -1253,6 +1253,7 @@ body.course-page main {
   }
   body.course-page .course-description {
     left: 0;
+    top: calc(1.5em + 0.5rem + 10px);
     width: calc(100vw - 2 * var(--mobile-edge));
     max-width: calc(100vw - 2 * var(--mobile-edge));
   }
