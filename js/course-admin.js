@@ -233,7 +233,53 @@ async function vimeoRatio(video) {
   return 9 / 16;
 }
 
+function showMobileCourseLayout(session) {
+  if (!session || document.getElementById('course-mobile-grid')) return;
+  const stored = readCourseLayout(session.courseId, session.groupId);
+  if (!stored.length) return;
+  const works = document.getElementById('course-works');
+  if (!works) return;
+  const items = stored.slice().sort((a, b) => {
+    const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
+    if (Math.abs(dy) > 8) return dy;
+    return (Number(a.x) || 0) - (Number(b.x) || 0);
+  });
+  const grid = document.createElement('div');
+  grid.id = 'course-mobile-grid';
+  items.forEach((data) => {
+    const cell = document.createElement('div');
+    const box = document.createElement('div');
+    box.className = 'course-layout-image';
+    const visual = mountCourseVisual(box, data);
+    if (visual.vimeo) visual.setWide(true);
+    cell.appendChild(box);
+    grid.appendChild(cell);
+  });
+  works.hidden = false;
+  works.appendChild(grid);
+
+  const fit = () => {
+    if (window.innerWidth >= 640) return;
+    const main = document.getElementById('course-root');
+    const above = works.previousElementSibling;
+    if (!main || !above) return;
+    const top = above.getBoundingClientRect().bottom - main.getBoundingClientRect().top + 48;
+    works.style.top = `${Math.round(top)}px`;
+    const bottom = works.getBoundingClientRect().bottom + window.scrollY;
+    document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+  };
+  requestAnimationFrame(fit);
+  grid.querySelectorAll('img').forEach((img) => {
+    if (!img.complete) img.addEventListener('load', fit);
+  });
+  window.addEventListener('resize', fit);
+}
+
 function showSavedCourseLayout(session) {
+  if (window.innerWidth < 640) {
+    showMobileCourseLayout(session);
+    return;
+  }
   if (!session || document.getElementById('course-layout') || document.getElementById('admin-layer')) return;
   const stored = readCourseLayout(session.courseId, session.groupId);
   if (!stored.length) return;
@@ -261,6 +307,7 @@ function showSavedCourseLayout(session) {
 }
 
 function startCourseAdmin(session) {
+  if (window.innerWidth < 640) return;
   if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
   if (sessionStorage.getItem('georgii-admin-ok') === '1') {
     openAdminEditor(session);

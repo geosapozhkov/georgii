@@ -6,14 +6,13 @@ function groupLabel(index) {
 
 let pinResize = null;
 
-function pinLeftToCourses(block, anchor) {
+function pinLeftToCourses(block) {
   const place = () => {
     if (window.innerWidth >= 640) {
       block.style.marginLeft = 'calc(40vw + 226px)';
       return;
     }
-    const width = anchor.getBoundingClientRect().width;
-    block.style.marginLeft = `calc(50% - ${width / 2}px)`;
+    block.style.marginLeft = 'var(--mobile-edge)';
   };
   if (pinResize) window.removeEventListener('resize', pinResize);
   pinResize = place;
@@ -49,7 +48,7 @@ function renderGroups(course) {
   }
 
   courseRoot.append(title, column);
-  pinLeftToCourses(courseRoot, title);
+  pinLeftToCourses(courseRoot);
 }
 
 function renderDetail(course, groupId, group) {
@@ -97,7 +96,7 @@ function renderDetail(course, groupId, group) {
 
   nameCol.append(courseLink, body);
   courseRoot.append(nameCol, number);
-  pinLeftToCourses(courseRoot, courseLink);
+  pinLeftToCourses(courseRoot);
 }
 
 function parseCourseRequest() {
@@ -137,7 +136,7 @@ async function initCoursePage() {
   if (group) {
     renderDetail(course, groupId, group);
     const session = { courseId: course.id, groupId };
-    if (admin) {
+    if (admin && window.innerWidth >= 640) {
       window.__courseAdminPending = session;
       if (window.startCourseAdmin) window.startCourseAdmin(session);
     } else {
