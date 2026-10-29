@@ -233,8 +233,95 @@ async function vimeoRatio(video) {
   return 9 / 16;
 }
 
+function descriptionText(el) {
+  if (!el) return '';
+  return (el.innerText || '').replace(/\u00a0/g, ' ').replace(/\n+$/g, '');
+}
+
+let publishedCopy = {};
+
+async function loadPublishedCopy() {
+  try {
+    const response = await fetch('js/course-copy.json', { cache: 'no-store' });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (data && typeof data === 'object') publishedCopy = data;
+  } catch (_) {}
+}
+
+function resolveCourseDescription(session) {
+  try {
+    const raw = localStorage.getItem(layoutKey(session.courseId, session.groupId));
+    if (raw != null) {
+      const data = JSON.parse(raw);
+      if (data && typeof data.description === 'string') return data.description;
+    }
+  } catch (_) {}
+  const shared = publishedCopy[session.courseId];
+  if (shared && typeof shared[session.groupId] === 'string') return shared[session.groupId];
+  return session.descriptionFallback || '';
+}
+
+function applyCourseDescription(session, editing) {
+  const nameCol = document.querySelector('.course-name-col');
+  if (!session || !nameCol) return;
+  const text = resolveCourseDescription(session);
+  let el = document.getElementById('course-description');
+  if (!editing && !text) {
+    if (el) el.remove();
+    return;
+  }
+  if (editing && el && document.activeElement === el) return;
+  if (!el) {
+    el = document.createElement('p');
+    el.id = 'course-description';
+    el.className = 'course-description';
+    nameCol.appendChild(el);
+  }
+  if (descriptionText(el) !== text) el.textContent = text;
+  el.contentEditable = editing ? 'plaintext-only' : 'false';
+  el.spellcheck = false;
+  el.classList.toggle('is-editing', Boolean(editing));
+  el.classList.toggle('is-empty', Boolean(editing) && text === '');
+  if (editing && !el.dataset.bound) {
+    el.dataset.bound = '1';
+    el.addEventListener('input', () => {
+      el.classList.toggle('is-empty', descriptionText(el) === '');
+    });
+  }
+}
+
+function finishCourseDescription() {
+  const el = document.getElementById('course-description');
+  if (!el) return;
+  const text = descriptionText(el);
+  el.textContent = text;
+  el.contentEditable = 'false';
+  el.classList.remove('is-editing', 'is-empty');
+  if (!text) el.remove();
+}
+
+function publishCourseDescription(session, description) {
+  fetch('api/course-description', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      courseId: session.courseId,
+      groupId: session.groupId,
+      description
+    })
+  }).then((response) => {
+    if (!response.ok) return;
+    const course = Object.assign({}, publishedCopy[session.courseId]);
+    course[session.groupId] = description;
+    publishedCopy[session.courseId] = course;
+  }).catch(() => {});
+}
+
 function showMobileCourseLayout(session) {
-  if (!session || document.getElementById('course-mobile-grid')) return;
+  if (!session) return;
+  applyCourseDescription(session, false);
+  if (document.getElementById('course-mobile-grid')) return;
   const stored = readCourseLayout(session.courseId, session.groupId);
   if (!stored.length) return;
   const works = document.getElementById('course-works');
@@ -280,7 +367,9 @@ function showSavedCourseLayout(session) {
     showMobileCourseLayout(session);
     return;
   }
-  if (!session || document.getElementById('course-layout') || document.getElementById('admin-layer')) return;
+  if (!session || document.getElementById('admin-layer')) return;
+  applyCourseDescription(session, false);
+  if (document.getElementById('course-layout')) return;
   const stored = readCourseLayout(session.courseId, session.groupId);
   if (!stored.length) return;
   const layer = document.createElement('div');
@@ -380,7 +469,9 @@ function openAdminEditor(session) {
   document.body.append(layer, file, tools);
 
   function save() {
+    const note = document.getElementById('course-description');
     const payload = {
+      description: note ? descriptionText(note) : resolveCourseDescription(session),
       images: images.map((item) => {
         const piece = {
           id: item.id,
@@ -406,7 +497,10 @@ function openAdminEditor(session) {
   }
 
   function leaveAdmin() {
+    const description = descriptionText(document.getElementById('course-description'));
     if (!save()) return;
+    publishCourseDescription(session, description);
+    finishCourseDescription();
     document.removeEventListener('pointermove', onPointerMove);
     document.removeEventListener('pointerup', onPointerUp);
     document.removeEventListener('pointerdown', onPointerDown);
@@ -866,7 +960,8 @@ function openAdminEditor(session) {
   }
 
   function onKeyDown(event) {
-    if (!selected || event.target.closest('input, textarea')) return;
+    if (event.target.closest('input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"]')) return;
+    if (!selected) return;
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
       remove(selected);
@@ -891,11 +986,29 @@ function openAdminEditor(session) {
   document.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', drawGrid);
 
+  applyCourseDescription(session, true);
   readCourseLayout(session.courseId, session.groupId).forEach((data) => addImage(data));
   drawGrid();
 }
 
 window.startCourseAdmin = startCourseAdmin;
 window.showSavedCourseLayout = showSavedCourseLayout;
-if (window.__courseAdminPending) startCourseAdmin(window.__courseAdminPending);
-if (window.__courseLayoutPending) showSavedCourseLayout(window.__courseLayoutPending);
+window.loadPublishedCopy = loadPublishedCopy;
+async function resumePendingCourse() {
+  await loadPublishedCopy();
+  if (window.__courseAdminPending && window.innerWidth >= 640 && !document.getElementById('admin-layer') && !document.getElementById('admin-lock')) {
+    startCourseAdmin(window.__courseAdminPending);
+    return;
+  }
+  const session = window.__courseLayoutPending || (window.innerWidth < 640 ? window.__courseAdminPending : null);
+  if (session) showSavedCourseLayout(session);
+}
+resumePendingCourse();
+setInterval(async () => {
+  const host = window.location.hostname;
+  if (host !== '127.0.0.1' && host !== 'localhost') return;
+  const session = window.__courseLayoutPending;
+  if (!session || document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+  await loadPublishedCopy();
+  applyCourseDescription(session, false);
+}, 1000);

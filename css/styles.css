@@ -993,6 +993,7 @@ body.course-page main {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  position: relative;
 }
 .course-group-id {
   color: #ACACAC;
@@ -1030,8 +1031,27 @@ a.course-group-id:hover {
   color: #ACACAC;
 }
 .course-description {
-  margin-top: 1.5rem;
+  position: absolute;
+  left: 0;
+  top: calc(1.5em + 0.5rem);
+  width: 18rem;
   max-width: 18rem;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  z-index: 2;
+}
+.course-description.is-editing {
+  min-height: 1.2em;
+  outline: none;
+  border: 0;
+  caret-color: #ACACAC;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.course-description.is-editing.is-empty::before {
+  content: 'description';
+  opacity: 0.35;
 }
 
 /* =============== COURSE ADMIN =============== */
@@ -1222,6 +1242,10 @@ body.course-page main {
 
   body.course-page main {
     padding-top: 1.75rem !important;
+  }
+  body.course-page .course-description {
+    width: calc(100vw - 2 * var(--mobile-edge));
+    max-width: calc(100vw - 2 * var(--mobile-edge));
   }
   body.course-page #course-works {
     position: absolute;

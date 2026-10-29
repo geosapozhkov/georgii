@@ -82,13 +82,6 @@ function renderDetail(course, groupId, group) {
   });
   body.appendChild(authors);
 
-  if (group.description) {
-    const description = document.createElement('p');
-    description.className = 'course-description';
-    description.textContent = group.description;
-    body.appendChild(description);
-  }
-
   const works = document.createElement('div');
   works.id = 'course-works';
   works.hidden = true;
@@ -134,8 +127,13 @@ async function initCoursePage() {
 
   const group = groupId && course.groups ? course.groups[groupId] : null;
   if (group) {
+    if (window.loadPublishedCopy) await window.loadPublishedCopy();
     renderDetail(course, groupId, group);
-    const session = { courseId: course.id, groupId };
+    const session = {
+      courseId: course.id,
+      groupId,
+      descriptionFallback: group.description || ''
+    };
     if (admin && window.innerWidth >= 640) {
       window.__courseAdminPending = session;
       if (window.startCourseAdmin) window.startCourseAdmin(session);
