@@ -977,6 +977,7 @@ body.course-page main {
 .course-group-col {
   display: flex;
   flex-direction: column;
+  padding-top: calc((1.5em - 1.2em) / 2);
 }
 .course-name-col {
   grid-column: 1;
@@ -990,9 +991,6 @@ body.course-page main {
   text-decoration: none;
   line-height: 1.2;
   opacity: var(--fade, 1);
-}
-.course-group-col > .course-group-id:first-child {
-  line-height: 1.5;
 }
 a.course-group-id:hover {
   opacity: 0.5;
