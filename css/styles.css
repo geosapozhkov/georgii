@@ -1032,7 +1032,8 @@ body.course-page main {
   position: relative;
   z-index: 1;
 }
-#admin-lock {
+#admin-lock,
+#admin-video-link {
   position: fixed;
   inset: 0;
   z-index: 80;
@@ -1041,7 +1042,8 @@ body.course-page main {
   justify-content: center;
   background: #FAFAFA;
 }
-#admin-lock input {
+#admin-lock input,
+#admin-video-link input {
   width: 10rem;
   border: 0;
   border-bottom: 1px solid #ACACAC;
@@ -1053,10 +1055,15 @@ body.course-page main {
   font-size: var(--description-font-size);
   line-height: 1.5;
 }
-#admin-lock input:focus {
+#admin-video-link input {
+  width: min(28rem, calc(100% - 2rem));
+}
+#admin-lock input:focus,
+#admin-video-link input:focus {
   outline: none;
 }
-#admin-lock input.is-wrong {
+#admin-lock input.is-wrong,
+#admin-video-link input.is-wrong {
   opacity: 0.35;
 }
 #admin-layer,
@@ -1101,12 +1108,69 @@ body.course-page main {
   pointer-events: none;
 }
 .admin-image img,
-.course-layout-image img {
+.course-layout-image img,
+.admin-image iframe,
+.course-layout-image iframe {
   display: block;
   width: 100%;
   height: 100%;
+  border: 0;
   object-fit: contain;
   pointer-events: none;
+}
+.course-video-chrome {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36px;
+  z-index: 4;
+  pointer-events: none;
+}
+.admin-image.is-wide:hover .course-video-chrome,
+.course-layout-image.is-wide:hover .course-video-chrome {
+  display: block;
+}
+.course-video-seek {
+  position: absolute;
+  left: 8px;
+  right: 44px;
+  bottom: 8px;
+  height: 16px;
+  pointer-events: auto;
+}
+.course-video-seek::before,
+.course-video-seek span {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  height: 1px;
+  background: #ACACAC;
+}
+.course-video-seek::before {
+  right: 0;
+}
+.course-video-seek span {
+  width: 0;
+}
+.course-video-volume {
+  position: absolute;
+  right: 8px;
+  bottom: 2px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+.course-video-volume svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: #ACACAC;
 }
 .admin-image.is-selected {
   outline: 1px solid rgba(172, 172, 172, 0.85);
@@ -1117,6 +1181,7 @@ body.course-page main {
   height: 7px;
   background: #ACACAC;
   pointer-events: auto;
+  z-index: 5;
 }
 #admin-tools {
   position: fixed;
@@ -1130,7 +1195,8 @@ body.course-page main {
   pointer-events: auto;
 }
 #admin-add,
-#admin-save {
+#admin-save,
+#admin-video {
   border: 0;
   background: #FAFAFA;
   color: #ACACAC;
