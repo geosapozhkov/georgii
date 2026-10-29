@@ -1240,23 +1240,19 @@ body.course-page main {
     width: auto;
   }
 
-  body.course-page .course-name,
-  body.course-page .course-groups-title,
-  body.course-page .course-group-col {
-    position: relative;
-    left: 4.5rem;
+  body.course-page main {
+    padding-top: 1.5rem !important;
   }
-  body.course-page .course-side-number {
-    left: 4.5rem;
+  body.course-page .course-authors {
+    display: none;
   }
   body.course-page .course-detail-body {
-    position: relative;
-    left: 4.5rem;
+    margin-top: 0;
   }
   body.course-page .course-description {
-    left: 4.5rem;
-    width: calc(100vw - 4.5rem - 2 * var(--mobile-edge));
-    max-width: calc(100vw - 4.5rem - 2 * var(--mobile-edge));
+    left: 0;
+    width: calc(100vw - 2 * var(--mobile-edge));
+    max-width: calc(100vw - 2 * var(--mobile-edge));
   }
   body.course-page #course-works {
     position: absolute;

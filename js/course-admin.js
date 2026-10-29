@@ -348,7 +348,9 @@ function showMobileCourseLayout(session) {
   const fit = () => {
     if (window.innerWidth >= 640) return;
     const main = document.getElementById('course-root');
-    const above = works.previousElementSibling;
+    const desc = document.getElementById('course-description');
+    const title = document.querySelector('.course-name');
+    const above = desc && desc.getBoundingClientRect().height ? desc : title;
     if (!main || !above) return;
     const top = above.getBoundingClientRect().bottom - main.getBoundingClientRect().top + 48;
     works.style.top = `${Math.round(top)}px`;
