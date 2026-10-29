@@ -497,11 +497,54 @@ function openAdminEditor(session) {
     item.h = Math.max(24, item.h);
   }
 
+  function layerPoint(event) {
+    const rect = layer.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  }
+
+  function placeCursor(x, y) {
+    window.__courseCursorLock = { x, y };
+    const cursor = document.getElementById('custom-cursor');
+    if (!cursor) return;
+    cursor.style.left = `${x}px`;
+    cursor.style.top = `${y}px`;
+  }
+
+  function releaseCursor(event) {
+    window.__courseCursorLock = null;
+    const cursor = document.getElementById('custom-cursor');
+    if (!cursor || !event) return;
+    cursor.style.left = `${event.clientX}px`;
+    cursor.style.top = `${event.clientY}px`;
+  }
+
   function showGuides(item) {
     guides.innerHTML = '';
     const eps = 0.6;
     const verticals = [item.x, item.x + item.w];
     const horizontals = [item.y, item.y + item.h];
+    if (metrics) {
+      verticals.forEach((x) => {
+        if (!metrics.xs.some((value) => Math.abs(value - x) <= eps)) return;
+        const line = document.createElement('div');
+        line.className = 'admin-guide';
+        line.style.left = `${x}px`;
+        line.style.top = `${item.y}px`;
+        line.style.width = '1px';
+        line.style.height = `${item.h}px`;
+        guides.appendChild(line);
+      });
+      horizontals.forEach((y) => {
+        if (!metrics.ys.some((value) => Math.abs(value - y) <= eps)) return;
+        const line = document.createElement('div');
+        line.className = 'admin-guide';
+        line.style.left = `${item.x}px`;
+        line.style.top = `${y}px`;
+        line.style.width = `${item.w}px`;
+        line.style.height = '1px';
+        guides.appendChild(line);
+      });
+    }
     othersOf(item).forEach((image) => {
       verticals.forEach((x) => {
         if (![image.x, image.x + image.w].some((value) => Math.abs(value - x) <= eps)) return;
@@ -585,7 +628,7 @@ function openAdminEditor(session) {
     const rect = item.el.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    const reach = 10;
+    const reach = Math.min(16, Math.max(8, Math.min(rect.width, rect.height) / 3));
     const nearLeft = x <= reach;
     const nearRight = rect.width - x <= reach;
     const nearTop = y <= reach;
@@ -609,8 +652,7 @@ function openAdminEditor(session) {
     drag = {
       mode,
       pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
+      start: layerPoint(event),
       origin: { x: item.x, y: item.y, w: item.w, h: item.h }
     };
   }
@@ -626,32 +668,49 @@ function openAdminEditor(session) {
 
   function onPointerMove(event) {
     if (!drag || event.pointerId !== drag.pointerId || !selected) return;
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
+    const point = layerPoint(event);
     const origin = drag.origin;
+    const layerRect = layer.getBoundingClientRect();
     if (drag.mode === 'move') {
-      selected.x = origin.x + dx;
-      selected.y = origin.y + dy;
+      const rawX = origin.x + (point.x - drag.start.x);
+      const rawY = origin.y + (point.y - drag.start.y);
+      selected.x = rawX;
+      selected.y = rawY;
       snapMove(selected);
+      placeCursor(event.clientX + (selected.x - rawX), event.clientY + (selected.y - rawY));
     } else {
       const edges = edgesFor(drag.mode);
-      selected.x = origin.x;
-      selected.y = origin.y;
-      selected.w = origin.w;
-      selected.h = origin.h;
+      let x = origin.x;
+      let y = origin.y;
+      let w = origin.w;
+      let h = origin.h;
       if (edges.left) {
-        selected.x = origin.x + dx;
-        selected.w = origin.w - dx;
+        x = point.x;
+        w = origin.x + origin.w - point.x;
       }
-      if (edges.right) selected.w = origin.w + dx;
+      if (edges.right) w = point.x - x;
       if (edges.top) {
-        selected.y = origin.y + dy;
-        selected.h = origin.h - dy;
+        y = point.y;
+        h = origin.y + origin.h - point.y;
       }
-      if (edges.bottom) selected.h = origin.h + dy;
-      selected.w = Math.max(24, selected.w);
-      selected.h = Math.max(24, selected.h);
+      if (edges.bottom) h = point.y - y;
+      if (w < 24) {
+        if (edges.left) x -= 24 - w;
+        w = 24;
+      }
+      if (h < 24) {
+        if (edges.top) y -= 24 - h;
+        h = 24;
+      }
+      selected.x = x;
+      selected.y = y;
+      selected.w = w;
+      selected.h = h;
       snapResize(selected, edges);
+      placeCursor(
+        edges.left ? layerRect.left + selected.x : edges.right ? layerRect.left + selected.x + selected.w : event.clientX,
+        edges.top ? layerRect.top + selected.y : edges.bottom ? layerRect.top + selected.y + selected.h : event.clientY
+      );
     }
     applyBox(selected);
     showGuides(selected);
@@ -660,6 +719,7 @@ function openAdminEditor(session) {
   function onPointerUp(event) {
     if (!drag || event.pointerId !== drag.pointerId) return;
     drag = null;
+    releaseCursor(event);
     save();
     drawGrid();
     if (selected) showGuides(selected);

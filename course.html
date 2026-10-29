@@ -17,7 +17,7 @@
   <div id="custom-cursor"></div>
   <script src="js/course.js?v=7"></script>
   <script src="https://player.vimeo.com/api/player.js"></script>
-  <script src="js/course-admin.js?v=5"></script>
+  <script src="js/course-admin.js?v=6"></script>
   <script>
     const customCursor = document.getElementById('custom-cursor');
     let cursorX = 0;
@@ -25,6 +25,7 @@
     let cursorVisible = false;
 
     function updateCursor(event) {
+      if (window.__courseCursorLock) return;
       cursorX = event.clientX;
       cursorY = event.clientY;
       if (!customCursor) return;
@@ -38,8 +39,9 @@
 
     function animateCursor() {
       if (customCursor && cursorVisible) {
-        customCursor.style.left = cursorX + 'px';
-        customCursor.style.top = cursorY + 'px';
+        const lock = window.__courseCursorLock;
+        customCursor.style.left = (lock ? lock.x : cursorX) + 'px';
+        customCursor.style.top = (lock ? lock.y : cursorY) + 'px';
       }
       requestAnimationFrame(animateCursor);
     }
