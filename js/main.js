@@ -173,7 +173,9 @@ async function getProjectsList(){
     });
     if(response.ok){
       const data = await response.json();
-      return data.projects || [];
+      const base = data.projects || [];
+      if (window.loadProjectCopy) await window.loadProjectCopy();
+      return window.mergeProjectRecords ? window.mergeProjectRecords(base) : base;
     }
   } catch(e) {
     console.error('Ошибка загрузки projects.json:', e);
@@ -263,6 +265,16 @@ async function getCoverImageFromProject(projectName, category = null){
     console.error(`   ❌ Ошибка загрузки files.json для проекта ${projectName}:`, e);
   }
   
+  const placed = adminPreviewUrls(projectName, category);
+  if (placed.length) {
+    const result = {
+      url: placed[Math.floor(Math.random() * placed.length)],
+      filename: ''
+    };
+    projectCoversCache.set(cacheKey, result);
+    return result;
+  }
+
   const emptyResult = { url: '', filename: '' };
   // Сохраняем пустой результат в кэш, чтобы не запрашивать повторно
   projectCoversCache.set(cacheKey, emptyResult);
@@ -306,11 +318,26 @@ function isRasterImageFilename(name) {
   return typeof name === 'string' && /\.(jpe?g|png|gif|webp)$/i.test(name);
 }
 
+function adminPreviewUrls(projectName, category) {
+  if (typeof window.projectLayoutImages !== 'function') return [];
+  return window.projectLayoutImages(category, projectName)
+    .filter((item) => item && item.src && !item.vimeo && (
+      String(item.src).startsWith('data:image/') || isRasterImageFilename(String(item.src).split('?')[0].split('/').pop())
+    ))
+    .map((item) => item.src);
+}
+
 /** Список URL картинок из files.json проекта (кэш по category+name) */
+function withAdminPreviewUrls(projectName, category, urls) {
+  const extra = adminPreviewUrls(projectName, category);
+  if (!extra.length) return urls;
+  return [...new Set([...urls, ...extra])];
+}
+
 async function getProjectPreviewImageUrls(projectName, category) {
   const key = `${String(category || '').toLowerCase()}_${projectName}`;
   if (projectPreviewImageUrlsCache.has(key)) {
-    return projectPreviewImageUrlsCache.get(key);
+    return withAdminPreviewUrls(projectName, category, projectPreviewImageUrlsCache.get(key));
   }
   const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
   const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
@@ -327,7 +354,7 @@ async function getProjectPreviewImageUrls(projectName, category) {
     });
     if (!response.ok) {
       projectPreviewImageUrlsCache.set(key, urls);
-      return urls;
+      return withAdminPreviewUrls(projectName, category, urls);
     }
     const data = await response.json();
     const pushFile = (f) => {
@@ -342,10 +369,10 @@ async function getProjectPreviewImageUrls(projectName, category) {
     files.forEach(pushFile);
     const unique = [...new Set(urls)];
     projectPreviewImageUrlsCache.set(key, unique);
-    return unique;
+    return withAdminPreviewUrls(projectName, category, unique);
   } catch (e) {
     projectPreviewImageUrlsCache.set(key, []);
-    return [];
+    return withAdminPreviewUrls(projectName, category, []);
   }
 }
 
@@ -427,75 +454,177 @@ async function getProjectsForDesktopHome() {
   });
 }
 
-function createDesktopHomeNames() {
+let desktopHomeNamesReady = false;
+let homeNamesEpoch = 0;
+
+function placeDesktopHomeName({ title, href, name, category }) {
   if (!homeProjectNamesContainer) return;
-  homeProjectNamesContainer.innerHTML = '';
-  desktopHomeItems = [];
   const w = window.innerWidth;
   const h = window.innerHeight;
-  getProjectsForDesktopHome().then(projects => {
-    if (!homeProjectNamesContainer || !document.body.classList.contains('home-page')) return;
-    projects.forEach(({ title, href, name, category }) => {
-      const a = document.createElement('a');
-      a.href = href;
-      a.textContent = title;
-      a.className = 'home-project-name-link';
-      a.dataset.href = href;
-      a.dataset.projectName = name;
-      a.dataset.projectCategory = category;
-      const itemW = 120;
-      const itemH = 24;
-      const x = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, w - itemW - DESKTOP_NAMES_PADDING));
-      const y = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, h - itemH - DESKTOP_NAMES_PADDING));
-      const vx = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
-      const vy = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
-      const fleesFromCursor = Math.random() < DESKTOP_NAMES_FLEE_CHANCE;
-      const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false, fleesFromCursor };
-      desktopHomeItems.push(item);
-      a.style.left = x + 'px';
-      a.style.top = y + 'px';
-      a.addEventListener('mouseenter', () => {
-        const r = Math.random();
-        if (r < DESKTOP_NAMES_HOVER_CHANCE) {
-          item.slowDown = true;
-        }
-        if (window.innerWidth < 640) return;
-        desktopHoverPreviewItem = item;
-        const pn = a.dataset.projectName;
-        const cat = a.dataset.projectCategory;
-        if (pn) showHomeProjectHoverPreview(pn, cat);
-      });
-      a.addEventListener('mouseleave', () => {
-        item.slowDown = false;
-        if (window.innerWidth >= 640) {
-          homeHoverPreviewGeneration += 1;
-          hideHomeProjectHoverPreview();
-        }
-      });
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        const url = a.dataset.href || a.getAttribute('href');
-        if (window.innerWidth >= 640 && homeProjectHoverPreview && homeProjectHoverPreview.classList.contains('is-visible')) {
-          desktopHoverPreviewItem = null;
-          homeHoverPreviewGeneration += 1;
-          homeProjectHoverPreview.style.transition = `opacity ${DESKTOP_CLICK_FADE_PREVIEW_SEC}s ease`;
-          homeProjectHoverPreview.style.opacity = '0';
-        }
-        // Плавно скрываем все названия одновременно (чуть медленнее превью)
-        desktopHomeItems.forEach(it => {
-          it.el.style.transition = `opacity ${DESKTOP_CLICK_FADE_NAMES_SEC}s ease`;
-          it.el.style.opacity = '0';
-        });
-        setTimeout(() => {
-          try { sessionStorage.setItem('fadeInProject', '1'); } catch (_) {}
-          window.location.href = url;
-        }, Math.round(DESKTOP_CLICK_FADE_NAMES_SEC * 1000) + 20);
-      });
-      homeProjectNamesContainer.appendChild(a);
+  const a = document.createElement('a');
+  a.href = href;
+  a.textContent = title;
+  a.className = 'home-project-name-link';
+  a.dataset.href = href;
+  a.dataset.projectName = name;
+  a.dataset.projectCategory = category;
+  const itemW = 120;
+  const itemH = 24;
+  const x = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, w - itemW - DESKTOP_NAMES_PADDING));
+  const y = getRandomInRange(DESKTOP_NAMES_PADDING, Math.max(DESKTOP_NAMES_PADDING, h - itemH - DESKTOP_NAMES_PADDING));
+  const vx = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
+  const vy = getRandomInRange(DESKTOP_NAMES_SPEED_MIN, DESKTOP_NAMES_SPEED_MAX) * getRandomSign();
+  const fleesFromCursor = Math.random() < DESKTOP_NAMES_FLEE_CHANCE;
+  const item = { el: a, x, y, vx, vy, w: itemW, h: itemH, slowDown: false, fleesFromCursor };
+  desktopHomeItems.push(item);
+  a.style.left = x + 'px';
+  a.style.top = y + 'px';
+  a.addEventListener('mouseenter', () => {
+    const r = Math.random();
+    if (r < DESKTOP_NAMES_HOVER_CHANCE) {
+      item.slowDown = true;
+    }
+    if (window.innerWidth < 640) return;
+    desktopHoverPreviewItem = item;
+    const pn = a.dataset.projectName;
+    const cat = a.dataset.projectCategory;
+    if (pn) showHomeProjectHoverPreview(pn, cat);
+  });
+  a.addEventListener('mouseleave', () => {
+    item.slowDown = false;
+    if (window.innerWidth >= 640) {
+      homeHoverPreviewGeneration += 1;
+      hideHomeProjectHoverPreview();
+    }
+  });
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const url = a.dataset.href || a.getAttribute('href');
+    if (window.innerWidth >= 640 && homeProjectHoverPreview && homeProjectHoverPreview.classList.contains('is-visible')) {
+      desktopHoverPreviewItem = null;
+      homeHoverPreviewGeneration += 1;
+      homeProjectHoverPreview.style.transition = `opacity ${DESKTOP_CLICK_FADE_PREVIEW_SEC}s ease`;
+      homeProjectHoverPreview.style.opacity = '0';
+    }
+    desktopHomeItems.forEach(it => {
+      it.el.style.transition = `opacity ${DESKTOP_CLICK_FADE_NAMES_SEC}s ease`;
+      it.el.style.opacity = '0';
     });
+    setTimeout(() => {
+      try { sessionStorage.setItem('fadeInProject', '1'); } catch (_) {}
+      window.location.href = url;
+    }, Math.round(DESKTOP_CLICK_FADE_NAMES_SEC * 1000) + 20);
+  });
+  homeProjectNamesContainer.appendChild(a);
+  requestAnimationFrame(() => {
+    const rect = a.getBoundingClientRect();
+    item.w = rect.width;
+    item.h = rect.height;
+  });
+}
+
+function createDesktopHomeNames() {
+  if (!homeProjectNamesContainer) return;
+  const epoch = ++homeNamesEpoch;
+  desktopHomeNamesReady = false;
+  homeProjectNamesContainer.innerHTML = '';
+  desktopHomeItems = [];
+  getProjectsForDesktopHome().then(projects => {
+    if (epoch !== homeNamesEpoch) return;
+    if (!homeProjectNamesContainer || !document.body.classList.contains('home-page')) return;
+    projects.forEach(placeDesktopHomeName);
+    desktopHomeNamesReady = true;
     document.addEventListener('mousemove', desktopHomeMouseMove);
     requestAnimationFrame(measureAndAnimateDesktopNames);
   });
+}
+
+function homeAdminRequested() {
+  return new URLSearchParams(window.location.search).has('admin');
+}
+
+function slugFromTitle(title, taken) {
+  let base = title.trim().replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_']/gu, '').replace(/^_+|_+$/g, '');
+  if (!base) return '';
+  base = base.slice(0, 60);
+  let name = base;
+  let n = 2;
+  while (taken.has(name)) {
+    name = `${base}_${n}`;
+    n += 1;
+  }
+  return name;
+}
+
+async function addFlyingProject(title) {
+  const clean = title.trim();
+  if (!clean || clean.length > 120) return null;
+  if (window.loadProjectCopy) await window.loadProjectCopy();
+  const existing = await getProjectsList();
+  const name = slugFromTitle(clean, new Set(existing.map((project) => project.name)));
+  if (!name) return null;
+  const project = { name, title: clean, category: 'commerce', description: '' };
+  if (window.rememberAddedProject) window.rememberAddedProject(project);
+  if (window.publishProject) await window.publishProject({ action: 'add', ...project });
+  const href = `project.html?project=${encodeURIComponent(name)}&category=commerce`;
+  const record = { title: clean, href, name, category: 'commerce' };
+  if (desktopHomeNamesReady && document.body.classList.contains('home-page')) {
+    placeDesktopHomeName(record);
+  } else {
+    createDesktopHomeNames();
+  }
+  return project;
+}
+
+function leaveHomeAdmin() {
+  const form = document.getElementById('admin-home');
+  if (form) form.remove();
+  const url = new URL(window.location.href);
+  url.searchParams.delete('admin');
+  const search = url.searchParams.toString();
+  history.replaceState(null, '', url.pathname + (search ? `?${search}` : ''));
+}
+
+function openHomeProjectCreator() {
+  if (document.getElementById('admin-home') || window.innerWidth < 640) return;
+  const form = document.createElement('form');
+  form.id = 'admin-home';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.maxLength = 120;
+  input.placeholder = 'project';
+  input.setAttribute('aria-label', 'project');
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.id = 'admin-save';
+  save.textContent = 'save';
+  form.append(input, save);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const project = await addFlyingProject(input.value);
+    if (!project) {
+      input.classList.add('is-wrong');
+      return;
+    }
+    input.value = '';
+    input.classList.remove('is-wrong');
+    input.focus();
+  });
+  save.addEventListener('click', async () => {
+    if (input.value.trim()) {
+      const project = await addFlyingProject(input.value);
+      if (!project) {
+        input.classList.add('is-wrong');
+        return;
+      }
+    }
+    leaveHomeAdmin();
+  });
+  input.addEventListener('input', () => input.classList.remove('is-wrong'));
+  document.body.appendChild(form);
+  input.focus();
 }
 
 function measureAndAnimateDesktopNames() {
@@ -1485,9 +1614,9 @@ function stopHomeContentRotation() {
 function updateURL(section) {
   const url = new URL(window.location);
   if (section === 'home') {
-    // Для главной страницы убираем все параметры
-    url.search = '';
+    url.search = url.searchParams.has('admin') ? '?admin' : '';
   } else {
+    url.searchParams.delete('admin');
     // Для других страниц устанавливаем параметр section
     url.searchParams.set('section', section);
     // Также сохраняем category для обратной совместимости
@@ -1557,6 +1686,9 @@ function showHome(){
   }
   currentSection = 'home';
   updateURL('home');
+  if (homeAdminRequested() && window.innerWidth >= 640 && typeof window.startHomeAdmin === 'function') {
+    window.startHomeAdmin(openHomeProjectCreator);
+  }
 }
 
 // =============== ПРОСМОТРЩИК ===============

@@ -6,7 +6,7 @@
   <meta name="referrer" content="no-referrer">
   <title>Project</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=49">
+  <link rel="stylesheet" href="css/styles.css?v=50">
 </head>
 <body class="p-1.5 project-page">
   <script>
@@ -55,7 +55,8 @@
   <div id="custom-cursor"></div>
 
   <script src="https://player.vimeo.com/api/player.js"></script>
-  <script src="js/project.js?v=80"></script>
+  <script src="js/course-admin.js?v=11"></script>
+  <script src="js/project.js?v=81"></script>
   
   <script>
     // =============== КАСТОМНЫЙ КУРСОР ===============
@@ -67,6 +68,7 @@
 
     // Обновление позиции курсора
     function updateCursor(e) {
+      if (window.__courseCursorLock) return;
       cursorX = e.clientX;
       cursorY = e.clientY;
       
@@ -84,8 +86,9 @@
     // Анимация курсора через requestAnimationFrame для плавности
     function animateCursor() {
       if (customCursor && cursorVisible) {
-        customCursor.style.left = cursorX + 'px';
-        customCursor.style.top = cursorY + 'px';
+        const lock = window.__courseCursorLock;
+        customCursor.style.left = (lock ? lock.x : cursorX) + 'px';
+        customCursor.style.top = (lock ? lock.y : cursorY) + 'px';
       }
       cursorAnimationFrame = requestAnimationFrame(animateCursor);
     }

@@ -5,13 +5,27 @@ function layoutKey(courseId, groupId) {
   return `georgii-course-layout:${courseId}:${groupId}`;
 }
 
-function readCourseLayout(courseId, groupId) {
+function storageKeyFor(session) {
+  if (session && session.storageKey) return session.storageKey;
+  return layoutKey(session.courseId, session.groupId);
+}
+
+function readStoredImages(key) {
   try {
-    const data = JSON.parse(localStorage.getItem(layoutKey(courseId, groupId)) || '{"images":[]}');
+    const data = JSON.parse(localStorage.getItem(key) || '{"images":[]}');
     return Array.isArray(data.images) ? data.images.filter((item) => item && (item.src || item.vimeo)) : [];
   } catch (_) {
     return [];
   }
+}
+
+function readCourseLayout(courseId, groupId) {
+  return readStoredImages(layoutKey(courseId, groupId));
+}
+
+function descriptionNode(session) {
+  const id = session && session.descriptionId ? session.descriptionId : 'course-description';
+  return document.getElementById(id);
 }
 
 function extendPageForImages(items) {
@@ -407,7 +421,7 @@ function startCourseAdmin(session) {
   askAdminPassword(session);
 }
 
-function askAdminPassword(session) {
+function askAdminPassword(session, onOk) {
   const lock = document.createElement('form');
   lock.id = 'admin-lock';
   const input = document.createElement('input');
@@ -424,7 +438,8 @@ function askAdminPassword(session) {
     }
     sessionStorage.setItem('georgii-admin-ok', '1');
     lock.remove();
-    openAdminEditor(session);
+    if (typeof onOk === 'function') onOk(session);
+    else if (session) openAdminEditor(session);
   });
   input.addEventListener('input', () => input.classList.remove('is-wrong'));
   document.body.appendChild(lock);
@@ -470,10 +485,20 @@ function openAdminEditor(session) {
   layer.append(canvas, guides, board);
   document.body.append(layer, file, tools);
 
+  function savedDescription() {
+    const note = descriptionNode(session);
+    if (note) return descriptionText(note);
+    try {
+      const data = JSON.parse(localStorage.getItem(storageKeyFor(session)) || '{}');
+      if (data && typeof data.description === 'string') return data.description;
+    } catch (_) {}
+    if (!session.storageKey) return resolveCourseDescription(session);
+    return session.descriptionFallback || '';
+  }
+
   function save() {
-    const note = document.getElementById('course-description');
     const payload = {
-      description: note ? descriptionText(note) : resolveCourseDescription(session),
+      description: savedDescription(),
       images: images.map((item) => {
         const piece = {
           id: item.id,
@@ -491,7 +516,7 @@ function openAdminEditor(session) {
       })
     };
     try {
-      localStorage.setItem(layoutKey(session.courseId, session.groupId), JSON.stringify(payload));
+      localStorage.setItem(storageKeyFor(session), JSON.stringify(payload));
       return true;
     } catch (_) {
       return false;
@@ -499,10 +524,13 @@ function openAdminEditor(session) {
   }
 
   function leaveAdmin() {
-    const description = descriptionText(document.getElementById('course-description'));
+    const description = savedDescription();
     if (!save()) return;
-    publishCourseDescription(session, description);
-    finishCourseDescription();
+    if (typeof session.onLeave === 'function') session.onLeave(description);
+    else {
+      publishCourseDescription(session, description);
+      finishCourseDescription();
+    }
     document.removeEventListener('pointermove', onPointerMove);
     document.removeEventListener('pointerup', onPointerUp);
     document.removeEventListener('pointerdown', onPointerDown);
@@ -523,9 +551,13 @@ function openAdminEditor(session) {
     layer.id = 'course-layout';
     board.removeAttribute('id');
     extendPageForImages(images);
-    const course = encodeURIComponent(session.courseId);
-    const group = encodeURIComponent(session.groupId);
-    history.replaceState(null, '', `course.html?course=${course}&group=${group}`);
+    if (typeof session.publicUrl === 'string') {
+      history.replaceState(null, '', session.publicUrl);
+    } else if (session.courseId) {
+      const course = encodeURIComponent(session.courseId);
+      const group = encodeURIComponent(session.groupId);
+      history.replaceState(null, '', `course.html?course=${course}&group=${group}`);
+    }
   }
 
   saveButton.addEventListener('click', leaveAdmin);
@@ -988,14 +1020,175 @@ function openAdminEditor(session) {
   document.addEventListener('keydown', onKeyDown);
   window.addEventListener('resize', drawGrid);
 
-  applyCourseDescription(session, true);
-  readCourseLayout(session.courseId, session.groupId).forEach((data) => addImage(data));
+  if (typeof session.prepare === 'function') session.prepare();
+  else applyCourseDescription(session, true);
+  readStoredImages(storageKeyFor(session)).forEach((data) => addImage(data));
   drawGrid();
+}
+
+function showSavedProjectLayout(session) {
+  if (!session) return;
+  const stored = readStoredImages(storageKeyFor(session));
+  if (!stored.length) return;
+  if (window.innerWidth < 640) {
+    const grid = document.getElementById('file-grid');
+    if (!grid || grid.querySelector('.project-extra-media')) return;
+    const empty = grid.querySelector('.border-dashed');
+    if (empty) empty.remove();
+    const items = stored.slice().sort((a, b) => {
+      const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
+      if (Math.abs(dy) > 8) return dy;
+      return (Number(a.x) || 0) - (Number(b.x) || 0);
+    });
+    items.forEach((data) => {
+      const cell = document.createElement('div');
+      cell.className = 'project-extra-media col-span-12 w-full';
+      const box = document.createElement('div');
+      box.className = 'course-layout-image';
+      const visual = mountCourseVisual(box, data);
+      if (visual.vimeo) visual.setWide(true);
+      cell.appendChild(box);
+      grid.appendChild(cell);
+    });
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
+    return;
+  }
+  if (document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
+  const layer = document.createElement('div');
+  layer.id = 'course-layout';
+  stored.forEach((data) => {
+    const box = document.createElement('div');
+    box.className = 'course-layout-image';
+    box.style.left = `${Number(data.x) || 0}px`;
+    box.style.top = `${Number(data.y) || 0}px`;
+    box.style.width = `${Number(data.w) || 0}px`;
+    box.style.height = `${Number(data.h) || 0}px`;
+    const visual = mountCourseVisual(box, data);
+    layer.appendChild(box);
+    rememberWide({
+      x: Number(data.x) || 0,
+      y: Number(data.y) || 0,
+      w: Number(data.w) || 0,
+      h: Number(data.h) || 0,
+      setWide: visual.setWide
+    });
+  });
+  document.body.appendChild(layer);
+  extendPageForImages(stored);
+}
+
+function startProjectAdmin(session) {
+  if (window.innerWidth < 640) return;
+  if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+  const open = () => openAdminEditor(session);
+  if (sessionStorage.getItem('georgii-admin-ok') === '1') open();
+  else askAdminPassword(session, open);
+}
+
+let projectCopy = { descriptions: {}, added: [] };
+
+async function loadProjectCopy() {
+  try {
+    const response = await fetch(`js/project-copy.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return projectCopy;
+    const data = await response.json();
+    if (!data || typeof data !== 'object') return projectCopy;
+    projectCopy = {
+      descriptions: data.descriptions && typeof data.descriptions === 'object' ? data.descriptions : {},
+      added: Array.isArray(data.added) ? data.added : []
+    };
+  } catch (_) {}
+  return projectCopy;
+}
+
+function localAddedProjects() {
+  try {
+    const data = JSON.parse(localStorage.getItem('georgii-added-projects') || '[]');
+    return Array.isArray(data) ? data.filter((item) => item && typeof item.name === 'string' && item.name) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function rememberAddedProject(project) {
+  const list = localAddedProjects().filter((item) => item.name !== project.name);
+  list.push({
+    name: project.name,
+    title: project.title,
+    category: project.category,
+    description: project.description || ''
+  });
+  try {
+    localStorage.setItem('georgii-added-projects', JSON.stringify(list));
+  } catch (_) {}
+}
+
+function mergeProjectRecords(base) {
+  const projects = (Array.isArray(base) ? base : []).map((project) => Object.assign({}, project));
+  const seen = new Set(projects.map((project) => project.name));
+  localAddedProjects().concat(projectCopy.added || []).forEach((project) => {
+    if (!project || typeof project.name !== 'string' || !project.name || seen.has(project.name)) return;
+    seen.add(project.name);
+    projects.push({
+      name: project.name,
+      title: typeof project.title === 'string' && project.title ? project.title : project.name.replace(/_/g, ' '),
+      category: String(project.category || 'commerce').toLowerCase(),
+      description: typeof project.description === 'string' ? project.description : ''
+    });
+  });
+  projects.forEach((project) => {
+    const category = String(project.category || '').toLowerCase();
+    const key = `${category}:${project.name}`;
+    const shared = projectCopy.descriptions ? projectCopy.descriptions[key] : undefined;
+    if (typeof shared === 'string') project.description = shared;
+    try {
+      const raw = localStorage.getItem(`georgii-project-layout:${category}:${project.name}`);
+      if (raw == null) return;
+      const data = JSON.parse(raw);
+      if (data && typeof data.description === 'string') project.description = data.description;
+    } catch (_) {}
+  });
+  return projects;
+}
+
+function publishProject(body) {
+  return fetch('api/project', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(async (response) => {
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data.copy && typeof data.copy === 'object') {
+      projectCopy = {
+        descriptions: data.copy.descriptions && typeof data.copy.descriptions === 'object' ? data.copy.descriptions : {},
+        added: Array.isArray(data.copy.added) ? data.copy.added : []
+      };
+    }
+    return data;
+  }).catch(() => null);
 }
 
 window.startCourseAdmin = startCourseAdmin;
 window.showSavedCourseLayout = showSavedCourseLayout;
 window.loadPublishedCopy = loadPublishedCopy;
+window.showSavedProjectLayout = showSavedProjectLayout;
+window.startProjectAdmin = startProjectAdmin;
+window.loadProjectCopy = loadProjectCopy;
+window.mergeProjectRecords = mergeProjectRecords;
+window.publishProject = publishProject;
+window.rememberAddedProject = rememberAddedProject;
+window.getProjectCopy = () => projectCopy;
+window.projectLayoutKey = (category, name) => `georgii-project-layout:${String(category || '').toLowerCase()}:${name}`;
+window.projectLayoutImages = (category, name) => readStoredImages(window.projectLayoutKey(category, name));
+window.startHomeAdmin = function (onReady) {
+  if (window.innerWidth < 640) return;
+  if (document.getElementById('admin-lock') || document.getElementById('admin-home')) return;
+  const open = () => { if (typeof onReady === 'function') onReady(); };
+  if (sessionStorage.getItem('georgii-admin-ok') === '1') open();
+  else askAdminPassword(null, open);
+};
 async function resumePendingCourse() {
   await loadPublishedCopy();
   if (window.__courseAdminPending && window.innerWidth >= 640 && !document.getElementById('admin-layer') && !document.getElementById('admin-lock')) {

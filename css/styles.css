@@ -418,6 +418,19 @@ body.about-page footer {
   padding-left: 1.5rem;
   padding-right: 0;
   box-sizing: border-box;
+  white-space: pre-wrap;
+}
+#project-description.is-editing {
+  min-height: 1.2em;
+  outline: none;
+  border: 0;
+  caret-color: #ACACAC;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#project-description.is-editing.is-empty::before {
+  content: 'description';
+  opacity: 0.35;
 }
 
 /* Стили для breadcrumb на странице проекта - скрыт на десктопе и планшете */
@@ -1218,6 +1231,43 @@ body.course-page main {
   line-height: 1.2;
   padding: 0;
 }
+#admin-home {
+  position: fixed;
+  right: var(--mobile-edge);
+  bottom: var(--mobile-edge);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  background: #FAFAFA;
+}
+#admin-home input,
+#admin-home button {
+  border: 0;
+  background: transparent;
+  color: #ACACAC;
+  font-size: var(--description-font-size);
+  line-height: 1.2;
+  padding: 0;
+  text-align: right;
+}
+#admin-home input {
+  width: 14rem;
+  caret-color: #ACACAC;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#admin-home input:focus {
+  outline: none;
+}
+#admin-home input::placeholder {
+  color: #ACACAC;
+  opacity: 0.35;
+}
+#admin-home input.is-wrong {
+  opacity: 0.35;
+}
 
 /* Courses on a phone: same pages, no admin editor. Media stacks like a project. */
 @media (max-width: 639px) {
@@ -1295,6 +1345,30 @@ body.course-page main {
     aspect-ratio: 16 / 9;
   }
   #course-mobile-grid .course-layout-image.is-wide .course-video-chrome {
+    display: block;
+  }
+  #file-grid > .project-extra-media {
+    grid-column: span 4 / span 4 !important;
+    width: 100% !important;
+  }
+  .project-extra-media .course-layout-image {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: auto;
+    pointer-events: auto;
+  }
+  .project-extra-media .course-layout-image img,
+  .project-extra-media .course-layout-image iframe {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+  .project-extra-media .course-layout-image iframe {
+    aspect-ratio: 16 / 9;
+  }
+  .project-extra-media .course-layout-image.is-wide .course-video-chrome {
     display: block;
   }
 }

@@ -1,7 +1,24 @@
 // Страница проекта - работа с локальными файлами
-const urlParams = new URLSearchParams(window.location.search);
-const projectName = urlParams.get('project') || '';
-const projectCategory = urlParams.get('category') || '';
+function parseProjectRequest() {
+  const params = new URLSearchParams(window.location.search);
+  let name = params.get('project') || '';
+  let category = params.get('category') || '';
+  let admin = params.has('admin') || /admin$/i.test(window.location.href.split('#')[0]);
+  if (/admin$/i.test(name)) {
+    admin = true;
+    name = name.replace(/admin$/i, '');
+  }
+  if (/admin$/i.test(category)) {
+    admin = true;
+    category = category.replace(/admin$/i, '');
+  }
+  return { name, category, admin };
+}
+const projectRequest = parseProjectRequest();
+const projectName = projectRequest.name;
+const projectCategory = projectRequest.category;
+const projectAdmin = projectRequest.admin;
+let resolvedProjectCategory = String(projectCategory || '').toLowerCase();
 
 const grid = document.getElementById('file-grid');
 const loading = document.getElementById('loading');
@@ -288,7 +305,11 @@ async function loadProject(projectName, subfolder = ''){
     grid.style.display = 'grid';
 
     if(!images || images.length === 0){
-      grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Добавьте изображения или видео в папку <code class="bg-gray-100 px-2 py-1 rounded">projects/' + (projectCategory ? projectCategory + '/' : '') + projectName + '/images/</code><br><br>Файлы будут автоматически обнаружены при следующей загрузке страницы.</div>';
+      if (!projectWasAdded() && !projectAdmin) {
+        grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Добавьте изображения или видео в папку <code class="bg-gray-100 px-2 py-1 rounded">projects/' + (projectCategory ? projectCategory + '/' : '') + projectName + '/images/</code><br><br>Файлы будут автоматически обнаружены при следующей загрузке страницы.</div>';
+      } else {
+        grid.innerHTML = '';
+      }
       loading.style.display='none'; 
       return;
     }
@@ -903,44 +924,124 @@ viewerOverlay.addEventListener('click',(e)=>{
   if(e.target===viewerOverlay) closeViewer(); 
 });
 
+function projectLayoutStorageKey() {
+  return `georgii-project-layout:${resolvedProjectCategory}:${projectName}`;
+}
+
+function readLocalProjectDescription() {
+  try {
+    const raw = localStorage.getItem(projectLayoutStorageKey());
+    if (raw == null) return null;
+    const data = JSON.parse(raw);
+    if (data && typeof data.description === 'string') return data.description;
+  } catch (_) {}
+  return null;
+}
+
+function sharedProjectDescription() {
+  const copy = window.getProjectCopy ? window.getProjectCopy() : null;
+  if (!copy || !copy.descriptions) return null;
+  const key = `${resolvedProjectCategory}:${projectName}`;
+  const value = copy.descriptions[key];
+  return typeof value === 'string' ? value : null;
+}
+
+function projectWasAdded() {
+  try {
+    const local = JSON.parse(localStorage.getItem('georgii-added-projects') || '[]');
+    if (Array.isArray(local) && local.some((item) => item && item.name === projectName)) return true;
+  } catch (_) {}
+  const copy = window.getProjectCopy ? window.getProjectCopy() : null;
+  return Boolean(copy && Array.isArray(copy.added) && copy.added.some((item) => item && item.name === projectName));
+}
+
+function projectDescriptionText(value) {
+  return String(value || '').replace(/\u00a0/g, ' ').replace(/\n+$/g, '');
+}
+
+function beginProjectDescriptionEdit() {
+  const el = projectDescription;
+  if (!el) return;
+  el.contentEditable = 'plaintext-only';
+  el.spellcheck = false;
+  el.classList.add('is-editing');
+  el.classList.toggle('is-empty', projectDescriptionText(el.innerText) === '');
+  if (!el.dataset.bound) {
+    el.dataset.bound = '1';
+    el.addEventListener('input', () => {
+      el.classList.toggle('is-empty', projectDescriptionText(el.innerText) === '');
+    });
+  }
+}
+
+function endProjectDescriptionEdit(description) {
+  if (!projectDescription) return;
+  projectDescription.textContent = description;
+  projectDescription.contentEditable = 'false';
+  projectDescription.classList.remove('is-editing', 'is-empty');
+  projectDescription.style.display = 'block';
+}
+
+function projectAdminSession() {
+  const category = resolvedProjectCategory || 'commerce';
+  const query = `project=${encodeURIComponent(projectName)}${projectCategory ? `&category=${encodeURIComponent(projectCategory)}` : ''}`;
+  return {
+    storageKey: projectLayoutStorageKey(),
+    descriptionId: 'project-description',
+    descriptionFallback: projectDescription ? projectDescription.textContent : '',
+    publicUrl: `project.html?${query}`,
+    prepare: beginProjectDescriptionEdit,
+    onLeave(description) {
+      endProjectDescriptionEdit(description);
+      if (window.publishProject) {
+        window.publishProject({
+          action: 'description',
+          name: projectName,
+          category,
+          description
+        });
+      }
+    }
+  };
+}
+
+async function fetchProjectsJson() {
+  const cacheBuster = `?v=${Date.now()}`;
+  const response = await fetch(`js/projects.json${cacheBuster}`, {
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache'
+    }
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.projects || [];
+}
+
 // Загрузка описания проекта
 async function loadProjectDescription() {
+  let jsonText = '';
   try {
-    // Добавляем cache-busting параметр для предотвращения кэширования
-    const cacheBuster = `?v=${Date.now()}`;
-    const response = await fetch(`js/projects.json${cacheBuster}`, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    });
-    if(response.ok) {
-      const data = await response.json();
-      const project = data.projects.find(p => p.name === projectName);
-      
-      if(project && project.description && project.description.trim() !== '') {
-        // Используем описание из JSON, если оно есть
-        projectDescription.textContent = project.description;
-      } else {
-        // Используем случайный текст, если описание пустое
-        projectDescription.textContent = generateRandomDescription();
-      }
-    } else {
-      // Если не удалось загрузить JSON, используем случайный текст
-      projectDescription.textContent = generateRandomDescription();
-    }
-  } catch(e) {
-    // В случае ошибки используем случайный текст
-    projectDescription.textContent = generateRandomDescription();
+    const projects = await fetchProjectsJson();
+    const project = projects.find(p => p.name === projectName);
+    if (project && typeof project.description === 'string') jsonText = project.description;
+  } catch (e) {
+    jsonText = '';
   }
-  
-  // Показываем описание
+  const local = readLocalProjectDescription();
+  const shared = sharedProjectDescription();
+  let text = null;
+  if (local !== null) text = local;
+  else if (shared !== null) text = shared;
+  else if (jsonText.trim() !== '') text = jsonText;
+  else text = generateRandomDescription();
+  projectDescription.textContent = text;
   projectDescription.style.display = 'block';
 }
 
 // Инициализация
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', async ()=>{
   // Инициализируем lazy loading
   initLazyLoading();
   
@@ -948,27 +1049,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
     loading.textContent='Проект не указан. Вернитесь на главную страницу.';
     return;
   }
+
+  if (window.loadProjectCopy) await window.loadProjectCopy();
   
   // Загружаем информацию о проекте из projects.json для получения правильного title
   async function setProjectTitle() {
     try {
-      const cacheBuster = `?v=${Date.now()}`;
-      const response = await fetch(`js/projects.json${cacheBuster}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
-      if(response.ok) {
-        const data = await response.json();
-        const project = data.projects.find(p => p.name === projectName);
-        if(project && project.title) {
-          projectTitle.textContent = project.title;
-          document.title = project.title;
-          projectTitle.style.display = 'block'; // Показываем заголовок после загрузки
-          return;
-        }
+      const base = await fetchProjectsJson();
+      const projects = window.mergeProjectRecords ? window.mergeProjectRecords(base) : base;
+      const project = projects.find(p => p.name === projectName);
+      if (project && project.category && !resolvedProjectCategory) {
+        resolvedProjectCategory = String(project.category).toLowerCase();
+      }
+      if(project && project.title) {
+        projectTitle.textContent = project.title;
+        document.title = project.title;
+        projectTitle.style.display = 'block';
+        return;
       }
     } catch(e) {
       console.warn('Не удалось загрузить projects.json, используем название из URL');
@@ -980,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
   
   // Устанавливаем заголовок
-  setProjectTitle();
+  await setProjectTitle();
   
   // Ссылка "Step Back" ведет на страницу категории
   const stepBackLink = document.getElementById('step-back-link');
@@ -995,10 +1092,28 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Показываем breadcrumb сразу при загрузке страницы
   breadcrumb.style.display = 'flex';
   renderBreadcrumb(projectName, '');
-  
-  // Загружаем описание проекта
-  loadProjectDescription();
-  
-  // Загружаем контент проекта
-  loadProject(projectName);
+
+  // Загружаем описание проекта и уже существующие файлы. Новые картинки кладутся поверх, ничего не стирая.
+  await loadProjectDescription();
+  await loadProject(projectName);
+  const session = projectAdminSession();
+  if (projectAdmin && window.innerWidth >= 640 && window.startProjectAdmin) {
+    window.startProjectAdmin(session);
+  } else if (window.showSavedProjectLayout) {
+    window.showSavedProjectLayout(session);
+  }
 });
+
+setInterval(async () => {
+  const host = window.location.hostname;
+  if (host !== '127.0.0.1' && host !== 'localhost') return;
+  if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+  if (!projectDescription || projectDescription.classList.contains('is-editing')) return;
+  if (readLocalProjectDescription() !== null) return;
+  if (window.loadProjectCopy) await window.loadProjectCopy();
+  const shared = sharedProjectDescription();
+  if (typeof shared === 'string' && projectDescription.textContent !== shared) {
+    projectDescription.textContent = shared;
+    projectDescription.style.display = 'block';
+  }
+}, 1000);
