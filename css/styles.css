@@ -973,6 +973,7 @@ body.course-page main {
 .course-side-number {
   grid-column: 2;
   grid-row: 1;
+  margin-left: -5px;
 }
 .course-group-col {
   display: flex;
