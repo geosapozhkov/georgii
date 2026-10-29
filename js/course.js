@@ -96,10 +96,24 @@ function renderDetail(course, groupId, group) {
   pinLeftToCourses(courseRoot, courseLink);
 }
 
-async function initCoursePage() {
+function parseCourseRequest() {
   const params = new URLSearchParams(window.location.search);
-  const courseId = params.get('course');
-  const groupId = params.get('group');
+  let courseId = params.get('course') || '';
+  let groupId = params.get('group') || '';
+  let admin = params.has('admin') || /admin$/i.test(window.location.href.split('#')[0]);
+  if (/admin$/i.test(courseId)) {
+    admin = true;
+    courseId = courseId.replace(/admin$/i, '');
+  }
+  if (/admin$/i.test(groupId)) {
+    admin = true;
+    groupId = groupId.replace(/admin$/i, '');
+  }
+  return { courseId, groupId, admin };
+}
+
+async function initCoursePage() {
+  const { courseId, groupId, admin } = parseCourseRequest();
 
   let courses = {};
   try {
@@ -118,6 +132,11 @@ async function initCoursePage() {
   const group = groupId && course.groups ? course.groups[groupId] : null;
   if (group) {
     renderDetail(course, groupId, group);
+    if (admin) {
+      const session = { courseId: course.id, groupId };
+      window.__courseAdminPending = session;
+      if (window.startCourseAdmin) window.startCourseAdmin(session);
+    }
     return;
   }
 

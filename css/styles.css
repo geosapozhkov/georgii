@@ -1027,3 +1027,100 @@ a.course-group-id:hover {
   max-width: 18rem;
 }
 
+/* =============== COURSE ADMIN =============== */
+body.course-page main {
+  position: relative;
+  z-index: 1;
+}
+#admin-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FAFAFA;
+}
+#admin-lock input {
+  width: 10rem;
+  border: 0;
+  border-bottom: 1px solid #ACACAC;
+  border-radius: 0;
+  background: transparent;
+  color: #ACACAC;
+  caret-color: #ACACAC;
+  text-align: center;
+  font-size: var(--description-font-size);
+  line-height: 1.5;
+}
+#admin-lock input:focus {
+  outline: none;
+}
+#admin-lock input.is-wrong {
+  opacity: 0.35;
+}
+#admin-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  z-index: 20;
+  pointer-events: none;
+}
+#admin-grid,
+#admin-guides,
+#admin-images {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+#admin-guides {
+  z-index: 3;
+}
+#admin-images {
+  z-index: 2;
+}
+.admin-guide {
+  position: absolute;
+  background: #ACACAC;
+  pointer-events: none;
+}
+.admin-image {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+}
+.admin-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.admin-image.is-selected {
+  outline: 1px solid rgba(172, 172, 172, 0.85);
+}
+.admin-handle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: #ACACAC;
+  pointer-events: auto;
+}
+#admin-add {
+  position: fixed;
+  right: var(--mobile-edge);
+  bottom: var(--mobile-edge);
+  z-index: 70;
+  pointer-events: auto;
+  border: 0;
+  background: #FAFAFA;
+  color: #ACACAC;
+  font-size: var(--description-font-size);
+  line-height: 1.2;
+  padding: 0;
+}
+
