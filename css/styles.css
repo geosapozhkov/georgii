@@ -990,10 +990,10 @@ body.course-page main {
   color: #ACACAC;
   text-decoration: none;
   line-height: 1.2;
-  opacity: var(--fade, 1);
+  opacity: 0.25;
 }
 a.course-group-id:hover {
-  opacity: 0.5;
+  opacity: 0.125;
 }
 
 .course-side-number {

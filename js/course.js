@@ -4,12 +4,6 @@ function groupLabel(index) {
   return String(index).padStart(3, '0');
 }
 
-function groupOpacity(index, count) {
-  if (count <= 1) return 1;
-  const t = index / (count - 1);
-  return Math.max(0.05, Math.pow(1 - t, 1.85));
-}
-
 let pinResize = null;
 
 function pinLeftToCourses(block, anchor) {
@@ -44,7 +38,6 @@ function renderGroups(course) {
     const item = document.createElement(page ? 'a' : 'span');
     item.className = 'course-group-id';
     item.textContent = id;
-    item.style.setProperty('--fade', groupOpacity(index, count).toFixed(3));
     if (page) {
       item.href = `course.html?course=${encodeURIComponent(course.id)}&group=${id}`;
     }
