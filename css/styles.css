@@ -882,6 +882,13 @@ body.about-page footer {
 body.home-page #courses-nav {
   display: block;
 }
+/* Courses starts on the same line as Step Back: 40vw + 226px. */
+@media (min-width: 640px) {
+  body.home-page #courses-nav {
+    left: calc(40vw + 226px);
+    transform: none;
+  }
+}
 #nav-courses {
   background: none;
   border: 0;

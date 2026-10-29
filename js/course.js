@@ -8,6 +8,10 @@ let pinResize = null;
 
 function pinLeftToCourses(block, anchor) {
   const place = () => {
+    if (window.innerWidth >= 640) {
+      block.style.marginLeft = 'calc(40vw + 226px)';
+      return;
+    }
     const width = anchor.getBoundingClientRect().width;
     block.style.marginLeft = `calc(50% - ${width / 2}px)`;
   };
