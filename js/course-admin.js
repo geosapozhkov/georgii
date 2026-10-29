@@ -57,12 +57,19 @@ function openAdminEditor(session) {
   file.accept = 'image/*';
   file.multiple = true;
   file.hidden = true;
+  const tools = document.createElement('div');
+  tools.id = 'admin-tools';
   const add = document.createElement('button');
   add.id = 'admin-add';
   add.type = 'button';
   add.textContent = 'image';
+  const saveButton = document.createElement('button');
+  saveButton.id = 'admin-save';
+  saveButton.type = 'button';
+  saveButton.textContent = 'save';
+  tools.append(saveButton, add);
   layer.append(canvas, guides, board);
-  document.body.append(layer, file, add);
+  document.body.append(layer, file, tools);
 
   function readStored() {
     try {
@@ -86,10 +93,22 @@ function openAdminEditor(session) {
     };
     try {
       localStorage.setItem(storageKey, JSON.stringify(payload));
+      return true;
     } catch (_) {
-      // The pictures stay for this visit when storage is full.
+      return false;
     }
   }
+
+  let saveTimer = null;
+  saveButton.addEventListener('click', () => {
+    const ok = save();
+    saveButton.textContent = ok ? 'saved' : 'save';
+    if (saveTimer) clearTimeout(saveTimer);
+    if (!ok) return;
+    saveTimer = setTimeout(() => {
+      saveButton.textContent = 'save';
+    }, 1200);
+  });
 
   function computeMetrics() {
     const width = document.documentElement.clientWidth;
@@ -123,7 +142,7 @@ function openAdminEditor(session) {
     const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, metrics.width, metrics.height);
-    ctx.fillStyle = 'rgba(172, 172, 172, 0.18)';
+    ctx.fillStyle = 'rgba(172, 172, 172, 0.09)';
     for (let i = 0; i < metrics.cols; i += 1) {
       const x = metrics.inset + i * (metrics.colW + metrics.gap);
       for (let y = 0; y < metrics.height; y += metrics.rowH + metrics.gap) {
@@ -391,7 +410,7 @@ function openAdminEditor(session) {
   document.addEventListener('pointermove', onPointerMove);
   document.addEventListener('pointerup', onPointerUp);
   document.addEventListener('pointerdown', (event) => {
-    if (event.target.closest('.admin-image') || event.target.closest('#admin-add')) return;
+    if (event.target.closest('.admin-image') || event.target.closest('#admin-tools')) return;
     select(null);
   });
   document.addEventListener('keydown', (event) => {

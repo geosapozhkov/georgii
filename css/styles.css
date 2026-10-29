@@ -1110,12 +1110,19 @@ body.course-page main {
   background: #ACACAC;
   pointer-events: auto;
 }
-#admin-add {
+#admin-tools {
   position: fixed;
   right: var(--mobile-edge);
   bottom: var(--mobile-edge);
   z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
   pointer-events: auto;
+}
+#admin-add,
+#admin-save {
   border: 0;
   background: #FAFAFA;
   color: #ACACAC;
