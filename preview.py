@@ -29,11 +29,15 @@ def project_copy_data():
         data = {}
     descriptions = data.get('descriptions')
     added = data.get('added')
+    removed = data.get('removed')
     if not isinstance(descriptions, dict):
         descriptions = {}
     if not isinstance(added, list):
         added = []
-    return {'descriptions': descriptions, 'added': added}
+    if not isinstance(removed, list):
+        removed = []
+    removed = [name for name in removed if isinstance(name, str)]
+    return {'descriptions': descriptions, 'added': added, 'removed': removed}
 
 
 def existing_project_names():
@@ -131,6 +135,7 @@ class Handler(SimpleHTTPRequestHandler):
                     raise ValueError
                 if len(description) > 8000:
                     raise ValueError
+                data['removed'] = [item for item in data['removed'] if item != name]
                 if name not in existing_project_names():
                     data['added'].append({
                         'name': name,
@@ -138,6 +143,13 @@ class Handler(SimpleHTTPRequestHandler):
                         'category': category,
                         'description': description
                     })
+            elif action == 'remove':
+                data['added'] = [
+                    project for project in data['added']
+                    if not (isinstance(project, dict) and project.get('name') == name)
+                ]
+                if name not in data['removed']:
+                    data['removed'].append(name)
             elif action == 'description':
                 description = body.get('description')
                 if not isinstance(description, str) or len(description) > 8000:

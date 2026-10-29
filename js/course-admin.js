@@ -1086,7 +1086,7 @@ function startProjectAdmin(session) {
   else askAdminPassword(session, open);
 }
 
-let projectCopy = { descriptions: {}, added: [] };
+let projectCopy = { descriptions: {}, added: [], removed: [] };
 
 async function loadProjectCopy() {
   try {
@@ -1096,7 +1096,8 @@ async function loadProjectCopy() {
     if (!data || typeof data !== 'object') return projectCopy;
     projectCopy = {
       descriptions: data.descriptions && typeof data.descriptions === 'object' ? data.descriptions : {},
-      added: Array.isArray(data.added) ? data.added : []
+      added: Array.isArray(data.added) ? data.added : [],
+      removed: Array.isArray(data.removed) ? data.removed.filter((item) => typeof item === 'string' && item) : []
     };
   } catch (_) {}
   return projectCopy;
@@ -1121,6 +1122,35 @@ function rememberAddedProject(project) {
   });
   try {
     localStorage.setItem('georgii-added-projects', JSON.stringify(list));
+  } catch (_) {}
+}
+
+function forgetAddedProject(name) {
+  try {
+    localStorage.setItem('georgii-added-projects', JSON.stringify(localAddedProjects().filter((item) => item.name !== name)));
+  } catch (_) {}
+}
+
+function localRemovedProjects() {
+  try {
+    const data = JSON.parse(localStorage.getItem('georgii-removed-projects') || '[]');
+    return Array.isArray(data) ? data.filter((item) => typeof item === 'string' && item) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function rememberRemovedProject(name) {
+  const list = localRemovedProjects().filter((item) => item !== name);
+  list.push(name);
+  try {
+    localStorage.setItem('georgii-removed-projects', JSON.stringify(list));
+  } catch (_) {}
+}
+
+function forgetRemovedProject(name) {
+  try {
+    localStorage.setItem('georgii-removed-projects', JSON.stringify(localRemovedProjects().filter((item) => item !== name)));
   } catch (_) {}
 }
 
@@ -1149,7 +1179,8 @@ function mergeProjectRecords(base) {
       if (data && typeof data.description === 'string') project.description = data.description;
     } catch (_) {}
   });
-  return projects;
+  const removed = new Set(localRemovedProjects().concat(projectCopy.removed || []));
+  return projects.filter((project) => !removed.has(project.name));
 }
 
 function publishProject(body) {
@@ -1163,7 +1194,8 @@ function publishProject(body) {
     if (data && data.copy && typeof data.copy === 'object') {
       projectCopy = {
         descriptions: data.copy.descriptions && typeof data.copy.descriptions === 'object' ? data.copy.descriptions : {},
-        added: Array.isArray(data.copy.added) ? data.copy.added : []
+        added: Array.isArray(data.copy.added) ? data.copy.added : [],
+        removed: Array.isArray(data.copy.removed) ? data.copy.removed.filter((item) => typeof item === 'string' && item) : []
       };
     }
     return data;
@@ -1179,6 +1211,9 @@ window.loadProjectCopy = loadProjectCopy;
 window.mergeProjectRecords = mergeProjectRecords;
 window.publishProject = publishProject;
 window.rememberAddedProject = rememberAddedProject;
+window.forgetAddedProject = forgetAddedProject;
+window.rememberRemovedProject = rememberRemovedProject;
+window.forgetRemovedProject = forgetRemovedProject;
 window.getProjectCopy = () => projectCopy;
 window.projectLayoutKey = (category, name) => `georgii-project-layout:${String(category || '').toLowerCase()}:${name}`;
 window.projectLayoutImages = (category, name) => readStoredImages(window.projectLayoutKey(category, name));

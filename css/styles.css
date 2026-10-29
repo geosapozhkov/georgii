@@ -1268,6 +1268,12 @@ body.course-page main {
 #admin-home input.is-wrong {
   opacity: 0.35;
 }
+#admin-delete {
+  opacity: 0.35;
+}
+#admin-delete.is-ready {
+  opacity: 1;
+}
 
 /* Courses on a phone: same pages, no admin editor. Media stacks like a project. */
 @media (max-width: 639px) {

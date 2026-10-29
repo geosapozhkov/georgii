@@ -456,6 +456,22 @@ async function getProjectsForDesktopHome() {
 
 let desktopHomeNamesReady = false;
 let homeNamesEpoch = 0;
+let homeAdminTarget = null;
+let homeAdminKeyHandler = null;
+
+function setHomeAdminTarget(item) {
+  if (homeAdminTarget && homeAdminTarget !== item && homeAdminTarget.el) {
+    homeAdminTarget.el.classList.remove('is-admin-target');
+    homeAdminTarget.slowDown = false;
+  }
+  homeAdminTarget = item && item.el && item.el.isConnected ? item : null;
+  if (homeAdminTarget) {
+    homeAdminTarget.el.classList.add('is-admin-target');
+    homeAdminTarget.slowDown = true;
+  }
+  const button = document.getElementById('admin-delete');
+  if (button) button.classList.toggle('is-ready', Boolean(homeAdminTarget));
+}
 
 function placeDesktopHomeName({ title, href, name, category }) {
   if (!homeProjectNamesContainer) return;
@@ -484,6 +500,7 @@ function placeDesktopHomeName({ title, href, name, category }) {
     if (r < DESKTOP_NAMES_HOVER_CHANCE) {
       item.slowDown = true;
     }
+    if (document.getElementById('admin-home')) setHomeAdminTarget(item);
     if (window.innerWidth < 640) return;
     desktopHoverPreviewItem = item;
     const pn = a.dataset.projectName;
@@ -491,7 +508,7 @@ function placeDesktopHomeName({ title, href, name, category }) {
     if (pn) showHomeProjectHoverPreview(pn, cat);
   });
   a.addEventListener('mouseleave', () => {
-    item.slowDown = false;
+    if (homeAdminTarget !== item) item.slowDown = false;
     if (window.innerWidth >= 640) {
       homeHoverPreviewGeneration += 1;
       hideHomeProjectHoverPreview();
@@ -525,6 +542,7 @@ function placeDesktopHomeName({ title, href, name, category }) {
 
 function createDesktopHomeNames() {
   if (!homeProjectNamesContainer) return;
+  setHomeAdminTarget(null);
   const epoch = ++homeNamesEpoch;
   desktopHomeNamesReady = false;
   homeProjectNamesContainer.innerHTML = '';
@@ -564,6 +582,7 @@ async function addFlyingProject(title) {
   const name = slugFromTitle(clean, new Set(existing.map((project) => project.name)));
   if (!name) return null;
   const project = { name, title: clean, category: 'commerce', description: '' };
+  if (window.forgetRemovedProject) window.forgetRemovedProject(name);
   if (window.rememberAddedProject) window.rememberAddedProject(project);
   if (window.publishProject) await window.publishProject({ action: 'add', ...project });
   const href = `project.html?project=${encodeURIComponent(name)}&category=commerce`;
@@ -576,7 +595,32 @@ async function addFlyingProject(title) {
   return project;
 }
 
+async function deleteFlyingProject(item) {
+  if (!item || !item.el || !item.el.isConnected || item.el.dataset.removing === '1') return;
+  const name = item.el.dataset.projectName;
+  const category = item.el.dataset.projectCategory || 'commerce';
+  if (!name) return;
+  item.el.dataset.removing = '1';
+  if (homeAdminTarget === item) setHomeAdminTarget(null);
+  if (desktopHoverPreviewItem === item) {
+    homeHoverPreviewGeneration += 1;
+    hideHomeProjectHoverPreview();
+  }
+  item.el.remove();
+  desktopHomeItems = desktopHomeItems.filter((entry) => entry !== item);
+  if (window.forgetAddedProject) window.forgetAddedProject(name);
+  if (window.rememberRemovedProject) window.rememberRemovedProject(name);
+  if (window.publishProject) {
+    await window.publishProject({ action: 'remove', name, category });
+  }
+}
+
 function leaveHomeAdmin() {
+  if (homeAdminKeyHandler) {
+    document.removeEventListener('keydown', homeAdminKeyHandler);
+    homeAdminKeyHandler = null;
+  }
+  setHomeAdminTarget(null);
   const form = document.getElementById('admin-home');
   if (form) form.remove();
   const url = new URL(window.location.href);
@@ -596,11 +640,18 @@ function openHomeProjectCreator() {
   input.maxLength = 120;
   input.placeholder = 'project';
   input.setAttribute('aria-label', 'project');
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.id = 'admin-delete';
+  remove.textContent = 'delete';
   const save = document.createElement('button');
   save.type = 'button';
   save.id = 'admin-save';
   save.textContent = 'save';
-  form.append(input, save);
+  form.append(input, remove, save);
+  remove.addEventListener('click', () => {
+    if (homeAdminTarget) deleteFlyingProject(homeAdminTarget);
+  });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const project = await addFlyingProject(input.value);
@@ -623,6 +674,14 @@ function openHomeProjectCreator() {
     leaveHomeAdmin();
   });
   input.addEventListener('input', () => input.classList.remove('is-wrong'));
+  homeAdminKeyHandler = (event) => {
+    if (event.target.closest('input, textarea, [contenteditable]')) return;
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    if (!homeAdminTarget) return;
+    event.preventDefault();
+    deleteFlyingProject(homeAdminTarget);
+  };
+  document.addEventListener('keydown', homeAdminKeyHandler);
   document.body.appendChild(form);
   input.focus();
 }
