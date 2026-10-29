@@ -1203,10 +1203,18 @@ body.course-page main {
 /* Courses on a phone: same pages, no admin editor. Media stacks like a project. */
 @media (max-width: 639px) {
   body.home-page #courses-nav {
-    position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+  }
+  /* A second tap must close the list. Sticky hover and focus keep it open on touch. */
+  body.home-page #courses-nav:hover #courses-menu,
+  body.home-page #courses-nav:focus-within #courses-menu {
+    display: none;
+  }
+  body.home-page #courses-nav.is-open #courses-menu {
+    display: flex;
   }
   body.home-page .logo-container {
     width: auto;
