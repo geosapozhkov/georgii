@@ -991,6 +991,9 @@ body.course-page main {
   line-height: 1.2;
   opacity: var(--fade, 1);
 }
+.course-group-col > .course-group-id:first-child {
+  line-height: 1.5;
+}
 a.course-group-id:hover {
   opacity: 0.5;
 }
