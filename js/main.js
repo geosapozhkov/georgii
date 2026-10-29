@@ -507,12 +507,46 @@ function measureAndAnimateDesktopNames() {
   startDesktopHomeNamesAnimation();
 }
 
+function getCourseNameObstacles() {
+  const nodes = [];
+  const button = document.getElementById('nav-courses');
+  if (button) nodes.push(button);
+  const menu = document.getElementById('courses-menu');
+  if (menu && getComputedStyle(menu).display !== 'none') {
+    menu.querySelectorAll('a, span').forEach((el) => nodes.push(el));
+  }
+  return nodes.map((el) => {
+    const rect = el.getBoundingClientRect();
+    return { x: rect.left, y: rect.top, w: rect.width, h: rect.height };
+  }).filter((rect) => rect.w > 0 && rect.h > 0);
+}
+
+function bounceOffCourseNames(it, obstacles) {
+  for (let n = 0; n < obstacles.length; n += 1) {
+    const ob = obstacles[n];
+    const dx = (it.x + it.w / 2) - (ob.x + ob.w / 2);
+    const dy = (it.y + it.h / 2) - (ob.y + ob.h / 2);
+    const gapX = it.w / 2 + ob.w / 2 + 8;
+    const gapY = it.h / 2 + ob.h / 2 + 4;
+    if (Math.abs(dx) < gapX && Math.abs(dy) < gapY) {
+      if (Math.abs(dx) > Math.abs(dy)) {
+        it.vx = dx > 0 ? Math.abs(it.vx) : -Math.abs(it.vx);
+        it.x += (dx > 0 ? 1 : -1) * (gapX - Math.abs(dx));
+      } else {
+        it.vy = dy > 0 ? Math.abs(it.vy) : -Math.abs(it.vy);
+        it.y += (dy > 0 ? 1 : -1) * (gapY - Math.abs(dy));
+      }
+    }
+  }
+}
+
 function startDesktopHomeNamesAnimation() {
   if (desktopHomeNamesAnimationId != null) return;
   const padding = DESKTOP_NAMES_PADDING;
   function tick() {
     const W = window.innerWidth;
     const H = window.innerHeight;
+    const courseObstacles = getCourseNameObstacles();
     for (let i = 0; i < desktopHomeItems.length; i++) {
       const it = desktopHomeItems[i];
       let vx = it.vx;
@@ -556,6 +590,7 @@ function startDesktopHomeNamesAnimation() {
       if (it.x + it.w >= W - padding) { it.x = W - padding - it.w; it.vx = -Math.abs(it.vx); }
       if (it.y <= padding) { it.y = padding; it.vy = Math.abs(it.vy); }
       if (it.y + it.h >= H - padding) { it.y = H - padding - it.h; it.vy = -Math.abs(it.vy); }
+      bounceOffCourseNames(it, courseObstacles);
       it.el.style.left = it.x + 'px';
       it.el.style.top = it.y + 'px';
       for (let j = i + 1; j < desktopHomeItems.length; j++) {
