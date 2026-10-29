@@ -70,18 +70,6 @@ function renderDetail(course, groupId, group) {
   const body = document.createElement('div');
   body.className = 'course-detail-body';
 
-  const authors = document.createElement('div');
-  authors.className = 'course-authors description-text';
-  const label = document.createElement('div');
-  label.textContent = group.authorsLabel || 'Authors';
-  authors.appendChild(label);
-  (group.authors || []).forEach((name) => {
-    const line = document.createElement('div');
-    line.textContent = name;
-    authors.appendChild(line);
-  });
-  body.appendChild(authors);
-
   const works = document.createElement('div');
   works.id = 'course-works';
   works.hidden = true;

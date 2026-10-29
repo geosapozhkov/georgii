@@ -1018,12 +1018,11 @@ a.course-group-id:hover {
   opacity: 0.5;
 }
 .course-detail-body {
-  margin-top: 22vh;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
-.course-authors,
 .course-description {
   font-size: var(--description-font-size);
   line-height: 1.2;
@@ -1242,12 +1241,6 @@ body.course-page main {
 
   body.course-page main {
     padding-top: 1.5rem !important;
-  }
-  body.course-page .course-authors {
-    display: none;
-  }
-  body.course-page .course-detail-body {
-    margin-top: 0;
   }
   body.course-page .course-description {
     left: 0;
