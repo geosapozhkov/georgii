@@ -1242,6 +1242,15 @@ body.course-page main {
   body.course-page main {
     padding-top: 1.5rem !important;
   }
+  body.course-page .course-name,
+  body.course-page .course-groups-title,
+  body.course-page .course-group-col {
+    position: relative;
+    top: -3px;
+  }
+  body.course-page .course-side-number {
+    top: -2px;
+  }
   body.course-page .course-description {
     left: 0;
     width: calc(100vw - 2 * var(--mobile-edge));
