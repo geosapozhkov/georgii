@@ -1179,17 +1179,6 @@ body.course-page main {
   display: block;
   fill: #ACACAC;
 }
-.admin-image.is-selected {
-  outline: 1px solid rgba(172, 172, 172, 0.85);
-}
-.admin-handle {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  background: #ACACAC;
-  pointer-events: auto;
-  z-index: 5;
-}
 #admin-tools {
   position: fixed;
   right: var(--mobile-edge);

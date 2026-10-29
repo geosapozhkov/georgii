@@ -260,8 +260,6 @@ function showSavedCourseLayout(session) {
   extendPageForImages(stored);
 }
 
-const HANDLE_DIRS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
-
 function startCourseAdmin(session) {
   if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
   if (sessionStorage.getItem('georgii-admin-ok') === '1') {
@@ -572,33 +570,35 @@ function openAdminEditor(session) {
     }
     item.setWide = visual.setWide;
     item.destroy = visual.destroy;
-    const handlePlace = {
-      nw: { left: '-3px', top: '-3px' },
-      n: { left: 'calc(50% - 3.5px)', top: '-3px' },
-      ne: { right: '-3px', top: '-3px' },
-      e: { right: '-3px', top: 'calc(50% - 3.5px)' },
-      se: { right: '-3px', bottom: '-3px' },
-      s: { left: 'calc(50% - 3.5px)', bottom: '-3px' },
-      sw: { left: '-3px', bottom: '-3px' },
-      w: { left: '-3px', top: 'calc(50% - 3.5px)' }
-    };
-    HANDLE_DIRS.forEach((dir) => {
-      const handle = document.createElement('span');
-      handle.className = 'admin-handle';
-      handle.dataset.dir = dir;
-      Object.assign(handle.style, handlePlace[dir]);
-      handle.addEventListener('pointerdown', (event) => beginPointer(event, item, dir), { signal: edits.signal });
-      item.el.appendChild(handle);
-    });
     item.el.addEventListener('pointerdown', (event) => {
-      if (event.target.closest('.course-video-chrome') || event.target.dataset.dir) return;
-      beginPointer(event, item, 'move');
+      if (event.target.closest('.course-video-chrome')) return;
+      beginPointer(event, item, edgeAt(event, item));
     }, { signal: edits.signal });
     board.appendChild(item.el);
     images.push(item);
     applyBox(item);
     rememberWide(item);
     return item;
+  }
+
+  function edgeAt(event, item) {
+    const rect = item.el.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const reach = 10;
+    const nearLeft = x <= reach;
+    const nearRight = rect.width - x <= reach;
+    const nearTop = y <= reach;
+    const nearBottom = rect.height - y <= reach;
+    let horizontal = '';
+    if (nearLeft && nearRight) horizontal = x < rect.width / 2 ? 'w' : 'e';
+    else if (nearLeft) horizontal = 'w';
+    else if (nearRight) horizontal = 'e';
+    let vertical = '';
+    if (nearTop && nearBottom) vertical = y < rect.height / 2 ? 'n' : 's';
+    else if (nearTop) vertical = 'n';
+    else if (nearBottom) vertical = 's';
+    return (vertical + horizontal) || 'move';
   }
 
   function beginPointer(event, item, mode) {
