@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Courses</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css?v=57">
+</head>
+<body class="course-page">
+  <header>
+    <a id="logo" href="index.html">georgii</a>
+    <a href="index.html?section=about">About me</a>
+  </header>
+  <main id="course-root"></main>
+  <div id="custom-cursor"></div>
+  <script src="js/course.js?v=1"></script>
+  <script>
+    const customCursor = document.getElementById('custom-cursor');
+    let cursorX = 0;
+    let cursorY = 0;
+    let cursorVisible = false;
+
+    function updateCursor(event) {
+      cursorX = event.clientX;
+      cursorY = event.clientY;
+      if (!customCursor) return;
+      customCursor.style.left = cursorX + 'px';
+      customCursor.style.top = cursorY + 'px';
+      if (!cursorVisible) {
+        customCursor.style.opacity = '1';
+        cursorVisible = true;
+      }
+    }
+
+    function animateCursor() {
+      if (customCursor && cursorVisible) {
+        customCursor.style.left = cursorX + 'px';
+        customCursor.style.top = cursorY + 'px';
+      }
+      requestAnimationFrame(animateCursor);
+    }
+
+    if (window.innerWidth >= 640) {
+      document.addEventListener('mousemove', updateCursor);
+      document.addEventListener('mouseleave', () => {
+        if (!customCursor) return;
+        customCursor.style.opacity = '0';
+        cursorVisible = false;
+      });
+      animateCursor();
+    }
+  </script>
+</body>
+</html>

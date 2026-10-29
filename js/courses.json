@@ -1,0 +1,14 @@
+{
+  "hardsurface": {
+    "id": "hardsurface",
+    "title": "HardSurface",
+    "groupCount": 70,
+    "groups": {
+      "000": {
+        "authorsLabel": "Authors",
+        "authors": ["Masha", "Polina", "Anton", "Anya", "Gosha", "Sonya"],
+        "description": ""
+      }
+    }
+  }
+}

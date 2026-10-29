@@ -1784,6 +1784,24 @@ document.addEventListener('DOMContentLoaded', ()=>{
       document.getElementById('logo')?.click();
     }
   });
+
+  // На тач-экранах меню Courses открывается по нажатию. На десктопе его открывает hover.
+  const coursesNav = document.getElementById('courses-nav');
+  const coursesButton = document.getElementById('nav-courses');
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!finePointer && coursesNav && coursesButton) {
+    coursesButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const open = coursesNav.classList.toggle('is-open');
+      coursesButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', (event) => {
+      if (!coursesNav.contains(event.target)) {
+        coursesNav.classList.remove('is-open');
+        coursesButton.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
 });
 
 // =============== ФУНКЦИИ АНИМАЦИИ ФОНА ===============
