@@ -122,9 +122,10 @@ async function initCoursePage() {
       groupId,
       descriptionFallback: group.description || ''
     };
-    if (admin && window.innerWidth >= 640) {
+    if (admin) {
       window.__courseAdminPending = session;
       if (window.startCourseAdmin) window.startCourseAdmin(session);
+      else if (window.showSavedCourseLayout) window.showSavedCourseLayout(session);
     } else {
       window.__courseLayoutPending = session;
       if (window.showSavedCourseLayout) window.showSavedCourseLayout(session);

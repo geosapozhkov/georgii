@@ -134,7 +134,14 @@ function hydrateImages(key) {
 }
 
 function writeLayout(key, payload) {
-  const raw = JSON.stringify(payload);
+  let next = payload;
+  if (!next || !Array.isArray(next.mobile)) {
+    try {
+      const prev = JSON.parse(localStorage.getItem(key) || '{}');
+      if (prev && Array.isArray(prev.mobile)) next = Object.assign({}, payload, { mobile: prev.mobile });
+    } catch (_) {}
+  }
+  const raw = JSON.stringify(next);
   const previous = localStorage.getItem(key);
   try {
     localStorage.setItem(key, raw);
@@ -501,6 +508,333 @@ function phoneLayout() {
   return window.matchMedia('(max-width: 639px)').matches;
 }
 
+const MOBILE_GAP = 96;
+const MOBILE_LEAD = 48;
+
+function readLocalMobile(session) {
+  try {
+    const data = JSON.parse(localStorage.getItem(storageKeyFor(session)) || '{}');
+    if (data && Array.isArray(data.mobile)) return data.mobile;
+  } catch (_) {}
+  return null;
+}
+
+function rememberMobile(session, mobile) {
+  const key = storageKeyFor(session);
+  let data = {};
+  try {
+    data = JSON.parse(localStorage.getItem(key) || '{}');
+  } catch (_) {}
+  if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
+  data.mobile = mobile;
+  writeLayout(key, data);
+}
+
+async function fetchLayoutDocument(dir) {
+  if (!dir) return null;
+  try {
+    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/layout.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data && typeof data === 'object' ? data : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function mobilePlanFor(session, doc) {
+  const local = readLocalMobile(session);
+  if (Array.isArray(local)) return local;
+  if (doc && Array.isArray(doc.mobile)) return doc.mobile;
+  return null;
+}
+
+function bindMobileHold(cell) {
+  if (!cell || cell.dataset.mobileBound === '1' || !cell.dataset.mobileId) return;
+  cell.dataset.mobileBound = '1';
+  cell.classList.add('mobile-edit-item');
+  cell.addEventListener('dragstart', (event) => event.preventDefault());
+  cell.querySelectorAll('img').forEach((img) => { img.draggable = false; });
+  let timer = 0;
+  let active = false;
+  let held = false;
+  let startX = 0;
+  let startY = 0;
+  let startBefore = 0;
+  let axis = '';
+  let dx = 0;
+  let pointerId = 0;
+
+  const syncPage = () => {
+    if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
+  };
+
+  const onMove = (event) => {
+    if (!active || event.pointerId !== pointerId) return;
+    const mx = event.clientX - startX;
+    const my = event.clientY - startY;
+    if (!held) {
+      if (mx * mx + my * my > 196) window.clearTimeout(timer);
+      return;
+    }
+    if (event.cancelable) event.preventDefault();
+    if (!axis) {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      axis = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+      cell.classList.add('is-dragging');
+    }
+    if (axis === 'y') {
+      const next = Math.max(0, Math.min(1600, Math.round(startBefore + my)));
+      cell.dataset.before = String(next);
+      cell.style.marginTop = `${next}px`;
+      cell.style.transform = 'scale(0.94)';
+      syncPage();
+      return;
+    }
+    dx = mx;
+    cell.style.transform = `translateX(${Math.max(0, mx)}px) scale(0.94)`;
+  };
+
+  const stopTracking = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', finishUp);
+    window.removeEventListener('pointercancel', finishCancel);
+  };
+
+  const finish = (commit) => {
+    if (!active) return;
+    window.clearTimeout(timer);
+    active = false;
+    const wasHeld = held;
+    held = false;
+    stopTracking();
+    if (!wasHeld) return;
+    if (commit && axis === 'x' && dx > window.innerWidth * 0.42) {
+      cell.dataset.hidden = '1';
+      cell.classList.remove('is-dragging');
+      cell.classList.add('is-leaving');
+      window.requestAnimationFrame(() => {
+        cell.style.transform = 'translateX(110vw) scale(0.94)';
+      });
+      window.setTimeout(() => {
+        cell.style.display = 'none';
+        cell.classList.remove('is-held', 'is-leaving');
+        cell.style.transform = '';
+        syncPage();
+      }, 180);
+      return;
+    }
+    cell.classList.remove('is-held', 'is-dragging');
+    cell.style.transform = '';
+    syncPage();
+  };
+  const finishUp = (event) => {
+    if (event.pointerId !== pointerId) return;
+    finish(true);
+  };
+  const finishCancel = (event) => {
+    if (event.pointerId !== pointerId) return;
+    finish(false);
+  };
+
+  cell.addEventListener('pointerdown', (event) => {
+    if (event.button || active || cell.dataset.hidden === '1') return;
+    active = true;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startY = event.clientY;
+    dx = 0;
+    axis = '';
+    held = false;
+    startBefore = Number(cell.dataset.before) || 0;
+    window.clearTimeout(timer);
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', finishUp);
+    window.addEventListener('pointercancel', finishCancel);
+    timer = window.setTimeout(() => {
+      if (!active) return;
+      held = true;
+      cell.classList.add('is-held');
+    }, 420);
+  });
+  cell.addEventListener('contextmenu', (event) => event.preventDefault());
+}
+
+function primeMobileGaps(container, course) {
+  if (!container || container.dataset.explicit === '1') return;
+  const rowGap = parseFloat(getComputedStyle(container).rowGap) || 0;
+  const cells = [...container.children].filter((cell) => cell.dataset.mobileId && cell.style.display !== 'none');
+  cells.forEach((cell, index) => {
+    const marginTop = parseFloat(getComputedStyle(cell).marginTop) || 0;
+    let before = marginTop;
+    if (index > 0) {
+      const prev = parseFloat(getComputedStyle(cells[index - 1]).marginBottom) || 0;
+      before += prev + rowGap;
+    } else if (course) before += MOBILE_LEAD;
+    before = Math.max(0, Math.round(before));
+    cell.dataset.before = String(before);
+    cell.style.marginTop = `${before}px`;
+    cell.style.marginBottom = '0px';
+  });
+  container.style.rowGap = '0px';
+  container.dataset.explicit = '1';
+  if (course) window.dispatchEvent(new Event('resize'));
+}
+
+function collectMobilePlan(container) {
+  const hidden = new Set(String(container.dataset.hiddenIds || '').split('\n').filter(Boolean));
+  const plan = [];
+  [...container.children].forEach((cell) => {
+    if (!cell.dataset.mobileId) return;
+    const entry = { id: cell.dataset.mobileId, before: Number(cell.dataset.before) || 0 };
+    if (cell.dataset.hidden === '1') {
+      entry.hidden = true;
+      hidden.delete(entry.id);
+    }
+    plan.push(entry);
+  });
+  hidden.forEach((id) => plan.push({ id, before: MOBILE_GAP, hidden: true }));
+  return plan;
+}
+
+async function publishMobileOnly(session, mobile) {
+  const dir = assetDirFor(session);
+  if (!SAFE_ASSET_DIR.test(dir)) return false;
+  const current = await fetchLayoutDocument(dir);
+  if (!current && session.courseId) return false;
+  const body = current ? Object.assign({}, current) : { images: [] };
+  if (!Array.isArray(body.images)) body.images = [];
+  if (typeof body.description !== 'string') body.description = '';
+  body.mobile = mobile;
+  const text = `${JSON.stringify(body, null, 2)}\n`;
+  try {
+    await commitRepoFiles([{
+      path: `${dir}/layout.json`,
+      base64: bytesToBase64(new TextEncoder().encode(text))
+    }], `Save mobile ${dir}`);
+  } catch (error) {
+    if (githubAuthFailure(error)) return 'auth';
+    return false;
+  }
+  rememberMobile(session, mobile);
+  return true;
+}
+
+function mountMobileSave(session, container) {
+  if (document.getElementById('admin-tools')) return;
+  const tools = document.createElement('div');
+  tools.id = 'admin-tools';
+  const tokenInput = document.createElement('input');
+  tokenInput.id = 'admin-github';
+  tokenInput.type = 'password';
+  tokenInput.autocomplete = 'off';
+  tokenInput.spellcheck = false;
+  tokenInput.placeholder = 'github';
+  tokenInput.setAttribute('aria-label', 'github');
+  tokenInput.hidden = !localStorage.getItem(GITHUB_TOKEN_KEY) ? false : true;
+  if (localStorage.getItem(GITHUB_TOKEN_KEY)) tokenInput.hidden = true;
+  const saveButton = document.createElement('button');
+  saveButton.id = 'admin-save';
+  saveButton.type = 'button';
+  saveButton.textContent = 'save';
+  tools.append(tokenInput, saveButton);
+  document.body.appendChild(tools);
+  tokenInput.addEventListener('input', () => tokenInput.classList.remove('is-wrong'));
+  const save = async () => {
+    if (save.busy) return;
+    save.busy = true;
+    saveButton.classList.remove('is-wrong');
+    saveButton.classList.add('is-saving');
+    if (!tokenInput.hidden) {
+      const typed = tokenInput.value.trim().replace(/^bearer\s+/i, '').trim();
+      if (typed) {
+        localStorage.setItem(GITHUB_TOKEN_KEY, typed);
+        tokenInput.value = '';
+        tokenInput.hidden = true;
+        tokenInput.classList.remove('is-wrong');
+      }
+    }
+    const saved = localStorage.getItem(GITHUB_TOKEN_KEY)
+      ? await publishMobileOnly(session, collectMobilePlan(container))
+      : 'auth';
+    if (saved === true) {
+      window.location.replace(publicPageUrl(session));
+      return;
+    }
+    save.busy = false;
+    saveButton.classList.remove('is-saving');
+    saveButton.textContent = 'save';
+    if (saved === 'auth') {
+      localStorage.removeItem(GITHUB_TOKEN_KEY);
+      tokenInput.hidden = false;
+      tokenInput.classList.add('is-wrong');
+      tokenInput.focus();
+      return;
+    }
+    saveButton.classList.add('is-wrong');
+  };
+  saveButton.addEventListener('click', save);
+  tokenInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    save();
+  });
+}
+
+let mobileAdminOpening = false;
+async function openMobileAdmin(session) {
+  if (!session || mobileAdminOpening || document.getElementById('mobile-admin')) return;
+  mobileAdminOpening = true;
+  const marker = document.createElement('div');
+  marker.id = 'mobile-admin';
+  marker.hidden = true;
+  document.body.appendChild(marker);
+  document.body.classList.add('mobile-admin');
+  if (!window.__mobileTouchBlock) {
+    window.__mobileTouchBlock = (event) => {
+      if (document.querySelector('.mobile-edit-item.is-held')) event.preventDefault();
+    };
+    document.addEventListener('touchmove', window.__mobileTouchBlock, { passive: false });
+  }
+  if (session.courseId) await showMobileCourseLayout(session);
+  else if (window.applyMobileProjectSpacing) await window.applyMobileProjectSpacing(session);
+  const container = session.courseId ? document.getElementById('course-mobile-grid') : document.getElementById('file-grid');
+  if (!container) return;
+  primeMobileGaps(container, Boolean(session.courseId));
+  [...container.children].forEach((cell) => bindMobileHold(cell));
+  mountMobileSave(session, container);
+}
+
+async function applyMobileProjectSpacing(session) {
+  const doc = await fetchLayoutDocument(assetDirFor(session));
+  const saved = mobilePlanFor(session, doc);
+  if (!saved) return;
+  const grid = document.getElementById('file-grid');
+  if (!grid) return;
+  const map = new Map(saved.map((item) => [String(item.id), item]));
+  let seen = 0;
+  [...grid.children].forEach((cell) => {
+    if (!cell.dataset.mobileId) return;
+    const record = map.get(cell.dataset.mobileId);
+    if (record && record.hidden) {
+      cell.dataset.hidden = '1';
+      cell.style.display = 'none';
+      return;
+    }
+    const before = record && Number.isFinite(Number(record.before))
+      ? Number(record.before)
+      : (seen === 0 ? 0 : MOBILE_GAP);
+    seen += 1;
+    cell.dataset.before = String(before);
+    cell.style.marginTop = `${before}px`;
+    cell.style.marginBottom = '0px';
+  });
+  grid.style.rowGap = '0px';
+  grid.dataset.explicit = '1';
+  grid.dataset.hiddenIds = saved.filter((item) => item && item.hidden).map((item) => item.id).join('\n');
+}
+window.applyMobileProjectSpacing = applyMobileProjectSpacing;
+
 async function fetchFileLayout(dir) {
   if (!dir) return [];
   try {
@@ -550,7 +884,7 @@ async function loadLayoutImages(session) {
 }
 
 async function refreshFileLayout(session) {
-  if (!session || document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+  if (!session || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
   const dir = assetDirFor(session);
   if (!dir) return;
   let text = '';
@@ -937,6 +1271,8 @@ async function showMobileCourseLayout(session) {
   if (!stored.length || !phoneLayout() || document.getElementById('course-mobile-grid')) return;
   const works = document.getElementById('course-works');
   if (!works) return;
+  const saved = mobilePlanFor(session, await fetchLayoutDocument(assetDirFor(session)));
+  const savedMap = new Map((saved || []).map((item) => [String(item.id), item]));
   const items = stored.slice().sort((a, b) => {
     const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
     if (Math.abs(dy) > 8) return dy;
@@ -944,8 +1280,24 @@ async function showMobileCourseLayout(session) {
   });
   const grid = document.createElement('div');
   grid.id = 'course-mobile-grid';
+  let seen = 0;
   items.forEach((data) => {
+    const id = String(data.id || '');
+    if (!id) return;
+    const record = savedMap.get(id);
     const cell = document.createElement('div');
+    cell.dataset.mobileId = id;
+    const before = record && Number.isFinite(Number(record.before))
+      ? Number(record.before)
+      : (seen === 0 ? MOBILE_LEAD : MOBILE_GAP);
+    cell.dataset.before = String(before);
+    if (record && record.hidden) {
+      cell.dataset.hidden = '1';
+      cell.style.display = 'none';
+    } else if (saved) {
+      cell.style.marginTop = `${before}px`;
+      seen += 1;
+    } else seen += 1;
     const box = document.createElement('div');
     box.className = 'course-layout-image';
     const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
@@ -953,6 +1305,11 @@ async function showMobileCourseLayout(session) {
     cell.appendChild(box);
     grid.appendChild(cell);
   });
+  if (saved) {
+    grid.dataset.explicit = '1';
+    grid.style.rowGap = '0px';
+    grid.dataset.hiddenIds = saved.filter((item) => item && item.hidden).map((item) => item.id).join('\n');
+  }
   works.hidden = false;
   works.appendChild(grid);
 
@@ -963,7 +1320,8 @@ async function showMobileCourseLayout(session) {
     const title = document.querySelector('.course-name');
     const above = desc && desc.getBoundingClientRect().height ? desc : title;
     if (!host || !above) return;
-    const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + 48;
+    const lead = grid.dataset.explicit === '1' ? 0 : MOBILE_LEAD;
+    const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + lead;
     works.style.top = `${Math.round(top)}px`;
     const bottom = works.getBoundingClientRect().bottom + window.scrollY;
     const height = `${Math.ceil(bottom + 24)}px`;
@@ -1001,7 +1359,7 @@ function bindLayoutMode(session) {
   const query = window.matchMedia('(max-width: 639px)');
   const apply = async () => {
     const current = window.__publicLayoutSession;
-    if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+    if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
     clearPlacedLayout();
     document.body.style.minHeight = '';
     document.documentElement.style.minHeight = '';
@@ -1051,13 +1409,13 @@ async function showSavedCourseLayout(session) {
 }
 
 function startCourseAdmin(session) {
-  if (window.innerWidth < 640) return;
-  if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
-  if (sessionStorage.getItem('georgii-admin-ok') === '1') {
-    openAdminEditor(session);
-    return;
-  }
-  askAdminPassword(session);
+  if (document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
+  const open = () => {
+    if (phoneLayout()) openMobileAdmin(session);
+    else openAdminEditor(session);
+  };
+  if (sessionStorage.getItem('georgii-admin-ok') === '1') open();
+  else askAdminPassword(session, open);
 }
 
 function askAdminPassword(session, onOk) {
@@ -1390,7 +1748,12 @@ function openAdminEditor(session) {
       base64: picture.base64,
       count: true
     }));
-    const layoutText = `${JSON.stringify({ description, images: layoutImages }, null, 2)}\n`;
+    const previousDoc = await fetchLayoutDocument(dir);
+    let mobileKeep = previousDoc && Array.isArray(previousDoc.mobile) ? previousDoc.mobile : null;
+    if (!mobileKeep) mobileKeep = readLocalMobile(session);
+    const layoutPayload = { description, images: layoutImages };
+    if (mobileKeep) layoutPayload.mobile = mobileKeep;
+    const layoutText = `${JSON.stringify(layoutPayload, null, 2)}\n`;
     files.push({
       path: `${dir}/layout.json`,
       base64: bytesToBase64(new TextEncoder().encode(layoutText))
@@ -1986,9 +2349,11 @@ async function showSavedProjectLayout(session) {
 }
 
 function startProjectAdmin(session) {
-  if (window.innerWidth < 640) return;
-  if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
-  const open = () => openAdminEditor(session);
+  if (document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
+  const open = () => {
+    if (phoneLayout()) openMobileAdmin(session);
+    else openAdminEditor(session);
+  };
   if (sessionStorage.getItem('georgii-admin-ok') === '1') open();
   else askAdminPassword(session, open);
 }
@@ -2137,7 +2502,7 @@ window.startHomeAdmin = function (onReady) {
 };
 async function resumePendingCourse() {
   await loadPublishedCopy();
-  if (window.__courseAdminPending && window.innerWidth >= 640 && !document.getElementById('admin-layer') && !document.getElementById('admin-lock')) {
+  if (window.__courseAdminPending && !document.getElementById('admin-layer') && !document.getElementById('admin-lock') && !document.getElementById('mobile-admin')) {
     startCourseAdmin(window.__courseAdminPending);
     return;
   }
@@ -2149,7 +2514,7 @@ setInterval(async () => {
   const host = window.location.hostname;
   if (host !== '127.0.0.1' && host !== 'localhost') return;
   const session = window.__courseLayoutPending;
-  if (!session || document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+  if (!session || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
   await loadPublishedCopy();
   applyCourseDescription(session, false);
   await refreshFileLayout(session);

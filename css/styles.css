@@ -1407,5 +1407,31 @@ body.course-page main {
   .project-extra-media .course-layout-image.is-wide .course-video-chrome {
     display: block;
   }
+  body.mobile-admin {
+    padding-bottom: 5rem !important;
+  }
+  body.mobile-admin #course-mobile-grid > div,
+  body.mobile-admin #file-grid > div,
+  body.mobile-admin #course-mobile-grid img,
+  body.mobile-admin #file-grid img {
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  body.mobile-admin .mobile-edit-item.is-held {
+    z-index: 3;
+    transform: scale(0.94);
+    transform-origin: center center;
+    transition: transform 0.16s ease;
+    touch-action: none;
+  }
+  body.mobile-admin .mobile-edit-item.is-dragging {
+    transition: none;
+  }
+  body.mobile-admin .mobile-edit-item.is-leaving {
+    z-index: 3;
+    transition: transform 0.18s ease;
+  }
 }
 

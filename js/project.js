@@ -619,6 +619,7 @@ async function loadProject(projectName, subfolder = ''){
         return; // Пропускаем неизвестные типы файлов
       }
 
+      wrap.dataset.mobileId = String(image.name || image.src || '');
       applyRandomProjectGridVerticalMargin(wrap);
       grid.appendChild(wrap);
     });
@@ -1098,7 +1099,11 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await loadProjectDescription();
   await loadProject(projectName);
   const session = projectAdminSession();
-  if (projectAdmin && window.innerWidth >= 640 && window.startProjectAdmin) {
+  const phone = window.matchMedia('(max-width: 639px)').matches;
+  if (!projectAdmin && phone && window.applyMobileProjectSpacing) {
+    await window.applyMobileProjectSpacing(session);
+  }
+  if (projectAdmin && window.startProjectAdmin) {
     window.startProjectAdmin(session);
   } else if (window.showSavedProjectLayout) {
     window.showSavedProjectLayout(session);
