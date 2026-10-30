@@ -611,10 +611,6 @@ function openAdminEditor(session) {
     syncWide(item);
   }
 
-  function othersOf(item) {
-    return images.filter((image) => image !== item);
-  }
-
   function snapDelta(edges, targets) {
     let best = null;
     edges.forEach((edge) => {
@@ -628,48 +624,82 @@ function openAdminEditor(session) {
     return best || 0;
   }
 
-  function imageTargets(item) {
-    const xs = [];
-    const ys = [];
-    othersOf(item).forEach((image) => {
-      xs.push(image.x, image.x + image.w);
-      ys.push(image.y, image.y + image.h);
-    });
-    return { xs, ys };
-  }
-
   function snapMove(item) {
-    const pictures = imageTargets(item);
-    const dxPic = snapDelta([item.x, item.x + item.w], pictures.xs);
-    const dyPic = snapDelta([item.y, item.y + item.h], pictures.ys);
-    item.x += dxPic || snapDelta([item.x, item.x + item.w], metrics.xs);
-    item.y += dyPic || snapDelta([item.y, item.y + item.h], metrics.ys);
+    if (!metrics) return;
+    item.x += snapDelta([item.x, item.x + item.w], metrics.xs);
+    item.y += snapDelta([item.y, item.y + item.h], metrics.ys);
   }
 
-  function snapResize(item, edges) {
-    const pictures = imageTargets(item);
-    if (edges.left || edges.right) {
-      const edge = edges.left ? item.x : item.x + item.w;
-      const dx = snapDelta([edge], pictures.xs) || snapDelta([edge], metrics.xs);
-      if (edges.left) {
-        item.x += dx;
-        item.w -= dx;
-      } else {
-        item.w += dx;
+  function itemRatio(item, origin) {
+    if (item.ratio > 0) return item.ratio;
+    if (origin && origin.w > 0 && origin.h > 0) return origin.w / origin.h;
+    return 1;
+  }
+
+  function placeFromAnchor(anchorX, anchorY, w, h, edges, origin) {
+    const horizontal = edges.left || edges.right;
+    const vertical = edges.top || edges.bottom;
+    return {
+      x: horizontal ? (edges.left ? anchorX - w : anchorX) : origin.x + (origin.w - w) / 2,
+      y: vertical ? (edges.top ? anchorY - h : anchorY) : origin.y + (origin.h - h) / 2,
+      w,
+      h
+    };
+  }
+
+  function resizeProportional(item, edges, point, origin) {
+    const ratio = itemRatio(item, origin);
+    const anchorX = edges.left ? origin.x + origin.w : origin.x;
+    const anchorY = edges.top ? origin.y + origin.h : origin.y;
+    const horizontal = edges.left || edges.right;
+    const vertical = edges.top || edges.bottom;
+    const minH = 24 / ratio;
+    let across = horizontal
+      ? Math.max(24, edges.left ? anchorX - point.x : point.x - anchorX)
+      : origin.w;
+    let down = vertical
+      ? Math.max(minH, edges.top ? anchorY - point.y : point.y - anchorY)
+      : origin.h;
+    let w;
+    let h;
+    if (horizontal && vertical) {
+      h = Math.max(minH, (across * ratio + down) / (ratio * ratio + 1));
+      w = h * ratio;
+    } else if (horizontal) {
+      w = across;
+      h = w / ratio;
+    } else {
+      h = down;
+      w = h * ratio;
+    }
+    if (w < 24) {
+      w = 24;
+      h = w / ratio;
+    }
+    let box = placeFromAnchor(anchorX, anchorY, w, h, edges, origin);
+    let best = box;
+    let bestShift = Infinity;
+    if (horizontal && metrics) {
+      const edge = edges.left ? box.x : box.x + box.w;
+      const delta = snapDelta([edge], metrics.xs);
+      if (delta && Math.abs(delta) < bestShift) {
+        const nw = Math.max(24, box.w + (edges.left ? -delta : delta));
+        best = placeFromAnchor(anchorX, anchorY, nw, nw / ratio, edges, origin);
+        bestShift = Math.abs(delta);
       }
     }
-    if (edges.top || edges.bottom) {
-      const edge = edges.top ? item.y : item.y + item.h;
-      const dy = snapDelta([edge], pictures.ys) || snapDelta([edge], metrics.ys);
-      if (edges.top) {
-        item.y += dy;
-        item.h -= dy;
-      } else {
-        item.h += dy;
+    if (vertical && metrics) {
+      const edge = edges.top ? box.y : box.y + box.h;
+      const delta = snapDelta([edge], metrics.ys);
+      if (delta && Math.abs(delta) < bestShift) {
+        const nh = Math.max(minH, box.h + (edges.top ? -delta : delta));
+        best = placeFromAnchor(anchorX, anchorY, nh * ratio, nh, edges, origin);
       }
     }
-    item.w = Math.max(24, item.w);
-    item.h = Math.max(24, item.h);
+    item.x = best.x;
+    item.y = best.y;
+    item.w = best.w;
+    item.h = best.h;
   }
 
   function layerPoint(event) {
@@ -693,66 +723,10 @@ function openAdminEditor(session) {
     cursor.style.top = `${event.clientY}px`;
   }
 
-  function showGuides(item) {
-    guides.innerHTML = '';
-    const eps = 0.6;
-    const verticals = [item.x, item.x + item.w];
-    const horizontals = [item.y, item.y + item.h];
-    if (metrics) {
-      verticals.forEach((x) => {
-        if (!metrics.xs.some((value) => Math.abs(value - x) <= eps)) return;
-        const line = document.createElement('div');
-        line.className = 'admin-guide';
-        line.style.left = `${x}px`;
-        line.style.top = `${item.y}px`;
-        line.style.width = '1px';
-        line.style.height = `${item.h}px`;
-        guides.appendChild(line);
-      });
-      horizontals.forEach((y) => {
-        if (!metrics.ys.some((value) => Math.abs(value - y) <= eps)) return;
-        const line = document.createElement('div');
-        line.className = 'admin-guide';
-        line.style.left = `${item.x}px`;
-        line.style.top = `${y}px`;
-        line.style.width = `${item.w}px`;
-        line.style.height = '1px';
-        guides.appendChild(line);
-      });
-    }
-    othersOf(item).forEach((image) => {
-      verticals.forEach((x) => {
-        if (![image.x, image.x + image.w].some((value) => Math.abs(value - x) <= eps)) return;
-        const top = Math.min(item.y, image.y);
-        const bottom = Math.max(item.y + item.h, image.y + image.h);
-        const line = document.createElement('div');
-        line.className = 'admin-guide';
-        line.style.left = `${x}px`;
-        line.style.top = `${top}px`;
-        line.style.width = '1px';
-        line.style.height = `${bottom - top}px`;
-        guides.appendChild(line);
-      });
-      horizontals.forEach((y) => {
-        if (![image.y, image.y + image.h].some((value) => Math.abs(value - y) <= eps)) return;
-        const left = Math.min(item.x, image.x);
-        const right = Math.max(item.x + item.w, image.x + image.w);
-        const line = document.createElement('div');
-        line.className = 'admin-guide';
-        line.style.left = `${left}px`;
-        line.style.top = `${y}px`;
-        line.style.width = `${right - left}px`;
-        line.style.height = '1px';
-        guides.appendChild(line);
-      });
-    });
-  }
-
   function select(item) {
     selected = item;
     images.forEach((image) => image.el.classList.toggle('is-selected', image === item));
-    if (item) showGuides(item);
-    else guides.innerHTML = '';
+    guides.innerHTML = '';
   }
 
   function remove(item) {
@@ -780,11 +754,20 @@ function openAdminEditor(session) {
       hash: data.hash || '',
       el: document.createElement('div')
     };
+    item.ratio = data.w > 0 && data.h > 0 ? data.w / data.h : 0;
     item.el.className = 'admin-image';
     const visual = mountCourseVisual(item.el, data);
     if (visual.vimeo) {
       item.vimeo = visual.vimeo;
       item.hash = visual.hash;
+    }
+    const img = item.el.querySelector('img');
+    if (img) {
+      const rememberRatio = () => {
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) item.ratio = img.naturalWidth / img.naturalHeight;
+      };
+      if (img.complete) rememberRatio();
+      else img.addEventListener('load', rememberRatio, { once: true });
     }
     item.setWide = visual.setWide;
     item.destroy = visual.destroy;
@@ -855,40 +838,13 @@ function openAdminEditor(session) {
       placeCursor(event.clientX + (selected.x - rawX), event.clientY + (selected.y - rawY));
     } else {
       const edges = edgesFor(drag.mode);
-      let x = origin.x;
-      let y = origin.y;
-      let w = origin.w;
-      let h = origin.h;
-      if (edges.left) {
-        x = point.x;
-        w = origin.x + origin.w - point.x;
-      }
-      if (edges.right) w = point.x - x;
-      if (edges.top) {
-        y = point.y;
-        h = origin.y + origin.h - point.y;
-      }
-      if (edges.bottom) h = point.y - y;
-      if (w < 24) {
-        if (edges.left) x -= 24 - w;
-        w = 24;
-      }
-      if (h < 24) {
-        if (edges.top) y -= 24 - h;
-        h = 24;
-      }
-      selected.x = x;
-      selected.y = y;
-      selected.w = w;
-      selected.h = h;
-      snapResize(selected, edges);
+      resizeProportional(selected, edges, point, origin);
       placeCursor(
         edges.left ? layerRect.left + selected.x : edges.right ? layerRect.left + selected.x + selected.w : event.clientX,
         edges.top ? layerRect.top + selected.y : edges.bottom ? layerRect.top + selected.y + selected.h : event.clientY
       );
     }
     applyBox(selected);
-    showGuides(selected);
   }
 
   function onPointerUp(event) {
@@ -897,7 +853,6 @@ function openAdminEditor(session) {
     releaseCursor(event);
     save();
     drawGrid();
-    if (selected) showGuides(selected);
   }
 
   function askVideoLink() {
@@ -1010,7 +965,6 @@ function openAdminEditor(session) {
     if (!moved) return;
     event.preventDefault();
     applyBox(selected);
-    showGuides(selected);
     save();
   }
 
