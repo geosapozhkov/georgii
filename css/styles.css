@@ -1231,6 +1231,9 @@ body.course-page main {
   line-height: 1.2;
   padding: 0;
 }
+#admin-save.is-wrong {
+  opacity: 0.35;
+}
 #admin-home {
   position: fixed;
   right: var(--mobile-edge);

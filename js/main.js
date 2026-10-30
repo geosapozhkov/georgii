@@ -265,6 +265,7 @@ async function getCoverImageFromProject(projectName, category = null){
     console.error(`   ❌ Ошибка загрузки files.json для проекта ${projectName}:`, e);
   }
   
+  if (window.hydrateProjectLayout) await window.hydrateProjectLayout(category, projectName);
   const placed = adminPreviewUrls(projectName, category);
   if (placed.length) {
     const result = {
@@ -322,7 +323,7 @@ function adminPreviewUrls(projectName, category) {
   if (typeof window.projectLayoutImages !== 'function') return [];
   return window.projectLayoutImages(category, projectName)
     .filter((item) => item && item.src && !item.vimeo && (
-      String(item.src).startsWith('data:image/') || isRasterImageFilename(String(item.src).split('?')[0].split('/').pop())
+      String(item.src).startsWith('data:image/') || String(item.src).startsWith('blob:') || isRasterImageFilename(String(item.src).split('?')[0].split('/').pop())
     ))
     .map((item) => item.src);
 }
@@ -335,6 +336,7 @@ function withAdminPreviewUrls(projectName, category, urls) {
 }
 
 async function getProjectPreviewImageUrls(projectName, category) {
+  if (window.hydrateProjectLayout) await window.hydrateProjectLayout(category, projectName);
   const key = `${String(category || '').toLowerCase()}_${projectName}`;
   if (projectPreviewImageUrlsCache.has(key)) {
     return withAdminPreviewUrls(projectName, category, projectPreviewImageUrlsCache.get(key));
