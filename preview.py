@@ -150,14 +150,19 @@ class Handler(SimpleHTTPRequestHandler):
             if data is None:
                 self.send_error(413)
                 return
-            if image_kind(data) != ASSET_EXTS[ext]:
+            kind = image_kind(data)
+            if kind is None:
+                raise ValueError
+            stem = name.rsplit('.', 1)[0]
+            safe_name = f'{stem}.{kind}'
+            if not ASSET_NAME.match(safe_name):
                 raise ValueError
             folder.mkdir(parents=True, exist_ok=True)
-            target = (folder / name).resolve()
+            target = (folder / safe_name).resolve()
             if ROOT.resolve() not in target.parents:
                 raise ValueError
             target.write_bytes(data)
-            src = f"{folder.relative_to(ROOT).as_posix()}/{name}"
+            src = f"{folder.relative_to(ROOT).as_posix()}/{safe_name}"
         except (ValueError, OSError):
             self.send_error(400)
             return

@@ -978,7 +978,7 @@ function projectAdminSession() {
     onLeave(description) {
       endProjectDescriptionEdit(description);
       if (window.publishProject) {
-        window.publishProject({
+        return window.publishProject({
           action: 'description',
           name: projectName,
           category,

@@ -177,32 +177,89 @@ function projectFilesUrl(projectName, subfolder) {
   return projectFilesDir(projectName, subfolder).split('/').map((part) => encodeURIComponent(part)).join('/');
 }
 
-function imageFileName(item, blob) {
+function imageFileName(item, ext) {
   const original = item.blob instanceof File ? item.blob.name : '';
-  const fromName = original.match(/\.([A-Za-z0-9]{2,5})$/);
-  const mime = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/gif': 'gif',
-    'image/webp': 'webp',
-    'image/avif': 'avif'
-  };
-  let ext = (fromName ? fromName[1] : mime[blob.type] || 'jpg').toLowerCase();
-  if (ext === 'jpeg') ext = 'jpg';
   const base = (original.replace(/\.[^.]+$/, '') || 'image')
     .replace(/[^A-Za-z0-9_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40) || 'image';
-  const suffix = String(item.id).replace(/[^A-Za-z0-9]/g, '').slice(-8) || 'image';
+  const suffix = String(item.id).replace(/[^A-Za-z0-9]/g, '').slice(-12) || 'image';
   return `${base}-${suffix}.${ext}`;
+}
+
+function storedOnDisk(dir, src) {
+  return Boolean(dir && typeof src === 'string' && (src.startsWith(`${dir}/`) || src.startsWith(`/${dir}/`)));
+}
+
+async function sniffedExt(blob) {
+  try {
+    const bytes = new Uint8Array(await blob.slice(0, 32).arrayBuffer());
+    if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return 'png';
+    if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpg';
+    if (bytes.length >= 6 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) return 'gif';
+    if (
+      bytes.length >= 12
+      && bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46
+      && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+    ) return 'webp';
+    if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+      const brand = String.fromCharCode(...bytes.slice(8, 32));
+      if (brand.includes('avif')) return 'avif';
+    }
+  } catch (_) {}
+  return '';
+}
+
+function blobToJpeg(blob, maxEdge, quality) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const longest = Math.max(img.naturalWidth, img.naturalHeight, 1);
+      const scale = Math.min(1, maxEdge / longest);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FAFAFA';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((out) => {
+        URL.revokeObjectURL(url);
+        resolve(out && out.size ? out : null);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+async function postCourseImage(dir, item, blob, ext) {
+  const name = imageFileName(item, ext);
+  const response = await fetch(`api/course-image?dir=${encodeURIComponent(dir)}&name=${encodeURIComponent(name)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': blob.type || 'application/octet-stream' },
+    body: blob
+  });
+  if (!response.ok) return false;
+  const data = await response.json();
+  if (!data || typeof data.src !== 'string' || !storedOnDisk(dir, data.src)) return false;
+  item.src = data.src;
+  item.blob = blob;
+  const img = item.el && item.el.querySelector('img');
+  if (img) img.src = data.src.split('/').map((part) => encodeURIComponent(part)).join('/');
+  return true;
 }
 
 async function uploadCourseImage(session, item) {
   const dir = assetDirFor(session);
-  if (!dir) return false;
-  if (item.src && item.src.startsWith(`${dir}/`)) return true;
+  if (!dir || item.vimeo) return false;
+  if (storedOnDisk(dir, item.src)) return true;
   const blob = item.blob instanceof Blob ? item.blob : await (async () => {
-    if (!item.src || (!item.src.startsWith('data:') && !item.src.startsWith('blob:'))) return null;
+    if (!item.src) return null;
     try {
       const response = await fetch(item.src);
       return await response.blob();
@@ -211,24 +268,23 @@ async function uploadCourseImage(session, item) {
     }
   })();
   if (!blob) return false;
-  const name = imageFileName(item, blob);
-  try {
-    const response = await fetch(`api/course-image?dir=${encodeURIComponent(dir)}&name=${encodeURIComponent(name)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': blob.type || 'application/octet-stream' },
-      body: blob
-    });
-    if (!response.ok) return false;
-    const data = await response.json();
-    if (!data || typeof data.src !== 'string' || !data.src.startsWith(`${dir}/`)) return false;
-    item.src = data.src;
-    item.blob = null;
-    const img = item.el && item.el.querySelector('img');
-    if (img) img.src = data.src;
-    return true;
-  } catch (_) {
-    return false;
+  item.blob = blob;
+  const ext = await sniffedExt(blob);
+  if (ext && blob.size <= 25 * 1024 * 1024) {
+    try {
+      if (await postCourseImage(dir, item, blob, ext)) return true;
+    } catch (_) {}
   }
+  const shrinks = [[4096, 0.92], [2560, 0.86], [1600, 0.8], [1280, 0.72]];
+  for (let i = 0; i < shrinks.length; i += 1) {
+    const [edge, quality] = shrinks[i];
+    const jpeg = await blobToJpeg(blob, edge, quality);
+    if (!jpeg || jpeg.size > 25 * 1024 * 1024) continue;
+    try {
+      if (await postCourseImage(dir, item, jpeg, 'jpg')) return true;
+    } catch (_) {}
+  }
+  return false;
 }
 
 async function publishFileLayout(session, payload) {
@@ -280,23 +336,38 @@ async function fetchFileLayout(dir) {
   }
 }
 
+function draftSrc(src) {
+  return typeof src === 'string' && (src.startsWith('blob:') || src.startsWith('data:'));
+}
+
+function mergeLayoutImages(local, file) {
+  const usable = (item) => item && (item.src || item.vimeo);
+  const localItems = local.filter(usable);
+  const fileItems = file.filter(usable);
+  if (!fileItems.length) return localItems;
+  if (!localItems.length) return fileItems;
+  const localIds = new Set(localItems.map((item) => item.id));
+  const fileIds = new Set(fileItems.map((item) => item.id));
+  const fileInLocal = fileItems.every((item) => localIds.has(item.id));
+  const localInFile = localItems.every((item) => fileIds.has(item.id));
+  if (fileInLocal && !localInFile) return localItems;
+  const merged = fileItems.map((item) => {
+    const draft = localItems.find((entry) => entry.id === item.id);
+    if (draft && draftSrc(draft.src)) return draft;
+    return item;
+  });
+  localItems.forEach((item) => {
+    if (fileIds.has(item.id)) return;
+    if (localInFile && !draftSrc(item.src)) return;
+    merged.push(item);
+  });
+  return merged.filter(usable);
+}
+
 async function loadLayoutImages(session) {
   const local = await hydrateImages(storageKeyFor(session));
   const file = await fetchFileLayout(assetDirFor(session));
-  if (!file.length) return local;
-  const localById = new Map(local.map((item) => [item.id, item]));
-  const merged = file.map((item) => {
-    const draft = localById.get(item.id);
-    if (draft && draft.src && (String(draft.src).startsWith('blob:') || String(draft.src).startsWith('data:'))) return draft;
-    return item;
-  });
-  const seen = new Set(merged.map((item) => item.id));
-  local.forEach((item) => {
-    if (!seen.has(item.id) && item.src && (String(item.src).startsWith('blob:') || String(item.src).startsWith('data:'))) {
-      merged.push(item);
-    }
-  });
-  return merged.filter((item) => item && (item.src || item.vimeo));
+  return mergeLayoutImages(local, file);
 }
 
 async function refreshFileLayout(session) {
@@ -640,8 +711,21 @@ function finishCourseDescription() {
   if (!text) el.remove();
 }
 
+function publicPageUrl(session) {
+  if (session && typeof session.publicUrl === 'string' && session.publicUrl) return session.publicUrl;
+  if (session && session.courseId) {
+    const course = encodeURIComponent(session.courseId);
+    const group = encodeURIComponent(session.groupId || '');
+    return `course.html?course=${course}&group=${group}`;
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.delete('admin');
+  const search = url.searchParams.toString();
+  return url.pathname + (search ? `?${search}` : '') + url.hash;
+}
+
 function publishCourseDescription(session, description) {
-  fetch('api/course-description', {
+  return fetch('api/course-description', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -777,6 +861,22 @@ function openAdminEditor(session) {
   let metrics = null;
   let drag = null;
   const edits = new AbortController();
+  let incoming = 0;
+  const incomingWaiters = [];
+
+  function waitForIncoming() {
+    if (incoming === 0) return Promise.resolve();
+    return new Promise((resolve) => incomingWaiters.push(resolve));
+  }
+
+  function beginIncoming() {
+    incoming += 1;
+  }
+
+  function finishIncoming() {
+    incoming = Math.max(0, incoming - 1);
+    if (incoming === 0) incomingWaiters.splice(0).forEach((resolve) => resolve());
+  }
 
   const layer = document.createElement('div');
   layer.id = 'admin-layer';
@@ -851,11 +951,17 @@ function openAdminEditor(session) {
     }).filter((item) => item.src || item.vimeo));
   }
 
-  async function persistLayout() {
+  async function writeCurrentLayout() {
     const key = storageKeyFor(session);
     const description = savedDescription();
+    const dir = assetDirFor(session);
+    const snapshot = images.slice();
+    for (const item of snapshot) {
+      if (!images.includes(item) || item.vimeo || storedOnDisk(dir, item.src)) continue;
+      await uploadCourseImage(session, item);
+    }
     const pieces = [];
-    for (const item of images) {
+    for (const item of images.slice()) {
       const piece = {
         id: item.id,
         x: item.x,
@@ -870,13 +976,7 @@ function openAdminEditor(session) {
         pieces.push(piece);
         continue;
       }
-      const alreadyStored = item.src && (item.src.startsWith('Courses/') || /^https?:\/\//.test(item.src));
-      if (!alreadyStored) {
-        const uploaded = await uploadCourseImage(session, item);
-        if (!uploaded && previewHost()) return false;
-      }
-      const remote = item.src && !item.src.startsWith('data:') && !item.src.startsWith('blob:');
-      if (remote) {
+      if (storedOnDisk(dir, item.src)) {
         piece.src = item.src;
         pieces.push(piece);
         continue;
@@ -893,7 +993,7 @@ function openAdminEditor(session) {
       pieces.push(piece);
     }
     const live = new Set(images.map((item) => item.id));
-    const kept = pieces.filter((piece) => live.has(piece.id));
+    const kept = pieces.filter((piece) => live.has(piece.id) && (piece.src || piece.vimeo || piece.blob));
     kept.forEach((piece) => {
       const item = images.find((entry) => entry.id === piece.id);
       if (!item) return;
@@ -902,6 +1002,7 @@ function openAdminEditor(session) {
       piece.w = item.w;
       piece.h = item.h;
     });
+    const fileReady = Boolean(dir) && kept.length === images.length && kept.every((piece) => piece.vimeo || storedOnDisk(dir, piece.src));
     const shrinkSteps = [[1600, 0.8], [1280, 0.68], [800, 0.55]];
     for (let step = -1; step < shrinkSteps.length; step += 1) {
       if (step >= 0) {
@@ -921,7 +1022,7 @@ function openAdminEditor(session) {
             if (img) img.src = smaller;
           }
         }
-        if (!changed) return false;
+        if (!changed && !fileReady) return false;
       }
       const payload = {
         description,
@@ -950,12 +1051,27 @@ function openAdminEditor(session) {
         rememberLayout(key, kept);
         pruneImageBlobs(key, kept.filter((piece) => piece.blob).map((piece) => piece.id));
       }
+      if (!fileReady) {
+        if (previewHost()) return false;
+        if (localOk) return true;
+        continue;
+      }
       const published = await publishFileLayout(session, payload);
       if (published === true) return true;
       if (published === false || (published === null && previewHost())) return false;
       if (localOk) return true;
     }
     return false;
+  }
+
+  async function persistLayout(depth) {
+    const level = depth || 0;
+    await waitForIncoming();
+    const mark = images.slice();
+    const saved = await writeCurrentLayout();
+    const changed = incoming > 0 || mark.length !== images.length || mark.some((item, index) => images[index] !== item);
+    if (changed && level < 8) return persistLayout(level + 1);
+    return saved && !changed;
   }
 
   let saveTail = Promise.resolve(true);
@@ -983,41 +1099,19 @@ function openAdminEditor(session) {
     if (!saved) {
       leaveAdmin.busy = false;
       saveButton.classList.add('is-wrong');
+      const dir = assetDirFor(session);
+      images.forEach((item) => {
+        const onDisk = item.vimeo || storedOnDisk(dir, item.src);
+        item.el.classList.toggle('is-unsaved', !onDisk);
+      });
       return;
     }
     const description = savedDescription();
-    if (typeof session.onLeave === 'function') session.onLeave(description);
-    else {
-      publishCourseDescription(session, description);
-      finishCourseDescription();
-    }
-    document.removeEventListener('pointermove', onPointerMove);
-    document.removeEventListener('pointerup', onPointerUp);
-    document.removeEventListener('pointerdown', onPointerDown);
-    document.removeEventListener('keydown', onKeyDown);
-    window.removeEventListener('resize', drawGrid);
-    edits.abort();
-    const linkForm = document.getElementById('admin-video-link');
-    if (linkForm) linkForm.remove();
-    canvas.remove();
-    guides.remove();
-    tools.remove();
-    file.remove();
-    images.forEach((item) => {
-      item.el.querySelectorAll('.admin-handle').forEach((handle) => handle.remove());
-      item.el.classList.remove('is-selected', 'admin-image');
-      item.el.classList.add('course-layout-image');
-    });
-    layer.id = 'course-layout';
-    board.removeAttribute('id');
-    extendPageForImages(images);
-    if (typeof session.publicUrl === 'string') {
-      history.replaceState(null, '', session.publicUrl);
-    } else if (session.courseId) {
-      const course = encodeURIComponent(session.courseId);
-      const group = encodeURIComponent(session.groupId);
-      history.replaceState(null, '', `course.html?course=${course}&group=${group}`);
-    }
+    try {
+      if (typeof session.onLeave === 'function') await session.onLeave(description);
+      else await publishCourseDescription(session, description);
+    } catch (_) {}
+    window.location.replace(publicPageUrl(session));
   }
 
   saveButton.addEventListener('click', leaveAdmin);
@@ -1411,22 +1505,21 @@ function openAdminEditor(session) {
   file.addEventListener('change', () => {
     const files = [...file.files];
     file.value = '';
-    let offset = 0;
     files.forEach((blob, index) => {
+      beginIncoming();
       const src = URL.createObjectURL(blob);
       const probe = new Image();
-      probe.onload = () => {
-        const w = Math.min(280, probe.naturalWidth || 280);
-        const h = Math.max(24, w * ((probe.naturalHeight || w) / (probe.naturalWidth || w)));
+      const place = (width, height) => {
+        const w = Math.min(280, width || 280);
+        const h = Math.max(24, w * ((height || w) / (width || w)));
         const item = addImage({
           src,
           blob,
-          x: Math.round(window.scrollX + (window.innerWidth - w) / 2 + offset),
-          y: Math.round(window.scrollY + 120 + offset),
+          x: Math.round(window.scrollX + (window.innerWidth - w) / 2 + index * 24),
+          y: Math.round(window.scrollY + 120 + index * 24),
           w,
           h
         });
-        offset += 24;
         if (!item) return;
         seatColumns(item);
         if (index > 0) {
@@ -1436,8 +1529,19 @@ function openAdminEditor(session) {
         }
         applyBox(item);
         select(item);
-        save();
         drawGrid();
+      };
+      const done = () => {
+        finishIncoming();
+        save();
+      };
+      probe.onload = () => {
+        place(probe.naturalWidth, probe.naturalHeight);
+        done();
+      };
+      probe.onerror = () => {
+        place(280, 280);
+        done();
       };
       probe.src = src;
     });
@@ -1488,11 +1592,13 @@ function openAdminEditor(session) {
   if (typeof session.prepare === 'function') session.prepare();
   else applyCourseDescription(session, true);
   drawGrid();
+  beginIncoming();
   loadLayoutImages(session).then((stored) => {
-    if (edits.signal.aborted) return;
-    stored.forEach((data) => addImage(data));
-    drawGrid();
-  });
+    if (!edits.signal.aborted) {
+      stored.forEach((data) => addImage(data));
+      drawGrid();
+    }
+  }).finally(finishIncoming);
 }
 
 async function showSavedProjectLayout(session) {

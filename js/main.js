@@ -621,7 +621,7 @@ function leaveHomeAdmin() {
   const url = new URL(window.location.href);
   url.searchParams.delete('admin');
   const search = url.searchParams.toString();
-  history.replaceState(null, '', url.pathname + (search ? `?${search}` : ''));
+  window.location.replace(url.pathname + (search ? `?${search}` : '') + url.hash);
 }
 
 function openHomeProjectCreator() {
