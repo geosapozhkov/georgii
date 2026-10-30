@@ -981,8 +981,13 @@ function openAdminEditor(session) {
         pieces.push(piece);
         continue;
       }
-      const blob = await blobFor(item);
-      if (blob && await putImageBlob(key, item.id, blob)) {
+      let blob = await blobFor(item);
+      if (blob && !(await putImageBlob(key, item.id, blob))) {
+        const smaller = await blobToJpeg(blob, 1600, 0.8);
+        if (smaller && await putImageBlob(key, item.id, smaller)) blob = smaller;
+        else blob = null;
+      }
+      if (blob) {
         piece.blob = true;
         pieces.push(piece);
         continue;
@@ -1051,15 +1056,16 @@ function openAdminEditor(session) {
         rememberLayout(key, kept);
         pruneImageBlobs(key, kept.filter((piece) => piece.blob).map((piece) => piece.id));
       }
-      if (!fileReady) {
-        if (previewHost()) return false;
+      const browserHasAll = localOk && kept.length === images.length;
+      if (fileReady) {
+        const published = await publishFileLayout(session, payload);
+        if (published === true || browserHasAll) return true;
+        if (published === false || (published === null && previewHost())) return false;
         if (localOk) return true;
         continue;
       }
-      const published = await publishFileLayout(session, payload);
-      if (published === true) return true;
-      if (published === false || (published === null && previewHost())) return false;
-      if (localOk) return true;
+      if (browserHasAll) return true;
+      if (previewHost()) return false;
     }
     return false;
   }
