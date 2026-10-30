@@ -497,10 +497,14 @@ async function publishFileLayout(session, payload) {
 
 const fileLayoutText = new Map();
 
+function phoneLayout() {
+  return window.matchMedia('(max-width: 639px)').matches;
+}
+
 async function fetchFileLayout(dir) {
   if (!dir) return [];
   try {
-    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/layout.json`, { cache: 'no-store' });
+    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/layout.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) return [];
     const text = await response.text();
     fileLayoutText.set(dir, text);
@@ -930,7 +934,7 @@ async function showMobileCourseLayout(session) {
   applyCourseDescription(session, false);
   if (document.getElementById('course-mobile-grid')) return;
   const stored = await loadLayoutImages(session);
-  if (!stored.length || window.innerWidth >= 640 || document.getElementById('course-mobile-grid')) return;
+  if (!stored.length || !phoneLayout() || document.getElementById('course-mobile-grid')) return;
   const works = document.getElementById('course-works');
   if (!works) return;
   const items = stored.slice().sort((a, b) => {
@@ -953,26 +957,68 @@ async function showMobileCourseLayout(session) {
   works.appendChild(grid);
 
   const fit = () => {
-    if (window.innerWidth >= 640) return;
-    const main = document.getElementById('course-root');
+    if (!phoneLayout() || !works.isConnected) return;
+    const host = document.querySelector('.course-name-col') || document.getElementById('course-root');
     const desc = document.getElementById('course-description');
     const title = document.querySelector('.course-name');
     const above = desc && desc.getBoundingClientRect().height ? desc : title;
-    if (!main || !above) return;
-    const top = above.getBoundingClientRect().bottom - main.getBoundingClientRect().top + 48;
+    if (!host || !above) return;
+    const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + 48;
     works.style.top = `${Math.round(top)}px`;
     const bottom = works.getBoundingClientRect().bottom + window.scrollY;
-    document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+    const height = `${Math.ceil(bottom + 24)}px`;
+    document.body.style.minHeight = height;
+    document.documentElement.style.minHeight = height;
   };
   requestAnimationFrame(fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   grid.querySelectorAll('img').forEach((img) => {
     if (!img.complete) img.addEventListener('load', fit);
   });
+  if (window.__courseMobileFit) window.removeEventListener('resize', window.__courseMobileFit);
+  window.__courseMobileFit = fit;
   window.addEventListener('resize', fit);
 }
 
+function clearPlacedLayout() {
+  const layer = document.getElementById('course-layout');
+  if (layer) layer.remove();
+  const mobile = document.getElementById('course-mobile-grid');
+  if (mobile) mobile.remove();
+  document.querySelectorAll('.project-extra-media').forEach((node) => node.remove());
+  wideItems.splice(0);
+  if (window.__courseMobileFit) {
+    window.removeEventListener('resize', window.__courseMobileFit);
+    window.__courseMobileFit = null;
+  }
+}
+
+let layoutModeBound = false;
+function bindLayoutMode(session) {
+  window.__publicLayoutSession = session;
+  if (layoutModeBound) return;
+  layoutModeBound = true;
+  const query = window.matchMedia('(max-width: 639px)');
+  const apply = async () => {
+    const current = window.__publicLayoutSession;
+    if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+    clearPlacedLayout();
+    document.body.style.minHeight = '';
+    document.documentElement.style.minHeight = '';
+    if (current.courseId) {
+      showSavedCourseLayout(current);
+      return;
+    }
+    if (window.reloadProjectMedia) await window.reloadProjectMedia();
+    if (!phoneLayout()) showSavedProjectLayout(current);
+  };
+  if (query.addEventListener) query.addEventListener('change', apply);
+  else query.addListener(apply);
+}
+
 async function showSavedCourseLayout(session) {
-  if (window.innerWidth < 640) {
+  bindLayoutMode(session);
+  if (phoneLayout()) {
     showMobileCourseLayout(session);
     return;
   }
@@ -1910,32 +1956,11 @@ function openAdminEditor(session) {
 
 async function showSavedProjectLayout(session) {
   if (!session) return;
+  bindLayoutMode(session);
+  if (phoneLayout()) return;
   const stored = await loadLayoutImages(session);
   if (!stored.length || document.getElementById('admin-layer')) return;
-  if (window.innerWidth < 640) {
-    const grid = document.getElementById('file-grid');
-    if (!grid || grid.querySelector('.project-extra-media')) return;
-    const empty = grid.querySelector('.border-dashed');
-    if (empty) empty.remove();
-    const items = stored.slice().sort((a, b) => {
-      const dy = (Number(a.y) || 0) - (Number(b.y) || 0);
-      if (Math.abs(dy) > 8) return dy;
-      return (Number(a.x) || 0) - (Number(b.x) || 0);
-    });
-    items.forEach((data) => {
-      const cell = document.createElement('div');
-      cell.className = 'project-extra-media col-span-12 w-full';
-      const box = document.createElement('div');
-      box.className = 'course-layout-image';
-      const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
-      if (visual.vimeo) visual.setWide(true);
-      cell.appendChild(box);
-      grid.appendChild(cell);
-    });
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'none';
-    return;
-  }
+  if (phoneLayout()) return;
   if (document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
   const layer = document.createElement('div');
   layer.id = 'course-layout';

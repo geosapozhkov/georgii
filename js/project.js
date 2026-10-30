@@ -667,17 +667,20 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
   
   const foundFiles = [];
   const arrangedNames = new Set();
-  try {
-    const layoutResponse = await fetch(`${basePath}/layout.json?v=${Date.now()}`, { cache: 'no-store' });
-    if (layoutResponse.ok) {
-      const layout = await layoutResponse.json();
-      (layout.images || []).forEach((item) => {
-        if (!item || !item.src || item.vimeo) return;
-        const name = String(item.src).split('/').pop();
-        if (name) arrangedNames.add(name);
-      });
-    }
-  } catch (_) {}
+  const desktopLayout = window.matchMedia('(min-width: 640px)').matches;
+  if (desktopLayout) {
+    try {
+      const layoutResponse = await fetch(`${basePath}/layout.json?v=${Date.now()}`, { cache: 'no-store' });
+      if (layoutResponse.ok) {
+        const layout = await layoutResponse.json();
+        (layout.images || []).forEach((item) => {
+          if (!item || !item.src || item.vimeo) return;
+          const name = String(item.src).split('/').pop();
+          if (name) arrangedNames.add(name);
+        });
+      }
+    } catch (_) {}
+  }
   
   // СНАЧАЛА проверяем files.json - это быстрее
   console.log(`🔍 Загрузка файлов проекта: ${projectName}, категория: ${category || 'нет'}`);
@@ -1101,6 +1104,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     window.showSavedProjectLayout(session);
   }
 });
+
+window.reloadProjectMedia = () => loadProject(projectName);
 
 setInterval(async () => {
   const host = window.location.hostname;
