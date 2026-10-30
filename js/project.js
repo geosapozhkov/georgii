@@ -284,16 +284,6 @@ async function loadProject(projectName, subfolder = ''){
     return;
   }
 
-  // Используем категорию для построения пути, если она указана
-  // Приводим категорию к правильному регистру (первая буква заглавная)
-  const categoryCapitalized = projectCategory ? projectCategory.charAt(0).toUpperCase() + projectCategory.slice(1).toLowerCase() : '';
-  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-  const projectPath = subfolder 
-    ? `projects/${categoryPath}${projectName}${subfolder}` 
-    : `projects/${categoryPath}${projectName}`;
-  
-  const imagesPath = `${projectPath}/images`;
-  
   try{
     // Загружаем список файлов из папки images
     console.log(`Загрузка проекта: ${projectName}, категория: ${projectCategory || 'нет'}, подпапка: ${subfolder || 'корневая'}`);
@@ -306,7 +296,7 @@ async function loadProject(projectName, subfolder = ''){
 
     if(!images || images.length === 0){
       if (!projectWasAdded() && !projectAdmin) {
-        grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Добавьте изображения или видео в папку <code class="bg-gray-100 px-2 py-1 rounded">projects/' + (projectCategory ? projectCategory + '/' : '') + projectName + '/images/</code><br><br>Файлы будут автоматически обнаружены при следующей загрузке страницы.</div>';
+        grid.innerHTML='<div class="col-span-12 text-center text-gray-400 border border-dashed rounded-lg p-6">Файлы не найдены.<br>Добавьте изображения или видео в папку <code class="bg-gray-100 px-2 py-1 rounded">projects/' + projectName + '/images/</code><br><br>Файлы будут автоматически обнаружены при следующей загрузке страницы.</div>';
       } else {
         grid.innerHTML = '';
       }
@@ -671,15 +661,9 @@ function extractNumber(filename){
 // Получаем список изображений проекта автоматически из папки
 // Сначала проверяет files.json (если есть), затем использует directory listing
 async function getProjectImages(projectName, subfolder = '', category = ''){
-  // Приводим категорию к правильному регистру (первая буква заглавная)
-  const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
-  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-  const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
-  const basePath = isRootFolderProject
-    ? `${projectName}${subfolder || ''}`
-    : (subfolder
-      ? `projects/${categoryPath}${projectName}${subfolder}/images`
-      : `projects/${categoryPath}${projectName}/images`);
+  const basePath = window.projectFilesUrl
+    ? window.projectFilesUrl(projectName, subfolder)
+    : `projects/${encodeURIComponent(projectName)}${subfolder || ''}/images`;
   
   const foundFiles = [];
   

@@ -197,13 +197,9 @@ async function getCoverImageFromProject(projectName, category = null){
     return projectCoversCache.get(cacheKey);
   }
   
-  // Приводим категорию к правильному регистру (первая буква заглавная)
-  const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
-  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-  const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
-  const basePath = isRootFolderProject
-    ? `${projectName}`
-    : `projects/${categoryPath}${projectName}/images`;
+  const basePath = window.projectFilesUrl
+    ? window.projectFilesUrl(projectName)
+    : `projects/${encodeURIComponent(projectName)}/images`;
   
   // Проверяем files.json для получения обложки
   console.log(`🔍 Поиск обложки для проекта: ${projectName}, категория: ${category || 'нет'}`);
@@ -341,12 +337,9 @@ async function getProjectPreviewImageUrls(projectName, category) {
   if (projectPreviewImageUrlsCache.has(key)) {
     return withAdminPreviewUrls(projectName, category, projectPreviewImageUrlsCache.get(key));
   }
-  const categoryCapitalized = category ? category.charAt(0).toUpperCase() + category.slice(1).toLowerCase() : '';
-  const categoryPath = categoryCapitalized ? `${categoryCapitalized}/` : '';
-  const isRootFolderProject = (projectName || '').toUpperCase() === 'RND';
-  const basePath = isRootFolderProject
-    ? `${projectName}`
-    : `projects/${categoryPath}${projectName}/images`;
+  const basePath = window.projectFilesUrl
+    ? window.projectFilesUrl(projectName)
+    : `projects/${encodeURIComponent(projectName)}/images`;
 
   const urls = [];
   try {

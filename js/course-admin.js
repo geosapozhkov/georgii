@@ -164,7 +164,17 @@ function assetDirFor(session) {
   const key = session.storageKey || '';
   const match = /^georgii-project-layout:([^:]+):(.+)$/.exec(key);
   if (!match) return '';
-  return `Courses/projects/${match[1]}/${match[2]}`;
+  return projectFilesDir(match[2]);
+}
+
+function projectFilesDir(projectName, subfolder) {
+  const name = String(projectName || '');
+  if (name.toUpperCase() === 'RND') return `${name}${subfolder || ''}`;
+  return `projects/${name}${subfolder || ''}/images`;
+}
+
+function projectFilesUrl(projectName, subfolder) {
+  return projectFilesDir(projectName, subfolder).split('/').map((part) => encodeURIComponent(part)).join('/');
 }
 
 function imageFileName(item, blob) {
@@ -259,7 +269,7 @@ const fileLayoutText = new Map();
 async function fetchFileLayout(dir) {
   if (!dir) return [];
   try {
-    const response = await fetch(`${dir}/layout.json`, { cache: 'no-store' });
+    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/layout.json`, { cache: 'no-store' });
     if (!response.ok) return [];
     const text = await response.text();
     fileLayoutText.set(dir, text);
@@ -295,7 +305,7 @@ async function refreshFileLayout(session) {
   if (!dir) return;
   let text = '';
   try {
-    const response = await fetch(`${dir}/layout.json`, { cache: 'no-store' });
+    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/layout.json`, { cache: 'no-store' });
     if (!response.ok) return;
     text = await response.text();
   } catch (_) {
@@ -435,7 +445,9 @@ function mountCourseVisual(box, data) {
     : parseVimeoLink(data.src);
   if (!parsed) {
     const img = document.createElement('img');
-    img.src = data.src;
+    img.src = /^(https?:|data:|blob:)/i.test(data.src)
+      ? data.src
+      : data.src.split('/').map((part) => encodeURIComponent(part)).join('/');
     img.alt = '';
     img.draggable = false;
     box.appendChild(img);
@@ -1672,6 +1684,8 @@ window.forgetAddedProject = forgetAddedProject;
 window.rememberRemovedProject = rememberRemovedProject;
 window.forgetRemovedProject = forgetRemovedProject;
 window.getProjectCopy = () => projectCopy;
+window.projectFilesDir = projectFilesDir;
+window.projectFilesUrl = projectFilesUrl;
 window.projectLayoutKey = (category, name) => `georgii-project-layout:${String(category || '').toLowerCase()}:${name}`;
 window.projectLayoutImages = (category, name) => readStoredImages(window.projectLayoutKey(category, name));
 window.hydrateProjectLayout = (category, name) => hydrateImages(window.projectLayoutKey(category, name));

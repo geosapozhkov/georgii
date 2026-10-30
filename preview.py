@@ -17,7 +17,7 @@ GROUP_ID = re.compile(r'^\d{3}$')
 PROJECT_NAME = re.compile(r"^[\w']{1,80}$", re.UNICODE)
 CATEGORIES = {'mind', 'commerce', 'rnd'}
 ASSET_DIR = re.compile(
-    r'^Courses/(?:projects/(?:mind|commerce|rnd)/[\w\']{1,80}|[A-Za-z0-9_-]{1,64}/\d{3})$'
+    r"^(?:Courses/[A-Za-z0-9_-]{1,64}/\d{3}|projects/[\w']{1,80}/images|RND)$"
 )
 ASSET_NAME = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$')
 ASSET_EXTS = {'png': 'png', 'jpg': 'jpg', 'jpeg': 'jpg', 'gif': 'gif', 'webp': 'webp', 'avif': 'avif'}
@@ -78,11 +78,11 @@ def image_kind(data):
 
 
 def asset_folder(dir_value):
-    if not isinstance(dir_value, str) or not ASSET_DIR.match(dir_value):
+    if not isinstance(dir_value, str) or not ASSET_DIR.match(dir_value) or '..' in dir_value:
         raise ValueError
     folder = (ROOT / dir_value).resolve()
-    root = COURSES.resolve()
-    if folder != root and root not in folder.parents:
+    root = ROOT.resolve()
+    if folder == root or root not in folder.parents:
         raise ValueError
     return folder
 
@@ -154,7 +154,7 @@ class Handler(SimpleHTTPRequestHandler):
                 raise ValueError
             folder.mkdir(parents=True, exist_ok=True)
             target = (folder / name).resolve()
-            if COURSES.resolve() not in target.parents:
+            if ROOT.resolve() not in target.parents:
                 raise ValueError
             target.write_bytes(data)
             src = f"{folder.relative_to(ROOT).as_posix()}/{name}"

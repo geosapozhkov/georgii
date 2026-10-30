@@ -2,12 +2,11 @@
 
 // Скрипт для автоматической генерации files.json для проектов
 // Использование: node generate-files-list.js [project-name]
-// Для проектов с категориями: node generate-files-list.js Commerce/ProjectName
 
 const fs = require('fs');
 const path = require('path');
 
-const projectPath = process.argv[2] || 'Commerce/Angry_Masseur';
+const projectPath = process.argv[2] || 'Angry_Masseur';
 const imagesPath = path.join(__dirname, 'projects', projectPath, 'images');
 
 if (!fs.existsSync(imagesPath)) {
