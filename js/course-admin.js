@@ -1,5 +1,4 @@
 const ADMIN_PASSWORD = 'Sapozhka';
-const ADMIN_SNAP = 8;
 
 function layoutKey(courseId, groupId) {
   return `georgii-course-layout:${courseId}:${groupId}`;
@@ -568,19 +567,9 @@ function openAdminEditor(session) {
     const gap = 24;
     const cols = width >= 768 ? 12 : width >= 640 ? 6 : 4;
     const colW = (width - inset * 2 - gap * (cols - 1)) / cols;
-    const rowH = colW;
-    const bottom = images.reduce((max, item) => Math.max(max, item.y + item.h), window.innerHeight);
+    const bottom = images.reduce((max, entry) => Math.max(max, entry.y + entry.h), window.innerHeight);
     const height = Math.max(bottom + 120, document.documentElement.scrollHeight, window.innerHeight);
-    const xs = [];
-    const ys = [];
-    for (let i = 0; i < cols; i += 1) {
-      const x = inset + i * (colW + gap);
-      xs.push(x, x + colW);
-    }
-    for (let y = 0; y < height; y += rowH + gap) {
-      ys.push(y, y + rowH);
-    }
-    return { width, height, inset, gap, cols, colW, rowH, xs, ys };
+    return { width, height, inset, gap, cols, colW };
   }
 
   function drawGrid() {
@@ -596,11 +585,54 @@ function openAdminEditor(session) {
     ctx.clearRect(0, 0, metrics.width, metrics.height);
     ctx.fillStyle = 'rgba(172, 172, 172, 0.09)';
     for (let i = 0; i < metrics.cols; i += 1) {
-      const x = metrics.inset + i * (metrics.colW + metrics.gap);
-      for (let y = 0; y < metrics.height; y += metrics.rowH + metrics.gap) {
-        ctx.fillRect(x, y, metrics.colW, Math.min(metrics.rowH, metrics.height - y));
+      const x = columnLeft(i);
+      ctx.fillRect(x, 0, metrics.colW, metrics.height);
+    }
+  }
+
+  function columnLeft(index) {
+    return metrics.inset + index * (metrics.colW + metrics.gap);
+  }
+
+  function spanWidth(span) {
+    return span * metrics.colW + (span - 1) * metrics.gap;
+  }
+
+  function nearestSpan(width) {
+    let best = 1;
+    let bestDist = Infinity;
+    for (let n = 1; n <= metrics.cols; n += 1) {
+      const dist = Math.abs(spanWidth(n) - width);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = n;
       }
     }
+    return best;
+  }
+
+  function nearestStart(x, span) {
+    const maxStart = Math.max(0, metrics.cols - span);
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i <= maxStart; i += 1) {
+      const dist = Math.abs(columnLeft(i) - x);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function seatColumns(item) {
+    metrics = computeMetrics();
+    const ratio = item.ratio > 0 ? item.ratio : (item.h > 0 ? item.w / item.h : 1);
+    const span = nearestSpan(item.w);
+    const w = spanWidth(span);
+    item.w = w;
+    item.h = w / ratio;
+    item.x = columnLeft(nearestStart(item.x, span));
   }
 
   function applyBox(item) {
@@ -611,23 +643,10 @@ function openAdminEditor(session) {
     syncWide(item);
   }
 
-  function snapDelta(edges, targets) {
-    let best = null;
-    edges.forEach((edge) => {
-      targets.forEach((target) => {
-        const delta = target - edge;
-        if (Math.abs(delta) <= ADMIN_SNAP && (best === null || Math.abs(delta) < Math.abs(best))) {
-          best = delta;
-        }
-      });
-    });
-    return best || 0;
-  }
-
   function snapMove(item) {
-    if (!metrics) return;
-    item.x += snapDelta([item.x, item.x + item.w], metrics.xs);
-    item.y += snapDelta([item.y, item.y + item.h], metrics.ys);
+    metrics = computeMetrics();
+    const span = nearestSpan(item.w);
+    item.x = columnLeft(nearestStart(item.x, span));
   }
 
   function itemRatio(item, origin) {
@@ -654,52 +673,50 @@ function openAdminEditor(session) {
     const horizontal = edges.left || edges.right;
     const vertical = edges.top || edges.bottom;
     const minH = 24 / ratio;
-    let across = horizontal
+    const across = horizontal
       ? Math.max(24, edges.left ? anchorX - point.x : point.x - anchorX)
       : origin.w;
-    let down = vertical
+    const down = vertical
       ? Math.max(minH, edges.top ? anchorY - point.y : point.y - anchorY)
       : origin.h;
-    let w;
-    let h;
-    if (horizontal && vertical) {
-      h = Math.max(minH, (across * ratio + down) / (ratio * ratio + 1));
-      w = h * ratio;
-    } else if (horizontal) {
-      w = across;
-      h = w / ratio;
+    const desiredW = horizontal && vertical
+      ? Math.max(24, Math.max(minH, (across * ratio + down) / (ratio * ratio + 1)) * ratio)
+      : horizontal
+        ? across
+        : Math.max(24, down * ratio);
+    metrics = computeMetrics();
+    let span = nearestSpan(desiredW);
+    let box;
+    if (edges.right) {
+      const start = nearestStart(origin.x, 1);
+      span = Math.max(1, Math.min(span, metrics.cols - start));
+      const w = spanWidth(span);
+      box = placeFromAnchor(anchorX, anchorY, w, w / ratio, edges, origin);
+      box.x = columnLeft(start);
+    } else if (edges.left) {
+      let end = 0;
+      let endDist = Infinity;
+      const right = origin.x + origin.w;
+      for (let i = 0; i < metrics.cols; i += 1) {
+        const dist = Math.abs(columnLeft(i) + metrics.colW - right);
+        if (dist < endDist) {
+          endDist = dist;
+          end = i;
+        }
+      }
+      span = Math.max(1, Math.min(span, end + 1));
+      const w = spanWidth(span);
+      box = placeFromAnchor(anchorX, anchorY, w, w / ratio, edges, origin);
+      box.x = columnLeft(end - span + 1);
     } else {
-      h = down;
-      w = h * ratio;
+      const w = spanWidth(span);
+      box = placeFromAnchor(anchorX, anchorY, w, w / ratio, edges, origin);
+      box.x = columnLeft(nearestStart(box.x, span));
     }
-    if (w < 24) {
-      w = 24;
-      h = w / ratio;
-    }
-    let box = placeFromAnchor(anchorX, anchorY, w, h, edges, origin);
-    let best = box;
-    let bestShift = Infinity;
-    if (horizontal && metrics) {
-      const edge = edges.left ? box.x : box.x + box.w;
-      const delta = snapDelta([edge], metrics.xs);
-      if (delta && Math.abs(delta) < bestShift) {
-        const nw = Math.max(24, box.w + (edges.left ? -delta : delta));
-        best = placeFromAnchor(anchorX, anchorY, nw, nw / ratio, edges, origin);
-        bestShift = Math.abs(delta);
-      }
-    }
-    if (vertical && metrics) {
-      const edge = edges.top ? box.y : box.y + box.h;
-      const delta = snapDelta([edge], metrics.ys);
-      if (delta && Math.abs(delta) < bestShift) {
-        const nh = Math.max(minH, box.h + (edges.top ? -delta : delta));
-        best = placeFromAnchor(anchorX, anchorY, nh * ratio, nh, edges, origin);
-      }
-    }
-    item.x = best.x;
-    item.y = best.y;
-    item.w = best.w;
-    item.h = best.h;
+    item.x = box.x;
+    item.y = box.y;
+    item.w = box.w;
+    item.h = box.h;
   }
 
   function layerPoint(event) {
@@ -806,6 +823,8 @@ function openAdminEditor(session) {
     event.preventDefault();
     event.stopPropagation();
     select(item);
+    seatColumns(item);
+    applyBox(item);
     item.el.setPointerCapture(event.pointerId);
     drag = {
       mode,
@@ -894,6 +913,10 @@ function openAdminEditor(session) {
         w,
         h
       });
+      if (item) {
+        seatColumns(item);
+        applyBox(item);
+      }
       select(item);
       save();
       drawGrid();
@@ -916,7 +939,7 @@ function openAdminEditor(session) {
     const files = [...file.files];
     file.value = '';
     let offset = 0;
-    files.forEach((blob) => {
+    files.forEach((blob, index) => {
       const reader = new FileReader();
       reader.onload = () => {
         const src = String(reader.result);
@@ -933,6 +956,13 @@ function openAdminEditor(session) {
           });
           offset += 24;
           if (!item) return;
+          seatColumns(item);
+          if (index > 0) {
+            const span = nearestSpan(item.w);
+            const start = Math.min(metrics.cols - span, nearestStart(item.x, span) + index);
+            item.x = columnLeft(start);
+          }
+          applyBox(item);
           select(item);
           save();
           drawGrid();
@@ -958,8 +988,19 @@ function openAdminEditor(session) {
     }
     const step = event.shiftKey ? 10 : 1;
     let moved = false;
-    if (event.key === 'ArrowLeft') { selected.x -= step; moved = true; }
-    if (event.key === 'ArrowRight') { selected.x += step; moved = true; }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      const before = selected.x;
+      seatColumns(selected);
+      const span = nearestSpan(selected.w);
+      let start = nearestStart(selected.x, span);
+      if (Math.abs(before - selected.x) < 0.5) {
+        start = event.key === 'ArrowLeft'
+          ? Math.max(0, start - 1)
+          : Math.min(metrics.cols - span, start + 1);
+      }
+      selected.x = columnLeft(start);
+      moved = true;
+    }
     if (event.key === 'ArrowUp') { selected.y -= step; moved = true; }
     if (event.key === 'ArrowDown') { selected.y += step; moved = true; }
     if (!moved) return;
