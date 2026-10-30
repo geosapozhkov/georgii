@@ -1,0 +1,61 @@
+{
+  "description": "We made some images with guys from the agency Poool. \n\nThanks a lot!\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nSoft: Plasticity, C4D Redshift,\nAfter Effects.",
+  "images": [
+    {
+      "id": "1793388312559-92ba8d3558079",
+      "x": 400.1666666666667,
+      "y": 441.6369614512472,
+      "w": 564.25,
+      "h": 1003.367006802721,
+      "src": "Courses/hardsurface/000/image-2ba8d3558079.png"
+    },
+    {
+      "id": "1793388312566-fa9710733f81b8",
+      "x": 596.25,
+      "y": 3749,
+      "w": 368.1666666666667,
+      "h": 465.60067340067343,
+      "src": "Courses/hardsurface/000/image-9710733f81b8.png"
+    },
+    {
+      "id": "1793388312599-141ba38b2d4818",
+      "x": 1380.5833333333335,
+      "y": 3749,
+      "w": 368.1666666666667,
+      "h": 465.30631084256464,
+      "src": "Courses/hardsurface/000/image-1ba38b2d4818.png"
+    },
+    {
+      "id": "1793393871277-98f3e193e186",
+      "x": 988.4166666666667,
+      "y": 2028,
+      "w": 368.1666666666667,
+      "h": 327.39550374687764,
+      "src": "Courses/hardsurface/000/image-98f3e193e186.png"
+    },
+    {
+      "id": "1793396799585-9659c281ec2be8",
+      "x": 1380.5833333333335,
+      "y": 1032.4388392857143,
+      "w": 956.4166666666667,
+      "h": 850.5276785714286,
+      "src": "Courses/hardsurface/000/Frame-1288-59c281ec2be8.png"
+    },
+    {
+      "id": "1793396799586-55e77a9b3e2788",
+      "x": 8,
+      "y": 2574.5712962962966,
+      "w": 1152.5,
+      "h": 671.3066239316239,
+      "src": "Courses/hardsurface/000/Frame-1267-e77a9b3e2788.png"
+    },
+    {
+      "id": "1793396799586-fe879a53c1a26",
+      "x": 8,
+      "y": 4867.367042824074,
+      "w": 2329,
+      "h": 1403.060763888889,
+      "src": "Courses/hardsurface/000/Frame-1270-e879a53c1a26.png"
+    }
+  ]
+}
