@@ -991,6 +991,8 @@ function projectAdminSession() {
     storageKey: projectLayoutStorageKey(),
     descriptionId: 'project-description',
     descriptionFallback: projectDescription ? projectDescription.textContent : '',
+    projectName,
+    category,
     publicUrl: `project.html?${query}`,
     prepare: beginProjectDescriptionEdit,
     onLeave(description) {
@@ -1115,7 +1117,7 @@ window.reloadProjectMedia = () => loadProject(projectName);
 setInterval(async () => {
   const host = window.location.hostname;
   if (host !== '127.0.0.1' && host !== 'localhost') return;
-  if (document.getElementById('admin-layer') || document.getElementById('admin-lock')) return;
+  if (document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
   if (window.refreshAdminFileLayout) await window.refreshAdminFileLayout(projectAdminSession());
   if (!projectDescription || projectDescription.classList.contains('is-editing')) return;
   if (readLocalProjectDescription() !== null) return;

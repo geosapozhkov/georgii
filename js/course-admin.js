@@ -519,14 +519,15 @@ function readLocalMobile(session) {
   return null;
 }
 
-function rememberMobile(session, mobile) {
+function rememberMobile(session, mobile, description) {
   const key = storageKeyFor(session);
   let data = {};
   try {
     data = JSON.parse(localStorage.getItem(key) || '{}');
   } catch (_) {}
   if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
-  data.mobile = mobile;
+  if (Array.isArray(mobile)) data.mobile = mobile;
+  if (typeof description === 'string') data.description = description;
   writeLayout(key, data);
 }
 
@@ -697,6 +698,53 @@ function collectMobilePlan(container) {
   return plan;
 }
 
+async function fetchJsonFile(path) {
+  try {
+    const response = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function jsonGitFile(path, data) {
+  const text = `${JSON.stringify(data, null, 2)}\n`;
+  return {
+    path,
+    base64: bytesToBase64(new TextEncoder().encode(text))
+  };
+}
+
+function editedDescription(session) {
+  const note = descriptionNode(session);
+  if (!note) return null;
+  return descriptionText(note);
+}
+
+async function descriptionCopyChange(session, description) {
+  if (session.courseId) {
+    const data = await fetchJsonFile('js/course-copy.json');
+    if (!data) return false;
+    const course = Object.assign({}, data[session.courseId]);
+    course[session.groupId] = description;
+    data[session.courseId] = course;
+    return jsonGitFile('js/course-copy.json', data);
+  }
+  const name = session.projectName;
+  const category = String(session.category || '').toLowerCase();
+  if (!name || !category) return false;
+  const data = await fetchJsonFile('js/project-copy.json');
+  if (!data) return false;
+  const descriptions = Object.assign({}, data.descriptions);
+  descriptions[`${category}:${name}`] = description;
+  data.descriptions = descriptions;
+  if (!Array.isArray(data.added)) data.added = [];
+  if (!Array.isArray(data.removed)) data.removed = [];
+  return jsonGitFile('js/project-copy.json', data);
+}
+
 async function publishMobileOnly(session, mobile) {
   const dir = assetDirFor(session);
   if (!SAFE_ASSET_DIR.test(dir)) return false;
@@ -704,19 +752,26 @@ async function publishMobileOnly(session, mobile) {
   if (!current && session.courseId) return false;
   const body = current ? Object.assign({}, current) : { images: [] };
   if (!Array.isArray(body.images)) body.images = [];
-  if (typeof body.description !== 'string') body.description = '';
-  body.mobile = mobile;
-  const text = `${JSON.stringify(body, null, 2)}\n`;
+  const edited = editedDescription(session);
+  if (typeof edited === 'string') body.description = edited;
+  else if (typeof body.description !== 'string') body.description = '';
+  if (Array.isArray(mobile)) body.mobile = mobile;
+  const files = [jsonGitFile(`${dir}/layout.json`, body)];
+  const copy = await descriptionCopyChange(session, body.description || '');
+  if (!copy) return false;
+  files.push(copy);
   try {
-    await commitRepoFiles([{
-      path: `${dir}/layout.json`,
-      base64: bytesToBase64(new TextEncoder().encode(text))
-    }], `Save mobile ${dir}`);
+    await commitRepoFiles(files, `Save mobile ${dir}`);
   } catch (error) {
     if (githubAuthFailure(error)) return 'auth';
     return false;
   }
-  rememberMobile(session, mobile);
+  rememberMobile(session, Array.isArray(body.mobile) ? body.mobile : null, typeof edited === 'string' ? edited : undefined);
+  if (session.courseId && typeof edited === 'string') {
+    const course = Object.assign({}, publishedCopy[session.courseId]);
+    course[session.groupId] = edited;
+    publishedCopy[session.courseId] = course;
+  }
   return true;
 }
 
@@ -755,7 +810,7 @@ function mountMobileSave(session, container) {
       }
     }
     const saved = localStorage.getItem(GITHUB_TOKEN_KEY)
-      ? await publishMobileOnly(session, collectMobilePlan(container))
+      ? await publishMobileOnly(session, container ? collectMobilePlan(container) : null)
       : 'auth';
     if (saved === true) {
       window.location.replace(publicPageUrl(session));
@@ -799,10 +854,18 @@ async function openMobileAdmin(session) {
   if (session.courseId) await showMobileCourseLayout(session);
   else if (window.applyMobileProjectSpacing) await window.applyMobileProjectSpacing(session);
   const container = session.courseId ? document.getElementById('course-mobile-grid') : document.getElementById('file-grid');
-  if (!container) return;
-  primeMobileGaps(container, Boolean(session.courseId));
-  [...container.children].forEach((cell) => bindMobileHold(cell));
+  if (container) {
+    primeMobileGaps(container, Boolean(session.courseId));
+    [...container.children].forEach((cell) => bindMobileHold(cell));
+  }
+  enableMobileDescription(session);
   mountMobileSave(session, container);
+}
+
+function enableMobileDescription(session) {
+  if (typeof session.prepare === 'function') session.prepare();
+  else applyCourseDescription(session, true);
+  if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
 }
 
 async function applyMobileProjectSpacing(session) {
@@ -1219,6 +1282,7 @@ function applyCourseDescription(session, editing) {
     el.dataset.bound = '1';
     el.addEventListener('input', () => {
       el.classList.toggle('is-empty', descriptionText(el) === '');
+      if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
     });
   }
 }

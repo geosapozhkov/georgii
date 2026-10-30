@@ -1410,6 +1410,13 @@ body.course-page main {
   body.mobile-admin {
     padding-bottom: 5rem !important;
   }
+  body.mobile-admin .course-description.is-editing,
+  body.mobile-admin #project-description.is-editing {
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+    touch-action: manipulation;
+  }
   body.mobile-admin #course-mobile-grid > div,
   body.mobile-admin #file-grid > div,
   body.mobile-admin #course-mobile-grid img,
