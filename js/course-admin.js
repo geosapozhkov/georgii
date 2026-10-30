@@ -1,4 +1,5 @@
 const ADMIN_PASSWORD = 'Sapozhka';
+const LEVEL_SNAP = 8;
 
 function layoutKey(courseId, groupId) {
   return `georgii-course-layout:${courseId}:${groupId}`;
@@ -643,10 +644,21 @@ function openAdminEditor(session) {
     syncWide(item);
   }
 
+  function snapLevel(item) {
+    let best = null;
+    images.forEach((other) => {
+      if (other === item || Math.abs(other.h - item.h) > 1) return;
+      const delta = other.y - item.y;
+      if (Math.abs(delta) <= LEVEL_SNAP && (best === null || Math.abs(delta) < Math.abs(best))) best = delta;
+    });
+    if (best) item.y += best;
+  }
+
   function snapMove(item) {
     metrics = computeMetrics();
     const span = nearestSpan(item.w);
     item.x = columnLeft(nearestStart(item.x, span));
+    snapLevel(item);
   }
 
   function itemRatio(item, origin) {
