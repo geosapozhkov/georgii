@@ -971,6 +971,7 @@ function beginProjectDescriptionEdit() {
   if (!el.dataset.bound) {
     el.dataset.bound = '1';
     el.addEventListener('input', () => {
+      el.dataset.descDirty = '1';
       el.classList.toggle('is-empty', projectDescriptionText(el.innerText) === '');
     });
   }
@@ -1033,15 +1034,14 @@ async function loadProjectDescription() {
   } catch (e) {
     jsonText = '';
   }
-  const local = readLocalProjectDescription();
   const shared = sharedProjectDescription();
   let text = null;
-  if (local !== null) text = local;
-  else if (shared !== null) text = shared;
+  if (shared !== null) text = shared;
   else if (jsonText.trim() !== '') text = jsonText;
   else text = generateRandomDescription();
   projectDescription.textContent = text;
   projectDescription.style.display = 'block';
+  if (window.refreshSharedDescription) await window.refreshSharedDescription(projectAdminSession());
 }
 
 // Инициализация
@@ -1119,12 +1119,7 @@ setInterval(async () => {
   if (host !== '127.0.0.1' && host !== 'localhost') return;
   if (document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
   if (window.refreshAdminFileLayout) await window.refreshAdminFileLayout(projectAdminSession());
-  if (!projectDescription || projectDescription.classList.contains('is-editing')) return;
-  if (readLocalProjectDescription() !== null) return;
+  if (!projectDescription || projectDescription.classList.contains('is-editing') || projectDescription.dataset.descDirty === '1') return;
   if (window.loadProjectCopy) await window.loadProjectCopy();
-  const shared = sharedProjectDescription();
-  if (typeof shared === 'string' && projectDescription.textContent !== shared) {
-    projectDescription.textContent = shared;
-    projectDescription.style.display = 'block';
-  }
+  if (window.refreshSharedDescription) await window.refreshSharedDescription(projectAdminSession());
 }, 1000);

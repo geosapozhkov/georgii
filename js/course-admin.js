@@ -135,12 +135,17 @@ function hydrateImages(key) {
 
 function writeLayout(key, payload) {
   let next = payload;
-  if (!next || !Array.isArray(next.mobile)) {
-    try {
-      const prev = JSON.parse(localStorage.getItem(key) || '{}');
-      if (prev && Array.isArray(prev.mobile)) next = Object.assign({}, payload, { mobile: prev.mobile });
-    } catch (_) {}
-  }
+  try {
+    const prev = JSON.parse(localStorage.getItem(key) || '{}');
+    if (prev && typeof prev === 'object' && !Array.isArray(prev)) {
+      if (!next || !Array.isArray(next.mobile)) {
+        if (Array.isArray(prev.mobile)) next = Object.assign({}, payload, { mobile: prev.mobile });
+      }
+      if (next && !Number(next.descriptionUpdatedAt) && Number(prev.descriptionUpdatedAt)) {
+        next = Object.assign({}, next, { descriptionUpdatedAt: prev.descriptionUpdatedAt });
+      }
+    }
+  } catch (_) {}
   const raw = JSON.stringify(next);
   const previous = localStorage.getItem(key);
   try {
@@ -519,7 +524,7 @@ function readLocalMobile(session) {
   return null;
 }
 
-function rememberMobile(session, mobile, description) {
+function rememberMobile(session, mobile, description, descriptionUpdatedAt) {
   const key = storageKeyFor(session);
   let data = {};
   try {
@@ -527,8 +532,33 @@ function rememberMobile(session, mobile, description) {
   } catch (_) {}
   if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
   if (Array.isArray(mobile)) data.mobile = mobile;
-  if (typeof description === 'string') data.description = description;
+  if (typeof description === 'string') {
+    data.description = description;
+    if (descriptionUpdatedAt) data.descriptionUpdatedAt = descriptionUpdatedAt;
+  }
   writeLayout(key, data);
+}
+
+function readLocalRecord(session) {
+  try {
+    const data = JSON.parse(localStorage.getItem(storageKeyFor(session)) || 'null');
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    return data;
+  } catch (_) {
+    return null;
+  }
+}
+
+function newerDescription(local, file) {
+  const localAt = local && Number(local.descriptionUpdatedAt) || 0;
+  const fileAt = file && Number(file.descriptionUpdatedAt) || 0;
+  if (!localAt && !fileAt) return null;
+  const localText = local && typeof local.description === 'string' ? local.description : null;
+  const fileText = file && typeof file.description === 'string' ? file.description : null;
+  if (fileAt >= localAt && fileText !== null) return { text: fileText, at: fileAt };
+  if (localText !== null) return { text: localText, at: localAt };
+  if (fileText !== null) return { text: fileText, at: fileAt };
+  return null;
 }
 
 async function fetchLayoutDocument(dir) {
@@ -753,8 +783,11 @@ async function publishMobileOnly(session, mobile) {
   const body = current ? Object.assign({}, current) : { images: [] };
   if (!Array.isArray(body.images)) body.images = [];
   const edited = editedDescription(session);
-  if (typeof edited === 'string') body.description = edited;
-  else if (typeof body.description !== 'string') body.description = '';
+  const descriptionUpdatedAt = typeof edited === 'string' ? Date.now() : 0;
+  if (typeof edited === 'string') {
+    body.description = edited;
+    body.descriptionUpdatedAt = descriptionUpdatedAt;
+  } else if (typeof body.description !== 'string') body.description = '';
   if (Array.isArray(mobile)) body.mobile = mobile;
   const files = [jsonGitFile(`${dir}/layout.json`, body)];
   const copy = await descriptionCopyChange(session, body.description || '');
@@ -766,7 +799,12 @@ async function publishMobileOnly(session, mobile) {
     if (githubAuthFailure(error)) return 'auth';
     return false;
   }
-  rememberMobile(session, Array.isArray(body.mobile) ? body.mobile : null, typeof edited === 'string' ? edited : undefined);
+  rememberMobile(
+    session,
+    Array.isArray(body.mobile) ? body.mobile : null,
+    typeof edited === 'string' ? edited : undefined,
+    descriptionUpdatedAt || undefined
+  );
   if (session.courseId && typeof edited === 'string') {
     const course = Object.assign({}, publishedCopy[session.courseId]);
     course[session.groupId] = edited;
@@ -860,6 +898,7 @@ async function openMobileAdmin(session) {
   }
   enableMobileDescription(session);
   mountMobileSave(session, container);
+  refreshSharedDescription(session);
 }
 
 function enableMobileDescription(session) {
@@ -1237,31 +1276,84 @@ let publishedCopy = {};
 
 async function loadPublishedCopy() {
   try {
-    const response = await fetch('js/course-copy.json', { cache: 'no-store' });
+    const response = await fetch(`js/course-copy.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) return;
     const data = await response.json();
     if (data && typeof data === 'object') publishedCopy = data;
   } catch (_) {}
 }
 
+const sharedDescriptions = new Map();
+
 function resolveCourseDescription(session) {
-  try {
-    const raw = localStorage.getItem(layoutKey(session.courseId, session.groupId));
-    if (raw != null) {
-      const data = JSON.parse(raw);
-      if (data && typeof data.description === 'string') return data.description;
-    }
-  } catch (_) {}
+  const key = storageKeyFor(session);
+  if (sharedDescriptions.has(key)) return sharedDescriptions.get(key);
+  const local = readLocalRecord(session);
+  if (local && Number(local.descriptionUpdatedAt) && typeof local.description === 'string') return local.description;
   const shared = publishedCopy[session.courseId];
   if (shared && typeof shared[session.groupId] === 'string') return shared[session.groupId];
   return session.descriptionFallback || '';
 }
+
+async function refreshSharedDescription(session) {
+  if (!session) return '';
+  const key = storageKeyFor(session);
+  const local = readLocalRecord(session);
+  const file = await fetchLayoutDocument(assetDirFor(session));
+  const picked = newerDescription(local, file);
+  let text = null;
+  let at = 0;
+  if (picked) {
+    text = picked.text;
+    at = picked.at;
+  } else if (session.courseId) {
+    await loadPublishedCopy();
+    const course = publishedCopy[session.courseId];
+    if (course && typeof course[session.groupId] === 'string') text = course[session.groupId];
+    else if (file && typeof file.description === 'string' && file.description) text = file.description;
+    else text = session.descriptionFallback || '';
+  } else {
+    if (window.loadProjectCopy) await window.loadProjectCopy();
+    const copy = window.getProjectCopy ? window.getProjectCopy() : null;
+    const category = String(session.category || '').toLowerCase();
+    const shared = copy && copy.descriptions ? copy.descriptions[`${category}:${session.projectName}`] : undefined;
+    if (typeof shared === 'string') text = shared;
+    else if (file && typeof file.description === 'string' && file.description) text = file.description;
+    else text = session.descriptionFallback || '';
+  }
+  if (typeof text !== 'string') text = '';
+  sharedDescriptions.set(key, text);
+  if (at && (!local || local.description !== text || Number(local.descriptionUpdatedAt) !== at)) {
+    const stored = local && typeof local === 'object' ? Object.assign({}, local) : {};
+    stored.description = text;
+    stored.descriptionUpdatedAt = at;
+    writeLayout(key, stored);
+  }
+  const note = descriptionNode(session);
+  if (note && note.dataset.descDirty === '1') return text;
+  if (session.courseId) {
+    const editing = Boolean(
+      (note && note.isContentEditable)
+      || document.getElementById('mobile-admin')
+      || document.getElementById('admin-layer')
+    );
+    applyCourseDescription(session, editing);
+    if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
+  } else if (note && descriptionText(note) !== text) {
+    const editing = note.isContentEditable;
+    note.textContent = text;
+    if (editing) note.classList.toggle('is-empty', text === '');
+  }
+  return text;
+}
+window.refreshSharedDescription = refreshSharedDescription;
 
 function applyCourseDescription(session, editing) {
   const nameCol = document.querySelector('.course-name-col');
   if (!session || !nameCol) return;
   const text = resolveCourseDescription(session);
   let el = document.getElementById('course-description');
+  if (el && el.dataset.descDirty === '1') return;
   if (!editing && !text) {
     if (el) el.remove();
     return;
@@ -1281,6 +1373,7 @@ function applyCourseDescription(session, editing) {
   if (editing && !el.dataset.bound) {
     el.dataset.bound = '1';
     el.addEventListener('input', () => {
+      el.dataset.descDirty = '1';
       el.classList.toggle('is-empty', descriptionText(el) === '');
       if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
     });
@@ -1440,6 +1533,7 @@ function bindLayoutMode(session) {
 
 async function showSavedCourseLayout(session) {
   bindLayoutMode(session);
+  refreshSharedDescription(session);
   if (phoneLayout()) {
     showMobileCourseLayout(session);
     return;
@@ -1807,6 +1901,7 @@ function openAdminEditor(session) {
     const nextNames = new Set(layoutImages.filter((item) => !item.vimeo && item.src).map((item) => item.src.split('/').pop()));
     const removed = [...previousNames].filter((name) => name && !nextNames.has(name));
     const description = savedDescription();
+    const descriptionUpdatedAt = Date.now();
     const files = pictures.map((picture) => ({
       path: picture.path,
       base64: picture.base64,
@@ -1815,13 +1910,15 @@ function openAdminEditor(session) {
     const previousDoc = await fetchLayoutDocument(dir);
     let mobileKeep = previousDoc && Array.isArray(previousDoc.mobile) ? previousDoc.mobile : null;
     if (!mobileKeep) mobileKeep = readLocalMobile(session);
-    const layoutPayload = { description, images: layoutImages };
+    const layoutPayload = { description, descriptionUpdatedAt, images: layoutImages };
     if (mobileKeep) layoutPayload.mobile = mobileKeep;
     const layoutText = `${JSON.stringify(layoutPayload, null, 2)}\n`;
     files.push({
       path: `${dir}/layout.json`,
       base64: bytesToBase64(new TextEncoder().encode(layoutText))
     });
+    const copy = await descriptionCopyChange(session, description);
+    if (copy) files.push(copy);
     if (!dir.startsWith('Courses/')) {
       const manifest = await nextFilesJson(dir, nextNames, removed);
       const manifestText = `${JSON.stringify(manifest, null, 2)}\n`;
@@ -1845,7 +1942,7 @@ function openAdminEditor(session) {
       const img = picture.item.el.querySelector('img');
       if (img) img.src = picture.path.split('/').map((part) => encodeURIComponent(part)).join('/');
     }
-    writeLayout(key, { description, images: layoutImages });
+    writeLayout(key, { description, descriptionUpdatedAt, images: layoutImages });
     return true;
   }
 
@@ -2371,6 +2468,7 @@ function openAdminEditor(session) {
 
   if (typeof session.prepare === 'function') session.prepare();
   else applyCourseDescription(session, true);
+  refreshSharedDescription(session);
   drawGrid();
   beginIncoming();
   loadLayoutImages(session).then((stored) => {
@@ -2512,7 +2610,9 @@ function mergeProjectRecords(base) {
       const raw = localStorage.getItem(`georgii-project-layout:${category}:${project.name}`);
       if (raw == null) return;
       const data = JSON.parse(raw);
-      if (data && typeof data.description === 'string') project.description = data.description;
+      const stamped = data && Number(data.descriptionUpdatedAt) && typeof data.description === 'string';
+      if (stamped) project.description = data.description;
+      else if (typeof shared !== 'string' && data && typeof data.description === 'string') project.description = data.description;
     } catch (_) {}
   });
   const removed = new Set(localRemovedProjects().concat(projectCopy.removed || []));
