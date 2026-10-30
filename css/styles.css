@@ -1232,7 +1232,33 @@ body.course-page main {
   padding: 0;
 }
 #admin-save.is-wrong,
-.admin-image.is-unsaved {
+.admin-image.is-unsaved,
+#admin-github.is-wrong {
+  opacity: 0.35;
+}
+#admin-save.is-saving {
+  pointer-events: none;
+  animation: admin-save-pulse 1.2s ease-in-out infinite;
+}
+@keyframes admin-save-pulse {
+  50% { opacity: 0.35; }
+}
+#admin-github {
+  width: 14rem;
+  border: 0;
+  background: transparent;
+  color: #ACACAC;
+  caret-color: #ACACAC;
+  text-align: right;
+  font-size: var(--description-font-size);
+  line-height: 1.2;
+  padding: 0;
+}
+#admin-github:focus {
+  outline: none;
+}
+#admin-github::placeholder {
+  color: #ACACAC;
   opacity: 0.35;
 }
 #admin-home {

@@ -191,6 +191,181 @@ function storedOnDisk(dir, src) {
   return Boolean(dir && typeof src === 'string' && (src.startsWith(`${dir}/`) || src.startsWith(`/${dir}/`)));
 }
 
+const GITHUB_REPO = 'geosapozhkov/georgii';
+const GITHUB_BRANCH = 'main';
+const GITHUB_TOKEN_KEY = 'georgii-github-token';
+const SAFE_ASSET_DIR = /^(?:Courses\/[A-Za-z0-9_-]{1,64}\/\d{3}|projects\/[\p{L}\p{N}_']{1,80}\/images|RND(?:\/[\p{L}\p{N}_']{1,80})?)$/u;
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  const size = 0x8000;
+  for (let i = 0; i < bytes.length; i += size) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + size));
+  }
+  return btoa(binary);
+}
+
+async function githubRequest(path, options) {
+  const token = localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+  const response = await fetch(`https://api.github.com${path}`, {
+    method: (options && options.method) || 'GET',
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json'
+    },
+    body: options && options.body
+  });
+  if (!response.ok) {
+    let detail = '';
+    try { detail = await response.text(); } catch (_) {}
+    const error = new Error('github');
+    error.status = response.status;
+    error.detail = detail.slice(0, 400);
+    throw error;
+  }
+  if (response.status === 204) return {};
+  return response.json();
+}
+
+function githubAuthFailure(error) {
+  if (!error) return false;
+  if (error.status === 401) return true;
+  if (error.status !== 403) return false;
+  const detail = String(error.detail || '').toLowerCase();
+  return !detail.includes('rate limit');
+}
+
+async function eachLimit(items, limit, worker) {
+  if (!items.length) return;
+  let index = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (index < items.length) {
+      const current = index;
+      index += 1;
+      await worker(items[current]);
+    }
+  });
+  await Promise.all(runners);
+}
+
+async function commitRepoFiles(files, message, onProgress) {
+  let left = files.filter((file) => file.count).length;
+  if (onProgress) onProgress(left);
+  await eachLimit(files, 3, async (file) => {
+    if (file.delete) {
+      file.sha = null;
+    } else if (!file.sha) {
+      const blob = await githubRequest(`/repos/${GITHUB_REPO}/git/blobs`, {
+        method: 'POST',
+        body: JSON.stringify({ content: file.base64, encoding: 'base64' })
+      });
+      file.sha = blob.sha;
+    }
+    if (file.count) {
+      left -= 1;
+      if (onProgress) onProgress(Math.max(0, left));
+    }
+  });
+
+  const writeCommit = async (batch) => {
+    const ref = await githubRequest(`/repos/${GITHUB_REPO}/git/ref/heads/${GITHUB_BRANCH}`);
+    const parent = ref.object.sha;
+    const current = await githubRequest(`/repos/${GITHUB_REPO}/git/commits/${parent}`);
+    let tree;
+    try {
+      tree = await githubRequest(`/repos/${GITHUB_REPO}/git/trees`, {
+        method: 'POST',
+        body: JSON.stringify({
+          base_tree: current.tree.sha,
+          tree: batch.map((file) => ({
+            path: file.path,
+            mode: '100644',
+            type: 'blob',
+            sha: file.delete ? null : file.sha
+          }))
+        })
+      });
+    } catch (error) {
+      error.step = 'tree';
+      throw error;
+    }
+    const commit = await githubRequest(`/repos/${GITHUB_REPO}/git/commits`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        tree: tree.sha,
+        parents: [parent]
+      })
+    });
+    try {
+      await githubRequest(`/repos/${GITHUB_REPO}/git/refs/heads/${GITHUB_BRANCH}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sha: commit.sha })
+      });
+    } catch (error) {
+      error.step = 'ref';
+      throw error;
+    }
+  };
+
+  let batch = files;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await writeCommit(batch);
+      return;
+    } catch (error) {
+      if (!error || error.status !== 422 || attempt === 2) throw error;
+      if (error.step === 'tree' && batch.some((file) => file.delete)) {
+        batch = batch.filter((file) => !file.delete);
+        continue;
+      }
+      if (error.step === 'ref') continue;
+      throw error;
+    }
+  }
+}
+
+async function pictureFile(item) {
+  let blob = item.blob instanceof Blob ? item.blob : null;
+  if (!blob && item.src) {
+    try {
+      const response = await fetch(item.src);
+      if (response.ok) blob = await response.blob();
+    } catch (_) {}
+  }
+  if (!blob) return null;
+  let ext = await sniffedExt(blob);
+  if (!ext || blob.size > 25 * 1024 * 1024) {
+    const jpeg = await blobToJpeg(blob, 4096, 0.9) || await blobToJpeg(blob, 1600, 0.8);
+    if (!jpeg) return null;
+    blob = jpeg;
+    ext = 'jpg';
+  }
+  const name = imageFileName(item, ext);
+  return { name, blob, bytes: new Uint8Array(await blob.arrayBuffer()) };
+}
+
+async function nextFilesJson(dir, nextNames, removed) {
+  let files = [];
+  let cover = '';
+  try {
+    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/files.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (data && Array.isArray(data.files)) files = data.files.filter((name) => typeof name === 'string');
+      if (data && typeof data.cover === 'string') cover = data.cover;
+    }
+  } catch (_) {}
+  const gone = new Set(removed);
+  files = files.filter((name) => !gone.has(name));
+  nextNames.forEach((name) => {
+    if (!files.includes(name)) files.push(name);
+  });
+  return { files, cover };
+}
+
 async function sniffedExt(blob) {
   try {
     const bytes = new Uint8Array(await blob.slice(0, 32).arrayBuffer());
@@ -521,6 +696,15 @@ function mountCourseVisual(box, data) {
       : data.src.split('/').map((part) => encodeURIComponent(part)).join('/');
     img.alt = '';
     img.draggable = false;
+    if (data.storeKey && data.id) {
+      img.addEventListener('error', () => {
+        if (img.dataset.fallback === '1') return;
+        img.dataset.fallback = '1';
+        readImageBlob(data.storeKey, data.id).then((blob) => {
+          if (blob) img.src = URL.createObjectURL(blob);
+        });
+      }, { once: true });
+    }
     box.appendChild(img);
     return { setWide() {}, destroy() {} };
   }
@@ -760,7 +944,7 @@ async function showMobileCourseLayout(session) {
     const cell = document.createElement('div');
     const box = document.createElement('div');
     box.className = 'course-layout-image';
-    const visual = mountCourseVisual(box, data);
+    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
     if (visual.vimeo) visual.setWide(true);
     cell.appendChild(box);
     grid.appendChild(cell);
@@ -806,7 +990,7 @@ async function showSavedCourseLayout(session) {
     box.style.top = `${Number(data.y) || 0}px`;
     box.style.width = `${Number(data.w) || 0}px`;
     box.style.height = `${Number(data.h) || 0}px`;
-    const visual = mountCourseVisual(box, data);
+    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
     layer.appendChild(box);
     rememberWide({
       x: Number(data.x) || 0,
@@ -906,7 +1090,15 @@ function openAdminEditor(session) {
   videoButton.id = 'admin-video';
   videoButton.type = 'button';
   videoButton.textContent = 'video';
-  tools.append(saveButton, add, videoButton);
+  const tokenInput = document.createElement('input');
+  tokenInput.id = 'admin-github';
+  tokenInput.type = 'password';
+  tokenInput.autocomplete = 'off';
+  tokenInput.spellcheck = false;
+  tokenInput.placeholder = 'github';
+  tokenInput.setAttribute('aria-label', 'github');
+  tokenInput.hidden = true;
+  tools.append(tokenInput, saveButton, add, videoButton);
   layer.append(canvas, guides, board);
   document.body.append(layer, file, tools);
 
@@ -1097,19 +1289,115 @@ function openAdminEditor(session) {
     return saveWait;
   }
 
+  async function publishToGithub(onProgress) {
+    await waitForIncoming();
+    if (!tokenInput.hidden) {
+      const typed = tokenInput.value.trim().replace(/^bearer\s+/i, '').trim();
+      if (typed) {
+        localStorage.setItem(GITHUB_TOKEN_KEY, typed);
+        tokenInput.value = '';
+        tokenInput.hidden = true;
+        tokenInput.classList.remove('is-wrong');
+      }
+    }
+    if (!localStorage.getItem(GITHUB_TOKEN_KEY)) return 'auth';
+    const dir = assetDirFor(session);
+    if (!SAFE_ASSET_DIR.test(dir)) return false;
+    const fresh = images.slice();
+    const pictures = [];
+    for (const item of fresh) {
+      if (item.vimeo || storedOnDisk(dir, item.src)) continue;
+      const prepared = await pictureFile(item);
+      if (!prepared) return false;
+      pictures.push({
+        item,
+        name: prepared.name,
+        blob: prepared.blob,
+        path: `${dir}/${prepared.name}`,
+        base64: bytesToBase64(prepared.bytes),
+        count: true
+      });
+    }
+    const previous = await fetchFileLayout(dir);
+    const previousNames = new Set(previous
+      .filter((item) => item && !item.vimeo && item.src && storedOnDisk(dir, item.src))
+      .map((item) => String(item.src).split('/').pop())
+      .filter(Boolean));
+    const planned = new Map(pictures.map((picture) => [picture.item.id, picture.path]));
+    const layoutImages = fresh.map((item) => {
+      const stored = { id: item.id, x: item.x, y: item.y, w: item.w, h: item.h };
+      if (item.vimeo) {
+        stored.vimeo = item.vimeo;
+        stored.src = item.src || '';
+        if (item.hash) stored.hash = item.hash;
+        return stored;
+      }
+      stored.src = planned.get(item.id) || item.src || '';
+      return stored;
+    });
+    if (layoutImages.some((item) => !item.vimeo && !storedOnDisk(dir, item.src))) return false;
+    const nextNames = new Set(layoutImages.filter((item) => !item.vimeo && item.src).map((item) => item.src.split('/').pop()));
+    const removed = [...previousNames].filter((name) => name && !nextNames.has(name));
+    const description = savedDescription();
+    const files = pictures.map((picture) => ({
+      path: picture.path,
+      base64: picture.base64,
+      count: true
+    }));
+    const layoutText = `${JSON.stringify({ description, images: layoutImages }, null, 2)}\n`;
+    files.push({
+      path: `${dir}/layout.json`,
+      base64: bytesToBase64(new TextEncoder().encode(layoutText))
+    });
+    if (!dir.startsWith('Courses/')) {
+      const manifest = await nextFilesJson(dir, nextNames, removed);
+      const manifestText = `${JSON.stringify(manifest, null, 2)}\n`;
+      files.push({
+        path: `${dir}/files.json`,
+        base64: bytesToBase64(new TextEncoder().encode(manifestText))
+      });
+    }
+    removed.forEach((name) => files.push({ path: `${dir}/${name}`, delete: true }));
+    try {
+      await commitRepoFiles(files, `Save ${dir}`, onProgress);
+    } catch (error) {
+      if (githubAuthFailure(error)) return 'auth';
+      return false;
+    }
+    const key = storageKeyFor(session);
+    for (const picture of pictures) {
+      picture.item.src = picture.path;
+      picture.item.blob = picture.blob;
+      await putImageBlob(key, picture.item.id, picture.blob);
+      const img = picture.item.el.querySelector('img');
+      if (img) img.src = picture.path.split('/').map((part) => encodeURIComponent(part)).join('/');
+    }
+    writeLayout(key, { description, images: layoutImages });
+    return true;
+  }
+
   async function leaveAdmin() {
     if (leaveAdmin.busy) return;
     leaveAdmin.busy = true;
     saveButton.classList.remove('is-wrong');
-    const saved = await save();
-    if (!saved) {
+    saveButton.classList.add('is-saving');
+    const saved = await publishToGithub((left) => {
+      if (left > 0) saveButton.dataset.counting = '1';
+      if (saveButton.dataset.counting === '1') saveButton.textContent = String(left);
+    });
+    if (saved !== true) {
       leaveAdmin.busy = false;
+      saveButton.classList.remove('is-saving');
+      delete saveButton.dataset.counting;
+      saveButton.textContent = 'save';
+      if (saved === 'auth') {
+        localStorage.removeItem(GITHUB_TOKEN_KEY);
+        tokenInput.hidden = false;
+        tokenInput.classList.add('is-wrong');
+        tokenInput.focus();
+        return;
+      }
       saveButton.classList.add('is-wrong');
-      const dir = assetDirFor(session);
-      images.forEach((item) => {
-        const onDisk = item.vimeo || storedOnDisk(dir, item.src);
-        item.el.classList.toggle('is-unsaved', !onDisk);
-      });
       return;
     }
     const description = savedDescription();
@@ -1121,6 +1409,12 @@ function openAdminEditor(session) {
   }
 
   saveButton.addEventListener('click', leaveAdmin);
+  tokenInput.addEventListener('input', () => tokenInput.classList.remove('is-wrong'));
+  tokenInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    leaveAdmin();
+  });
 
   function computeMetrics() {
     const width = document.documentElement.clientWidth;
@@ -1506,9 +1800,16 @@ function openAdminEditor(session) {
     setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
   }
 
-  add.addEventListener('click', () => file.click());
+  add.addEventListener('click', () => {
+    if (leaveAdmin.busy) return;
+    file.click();
+  });
   videoButton.addEventListener('click', askVideoLink);
   file.addEventListener('change', () => {
+    if (leaveAdmin.busy) {
+      file.value = '';
+      return;
+    }
     const files = [...file.files];
     file.value = '';
     files.forEach((blob, index) => {
@@ -1626,7 +1927,7 @@ async function showSavedProjectLayout(session) {
       cell.className = 'project-extra-media col-span-12 w-full';
       const box = document.createElement('div');
       box.className = 'course-layout-image';
-      const visual = mountCourseVisual(box, data);
+      const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
       if (visual.vimeo) visual.setWide(true);
       cell.appendChild(box);
       grid.appendChild(cell);
@@ -1645,7 +1946,7 @@ async function showSavedProjectLayout(session) {
     box.style.top = `${Number(data.y) || 0}px`;
     box.style.width = `${Number(data.w) || 0}px`;
     box.style.height = `${Number(data.h) || 0}px`;
-    const visual = mountCourseVisual(box, data);
+    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
     layer.appendChild(box);
     rememberWide({
       x: Number(data.x) || 0,

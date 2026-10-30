@@ -666,6 +666,18 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
     : `projects/${encodeURIComponent(projectName)}${subfolder || ''}/images`;
   
   const foundFiles = [];
+  const arrangedNames = new Set();
+  try {
+    const layoutResponse = await fetch(`${basePath}/layout.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (layoutResponse.ok) {
+      const layout = await layoutResponse.json();
+      (layout.images || []).forEach((item) => {
+        if (!item || !item.src || item.vimeo) return;
+        const name = String(item.src).split('/').pop();
+        if (name) arrangedNames.add(name);
+      });
+    }
+  } catch (_) {}
   
   // СНАЧАЛА проверяем files.json - это быстрее
   console.log(`🔍 Загрузка файлов проекта: ${projectName}, категория: ${category || 'нет'}`);
@@ -700,6 +712,7 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
         for(let i = 0; i < jsonFiles.length; i++){
           const jsonFile = jsonFiles[i];
           // Пропускаем файлы с "cover" в названии или соответствующие паттерну обложки
+          if (arrangedNames.has(jsonFile)) continue;
           if(jsonFile.toLowerCase().includes('cover') || coverPattern.test(jsonFile)){
             console.log(`   ⏭️ Пропущен файл (обложка): ${jsonFile}`);
             continue;
@@ -801,6 +814,7 @@ async function getProjectImages(projectName, subfolder = '', category = ''){
         if(filename === 'files.json' || filename.startsWith('.')) continue;
         
         // Пропускаем файлы с "cover" в названии
+        if (arrangedNames.has(filename)) continue;
         if(filename.toLowerCase().includes('cover')) continue;
         
         // Проверяем расширение файла (должно быть хотя бы одна точка)
