@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw Handy's app icon: two windows on a dark desk."""
+"""Draw Handy's app icon: two square windows on a light grey field."""
 
 import struct
 import zlib
@@ -10,40 +10,18 @@ def chunk(tag: bytes, data: bytes) -> bytes:
     return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
 
 
-def rounded(px: float, py: float, left: float, top: float, right: float, bottom: float, radius: float) -> bool:
-    cx = min(max(px, left + radius), right - radius)
-    cy = min(max(py, top + radius), bottom - radius)
-    return (px - cx) ** 2 + (py - cy) ** 2 <= radius * radius
-
-
-def mix(a: tuple[int, int, int, int], b: tuple[int, int, int, int], t: float) -> tuple[int, int, int, int]:
-    return tuple(int(a[i] * (1 - t) + b[i] * t) for i in range(4))  # type: ignore[return-value]
-
-
 def pixel(x: int, y: int, size: int) -> tuple[int, int, int, int]:
     px = (x + 0.5) / size
     py = (y + 0.5) / size
-    ink = (16, 14, 12, 255)
-    amber = (255, 176, 0, 255)
-    paper = (244, 239, 230, 255)
-    green = (125, 207, 182, 255)
-    color = ink
-    if rounded(px, py, 0.16, 0.18, 0.78, 0.84, 0.08):
-        color = amber if py < 0.30 else paper
-        if py < 0.30:
-            color = amber
-        else:
-            color = (28, 25, 22, 255)
-        if 0.22 < px < 0.72 and 0.40 < py < 0.46:
-            color = amber
-    if rounded(px, py, 0.34, 0.30, 0.90, 0.88, 0.07):
-        color = green if py < 0.42 else (23, 21, 18, 255)
-        if 0.42 < px < 0.82 and 0.50 < py < 0.55:
-            color = paper
-    # Soften the outer edge of the full-bleed icon.
-    edge = min(px, py, 1 - px, 1 - py)
-    if edge < 0.02:
-        color = mix(ink, color, edge / 0.02)
+    field = (230, 230, 230, 255)
+    bar = (176, 176, 176, 255)
+    back = (90, 90, 90, 255)
+    front = (58, 58, 58, 255)
+    color = field
+    if 0.14 <= px <= 0.70 and 0.16 <= py <= 0.76:
+        color = bar if py < 0.28 else back
+    if 0.30 <= px <= 0.86 and 0.30 <= py <= 0.88:
+        color = bar if py < 0.42 else front
     return color
 
 

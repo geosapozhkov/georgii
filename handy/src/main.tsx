@@ -1,7 +1,3 @@
-import "@fontsource/fraunces/600.css";
-import "@fontsource/outfit/400.css";
-import "@fontsource/outfit/500.css";
-import "@fontsource/outfit/600.css";
 import { createRoot } from "react-dom/client";
 import { ProjectProvider } from "./model/store";
 import { Shell } from "./shell/Shell";

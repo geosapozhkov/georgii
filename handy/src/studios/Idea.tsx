@@ -49,7 +49,7 @@ export function Idea({ visible }: StudioProps) {
         } else context.fillRect(layer.x, layer.y, layer.w, layer.h);
       } else if (layer.kind === "text") {
         context.fillStyle = layer.fill;
-        context.font = `${layer.fontSize}px Fraunces, Palatino, serif`;
+        context.font = `${layer.fontSize}px Arial, sans-serif`;
         context.textBaseline = "top";
         context.fillText(layer.text, layer.x, layer.y);
       } else context.drawImage(paint, layer.x, layer.y, layer.w, layer.h);

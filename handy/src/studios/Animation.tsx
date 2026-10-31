@@ -67,7 +67,7 @@ export function Animation({ focused }: StudioProps) {
     if (canvas.width !== comp.width) canvas.width = comp.width;
     if (canvas.height !== comp.height) canvas.height = comp.height;
     context.clearRect(0, 0, comp.width, comp.height);
-    context.fillStyle = "#141210";
+    context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--stage").trim() || "#d9d9d9";
     context.fillRect(0, 0, comp.width, comp.height);
     for (const layer of comp.layers) {
       if (!layer.visible || at < layer.in || at > layer.out) continue;
@@ -82,7 +82,7 @@ export function Animation({ focused }: StudioProps) {
         context.fillRect(-160, -90, 320, 180);
       } else if (layer.kind === "text") {
         context.fillStyle = layer.color;
-        context.font = "72px Fraunces, Palatino, serif";
+        context.font = "72px Arial, sans-serif";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText(layer.text || "Text", 0, 0);
@@ -161,7 +161,7 @@ export function Animation({ focused }: StudioProps) {
         <p>Drop image files here, or send a sequence from Rendering. Keys remember position, scale, turn, and opacity.</p>
         <p>{time.toFixed(2)}s</p>
         <div className="row">
-          <button type="button" onClick={() => addLayer({ name: "Solid", kind: "solid", color: "#ffb000" })}>Solid</button>
+          <button type="button" onClick={() => addLayer({ name: "Solid", kind: "solid", color: "#6e6e6e" })}>Solid</button>
           <button type="button" onClick={() => addLayer({ name: "Title", kind: "text", text: "Title" })}>Text</button>
           <button type="button" onClick={() => useFrames(frames)} disabled={!frames.length}>Use renders</button>
         </div>

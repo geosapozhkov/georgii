@@ -12,7 +12,7 @@ type Drag =
   | { kind: "resize"; handle: string; node: DesignNode }
   | { kind: "create"; tool: Tool; x: number; y: number };
 
-const palette = ["#f4efe6", "#ffb000", "#ff6b4a", "#7eb6ff", "#7dcfb6", "#c77dff"];
+const palette = ["#2a2a2a", "#4a4a4a", "#6e6e6e", "#8a8a8a", "#b0b0b0", "#d4d4d4"];
 
 export function Thinking({ focused, onOpen }: StudioProps) {
   const { project, commit } = useProject();
@@ -282,7 +282,7 @@ export function Thinking({ focused, onOpen }: StudioProps) {
           <g transform={`translate(${cam.x} ${cam.y}) scale(${cam.zoom})`}>
             <defs>
               <pattern id="handy-dots" width="28" height="28" patternUnits="userSpaceOnUse">
-                <circle cx="1" cy="1" r="1.1" fill="rgba(244,239,230,0.2)" />
+                <circle cx="1" cy="1" r="0.8" fill="var(--line)" />
               </pattern>
             </defs>
             <rect x={-5000} y={-5000} width={10000} height={10000} fill="url(#handy-dots)" />
@@ -425,7 +425,7 @@ function Shape({ node, zoom }: { node: DesignNode; zoom: number }) {
   }
   if (node.kind === "text") {
     return (
-      <text x={node.x} y={node.y + node.fontSize} fill={node.fill} opacity={node.opacity} fontFamily="Fraunces, Palatino, serif" fontSize={node.fontSize} transform={`rotate(${node.rotation} ${node.x} ${node.y + node.h / 2})`}>
+      <text x={node.x} y={node.y + node.fontSize} fill={node.fill} opacity={node.opacity} fontFamily="Arial, sans-serif" fontWeight="400" fontSize={node.fontSize} transform={`rotate(${node.rotation} ${node.x} ${node.y + node.h / 2})`}>
         {node.text}
       </text>
     );
@@ -436,9 +436,9 @@ function Shape({ node, zoom }: { node: DesignNode; zoom: number }) {
   }
   return (
     <g opacity={node.opacity}>
-      <rect width={node.w} height={node.h} rx={node.radius} fill={node.fill} stroke={node.kind === "frame" ? "rgba(244,239,230,0.35)" : "transparent"} strokeWidth={node.kind === "frame" ? 1 / zoom : 0} transform={transform} />
+      <rect width={node.w} height={node.h} rx={0} fill={node.fill} stroke={node.kind === "frame" ? "var(--line)" : "transparent"} strokeWidth={node.kind === "frame" ? 1 / zoom : 0} transform={transform} />
       {node.kind === "frame" && (
-        <text x={node.x} y={node.y - 8 / zoom} fill="#b3aa9d" fontSize={12 / zoom} fontFamily="Outfit, sans-serif">
+        <text x={node.x} y={node.y - 8 / zoom} fill="var(--muted)" fontSize={12 / zoom} fontFamily="Arial, sans-serif">
           {node.name}
         </text>
       )}
@@ -453,7 +453,7 @@ function makeNode(kind: DesignNode["kind"], x: number, y: number, w: number, h: 
     name: kind === "frame" ? "Frame" : kind === "text" ? "Text" : kind === "path" ? "Path" : "Shape",
     x, y, w, h,
     rotation: 0,
-    fill: kind === "frame" ? "#17140f" : kind === "text" ? "#f4efe6" : palette[index % palette.length],
+    fill: kind === "frame" ? "#d4d4d4" : kind === "text" ? "#2a2a2a" : palette[index % palette.length],
     stroke: "transparent",
     strokeWidth: 0,
     radius: kind === "frame" ? 0 : 0,

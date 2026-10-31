@@ -4,6 +4,7 @@ import { uid } from "../model/ids";
 import { useProject } from "../model/store";
 import type { FormKind, FormObject } from "../model/types";
 import type { StudioProps } from "../shell/meta";
+import { subscribeTheme, themeGrey } from "../theme";
 import { syncForms } from "../three/formMesh";
 import { useStage } from "../three/useStage";
 import { ColorField, IconButton, NumberField, Slider, TextField, isTyping } from "../ui";
@@ -37,20 +38,34 @@ export function Formulation({ focused, visible, onOpen }: StudioProps) {
   useEffect(() => {
     if (!stage) return;
     const { scene, camera, canvas, controls } = stage;
-    scene.add(new THREE.HemisphereLight("#fff4e4", "#3a342c", 1.05));
+    scene.add(new THREE.HemisphereLight("#f2f2f2", "#6a6a6a", 1.05));
     const key = new THREE.DirectionalLight("#ffffff", 1.25);
     key.position.set(4.5, 6.5, 3);
     scene.add(key);
-    const fill = new THREE.DirectionalLight("#d5def0", 0.35);
+    const fill = new THREE.DirectionalLight("#d0d0d0", 0.35);
     fill.position.set(-4, 2, -3);
     scene.add(fill);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshStandardMaterial({ color: "#2a2724", roughness: 1 }));
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshStandardMaterial({ color: "#c8c8c8", roughness: 1 }));
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-    const grid = new THREE.GridHelper(10, 20, "#6a6258", "#3e3a34");
+    let grid = new THREE.GridHelper(10, 20, "#8a8a8a", "#bdbdbd");
     grid.position.y = 0.002;
     scene.add(grid);
+    const paintRoom = () => {
+      const tone = themeGrey();
+      (floor.material as THREE.MeshStandardMaterial).color.set(tone.floor);
+      scene.remove(grid);
+      grid.geometry.dispose();
+      const material = grid.material;
+      if (Array.isArray(material)) material.forEach((item) => item.dispose());
+      else material.dispose();
+      grid = new THREE.GridHelper(10, 20, tone.grid, tone.gridMinor);
+      grid.position.y = 0.002;
+      scene.add(grid);
+    };
+    paintRoom();
+    const stopTheme = subscribeTheme(paintRoom);
     const group = new THREE.Group();
     scene.add(group);
     groupRef.current = group;
@@ -194,6 +209,7 @@ export function Formulation({ focused, visible, onOpen }: StudioProps) {
     canvas.addEventListener("pointerup", onUp);
     canvas.addEventListener("contextmenu", (event) => event.preventDefault());
     return () => {
+      stopTheme();
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
@@ -347,8 +363,8 @@ function makeGizmo() {
     head.renderOrder = 5;
     group.add(shaft, head);
   };
-  add("x", new THREE.Vector3(1, 0, 0), 0xe25b45);
-  add("y", new THREE.Vector3(0, 1, 0), 0x73c7a8);
-  add("z", new THREE.Vector3(0, 0, 1), 0x7eb6ff);
+  add("x", new THREE.Vector3(1, 0, 0), 0x2a2a2a);
+  add("y", new THREE.Vector3(0, 1, 0), 0x6e6e6e);
+  add("z", new THREE.Vector3(0, 0, 1), 0x9a9a9a);
   return group;
 }

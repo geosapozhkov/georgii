@@ -3,7 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#100e0c" />
+    <meta name="theme-color" content="#e6e6e6" />
+    <script>
+      try {
+        var saved = localStorage.getItem("handy.v1.night");
+        var night = saved === "1" || (saved !== "0" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = night ? "night" : "day";
+      } catch (e) {}
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

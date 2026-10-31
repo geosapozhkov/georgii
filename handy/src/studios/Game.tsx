@@ -4,6 +4,7 @@ import { uid } from "../model/ids";
 import { useProject } from "../model/store";
 import type { FormObject, GameEntity } from "../model/types";
 import type { StudioProps } from "../shell/meta";
+import { subscribeTheme, themeGrey } from "../theme";
 import { syncForms } from "../three/formMesh";
 import { useStage } from "../three/useStage";
 import { TextField } from "../ui";
@@ -18,6 +19,7 @@ export function Game({ focused, visible }: StudioProps) {
   const [playing, setPlaying] = useState(false);
   const [banner, setBanner] = useState("");
   const [nub, setNub] = useState({ x: 0, y: 0 });
+  const [night, setNight] = useState(() => document.documentElement.dataset.theme === "night");
   const groupRef = useRef<THREE.Group | null>(null);
   const floorRef = useRef<THREE.Mesh | null>(null);
   const playingRef = useRef(false);
@@ -29,6 +31,8 @@ export function Game({ focused, visible }: StudioProps) {
   const entitiesRef = useRef(project.game.entities);
   const formsRef = useRef(project.formulation.objects);
   const commitRef = useRef(commit);
+  useEffect(() => subscribeTheme(() => setNight(document.documentElement.dataset.theme === "night")), []);
+
   playingRef.current = playing;
   armedRef.current = armed;
   entitiesRef.current = project.game.entities;
@@ -38,20 +42,33 @@ export function Game({ focused, visible }: StudioProps) {
   useEffect(() => {
     if (!stage) return;
     const { scene, canvas, camera, controls } = stage;
-    scene.add(new THREE.HemisphereLight("#fff0d8", "#241c16", 0.7));
-    const sun = new THREE.DirectionalLight("#fff4e2", 1.8);
+    scene.add(new THREE.HemisphereLight("#f2f2f2", "#5e5e5e", 0.7));
+    const sun = new THREE.DirectionalLight("#ffffff", 1.8);
     sun.position.set(5, 8, 3);
     sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
     scene.add(sun);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(18, 64), new THREE.MeshStandardMaterial({ color: "#3a342c", roughness: 0.95 }));
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(18, 64), new THREE.MeshStandardMaterial({ color: "#c8c8c8", roughness: 0.95 }));
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     floor.userData.floor = true;
     scene.add(floor);
-    const grid = new THREE.GridHelper(16, 16, "#8a8174", "#4a453d");
+    let grid = new THREE.GridHelper(16, 16, "#8a8a8a", "#bdbdbd");
     grid.position.y = 0.01;
     scene.add(grid);
+    const paintGrid = () => {
+      const tone = themeGrey();
+      scene.remove(grid);
+      grid.geometry.dispose();
+      const material = grid.material;
+      if (Array.isArray(material)) material.forEach((item) => item.dispose());
+      else material.dispose();
+      grid = new THREE.GridHelper(16, 16, tone.grid, tone.gridMinor);
+      grid.position.y = 0.01;
+      scene.add(grid);
+    };
+    paintGrid();
+    const stopTheme = subscribeTheme(paintGrid);
     floorRef.current = floor;
     const group = new THREE.Group();
     scene.add(group);
@@ -117,6 +134,7 @@ export function Game({ focused, visible }: StudioProps) {
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
     return () => {
+      stopTheme();
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
@@ -151,11 +169,11 @@ export function Game({ focused, visible }: StudioProps) {
     const floor = floorRef.current;
     if (floor) {
       const temperature = project.idea.grade.temperature;
-      const color = new THREE.Color("#3a342c");
-      color.lerp(new THREE.Color(temperature >= 0 ? "#6a4030" : "#243844"), Math.min(1, Math.abs(temperature)));
+      const color = new THREE.Color(night ? "#3a3a3a" : "#c8c8c8");
+      color.lerp(new THREE.Color(temperature >= 0 ? "#a89890" : "#909aa3"), Math.min(0.55, Math.abs(temperature)));
       (floor.material as THREE.MeshStandardMaterial).color.copy(color);
     }
-  }, [stage, project.game.entities, project.formulation.objects, project.idea.grade.temperature, selectedId, playing]);
+  }, [stage, project.game.entities, project.formulation.objects, project.idea.grade.temperature, selectedId, playing, night]);
 
   useEffect(() => {
     if (!stage) return;
@@ -319,7 +337,7 @@ export function Game({ focused, visible }: StudioProps) {
         </div>
         {armed && <p>Click the floor to place {project.formulation.objects.find((object) => object.id === armed)?.name}.</p>}
         <div className="row">
-          <button type="button" onClick={() => commit((draft) => { draft.game.entities.push({ id: uid("hazard"), name: "Hazard", role: "hazard", formId: null, kind: "box", color: "#ff6b4a", scale: 0.5, x: 0, z: -2, rotY: 0, radius: 0.4, block: 0.45 }); })}>Add hazard</button>
+          <button type="button" onClick={() => commit((draft) => { draft.game.entities.push({ id: uid("hazard"), name: "Hazard", role: "hazard", formId: null, kind: "box", color: "#4a4a4a", scale: 0.5, x: 0, z: -2, rotY: 0, radius: 0.4, block: 0.45 }); })}>Add hazard</button>
           <button type="button" onClick={() => commit((draft) => { draft.game.entities.push({ id: uid("goal"), name: "Mark", role: "goal", formId: null, kind: "torus", color: "#7dcfb6", scale: 0.8, x: 0, z: -4, rotY: 0, radius: 0.5, block: 0.2 }); })}>Add mark</button>
         </div>
         {selected && (

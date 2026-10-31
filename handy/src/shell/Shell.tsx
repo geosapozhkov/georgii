@@ -8,6 +8,7 @@ import { Game } from "../studios/Game";
 import { Idea } from "../studios/Idea";
 import { Rendering } from "../studios/Rendering";
 import { Thinking } from "../studios/Thinking";
+import { applyNight, nightPreferred } from "../theme";
 import { downloadText, isTyping } from "../ui";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { ROOMS } from "./meta";
@@ -32,10 +33,15 @@ export function Shell() {
   const [help, setHelp] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [narrow, setNarrow] = useState(false);
+  const [night, setNight] = useState(nightPreferred);
   const [install, setInstall] = useState<InstallPrompt | null>(null);
   const [standalone, setStandalone] = useState(false);
   const zRef = useRef(10);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    applyNight(night);
+  }, [night]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 860px)");
@@ -179,6 +185,9 @@ export function Shell() {
           onChange={(event) => commit((draft) => { draft.name = event.target.value; }, "coalesce")}
           onBlur={() => commit((draft) => { draft.name = draft.name.trim() || "Untitled"; }, "end")}
         />
+        <button type="button" className="ghost" onClick={() => setNight((value) => !value)}>
+          {night ? "Day" : "Night"}
+        </button>
         <span className="save-state">{saveState === "saving" ? "Saving" : saveState === "saved" ? "Saved" : "In this tab"}</span>
         {install && !standalone && (
           <button
@@ -194,27 +203,12 @@ export function Shell() {
         )}
       </header>
       <main className="desk">
-        <div className="watermark">Handy</div>
         {windows.length === 0 && (
           <div className="home">
-            <h1>One desk.</h1>
-            <p className="lede">
-              Open a room on top of this desk. Keep several open, move work between them, and the project stays on this device.
-            </p>
-            <div className="flow">
-              <span>Thinking feeds Idea</span>
-              <span>Formulation feeds Rendering and Game</span>
-              <span>Rendering frames feed Animation</span>
-            </div>
             <div className="cards">
               {ROOMS.map((room) => (
                 <button type="button" className="card" key={room.id} onClick={() => open(room.id)}>
-                  <i style={{ background: room.hue }} />
-                  <span>
-                    <b>{room.title}</b>
-                    <br />
-                    <em>{room.line}</em>
-                  </span>
+                  {room.title}
                 </button>
               ))}
             </div>
@@ -228,8 +222,6 @@ export function Shell() {
             <WindowFrame
               key={win.id}
               title={room.title}
-              line={room.line}
-              hue={room.hue}
               box={win}
               z={win.z}
               focused={win.id === top?.id}
@@ -260,7 +252,6 @@ export function Shell() {
               aria-pressed={Boolean(openWin && !openWin.minimized)}
               onClick={() => open(room.id)}
             >
-              <i style={{ background: room.hue }} />
               {room.title}
             </button>
           );

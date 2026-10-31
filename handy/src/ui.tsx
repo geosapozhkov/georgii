@@ -165,6 +165,6 @@ export function measureText(text: string, fontSize: number): { w: number; h: num
   measureCanvas ??= document.createElement("canvas");
   const context = measureCanvas.getContext("2d");
   if (!context) return { w: fontSize * 4, h: fontSize * 1.3 };
-  context.font = `${fontSize}px Fraunces, Palatino, serif`;
+  context.font = `${fontSize}px Arial, sans-serif`;
   return { w: Math.max(24, context.measureText(text || "Text").width + 12), h: fontSize * 1.35 };
 }

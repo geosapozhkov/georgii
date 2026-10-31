@@ -4,8 +4,6 @@ type Box = { x: number; y: number; w: number; h: number };
 
 export function WindowFrame({
   title,
-  line,
-  hue,
   box,
   z,
   focused,
@@ -18,8 +16,6 @@ export function WindowFrame({
   children,
 }: {
   title: string;
-  line: string;
-  hue: string;
   box: Box;
   z: number;
   focused: boolean;
@@ -80,11 +76,7 @@ export function WindowFrame({
       onPointerUp={end}
     >
       <header className="window-title" onPointerDown={(event) => begin(event, "move")}>
-        <i className="pip" style={{ background: hue }} />
-        <div>
-          <strong>{title}</strong>
-          <em>{line}</em>
-        </div>
+        <strong>{title}</strong>
         <div className="window-actions">
           <button type="button" aria-label={`Minimize ${title}`} onClick={onMinimize}>
             –

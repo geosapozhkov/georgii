@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type * as THREE from "three";
+import * as THREE_NS from "three";
+import { subscribeTheme, themeGrey } from "../theme";
 import { createStage, fitStage, type Stage } from "./stage";
 
 type StageOptions = { background: number; exposure: number; shadows: boolean; tone: boolean };
@@ -24,6 +26,11 @@ export function useStage(visible: boolean, options: StageOptions) {
       return;
     }
     setStage(created);
+    const paint = () => {
+      created.scene.background = new THREE_NS.Color(themeGrey().background);
+    };
+    paint();
+    const stopTheme = subscribeTheme(paint);
     let frame = 0;
     const loop = () => {
       frame = requestAnimationFrame(loop);
@@ -43,6 +50,7 @@ export function useStage(visible: boolean, options: StageOptions) {
     created.canvas.addEventListener("webglcontextlost", onLost);
     return () => {
       cancelAnimationFrame(frame);
+      stopTheme();
       observer.disconnect();
       created.canvas.removeEventListener("webglcontextlost", onLost);
       created.controls.dispose();

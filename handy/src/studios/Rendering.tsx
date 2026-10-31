@@ -5,6 +5,7 @@ import { formsToPrims, prepareScene, type Camera } from "../render/pathtrace";
 import { uid } from "../model/ids";
 import { useProject } from "../model/store";
 import type { StudioProps } from "../shell/meta";
+import { subscribeTheme, themeGrey } from "../theme";
 import { syncForms } from "../three/formMesh";
 import { useStage } from "../three/useStage";
 import { Slider } from "../ui";
@@ -27,8 +28,8 @@ export function Rendering({ visible, onOpen }: StudioProps) {
   useEffect(() => {
     if (!stage) return;
     const { scene } = stage;
-    const hemi = new THREE.HemisphereLight("#ffe7c4", "#201c18", 0.45);
-    const key = new THREE.DirectionalLight("#fff1dc", 2.6);
+    const hemi = new THREE.HemisphereLight("#f4f4f4", "#5a5a5a", 0.45);
+    const key = new THREE.DirectionalLight("#ffffff", 2.6);
     key.position.set(4.2, 7.2, 2.4);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
@@ -39,17 +40,23 @@ export function Rendering({ visible, onOpen }: StudioProps) {
     key.shadow.camera.top = 7;
     key.shadow.camera.bottom = -7;
     key.shadow.bias = -0.0008;
-    const rim = new THREE.DirectionalLight("#8eb6ff", 0.7);
+    const rim = new THREE.DirectionalLight("#b0b0b0", 0.7);
     rim.position.set(-5, 3, -3);
     scene.add(hemi, key, rim);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(16, 80), new THREE.MeshStandardMaterial({ color: "#24211e", roughness: 0.92, metalness: 0.04 }));
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(16, 80), new THREE.MeshStandardMaterial({ color: "#c8c8c8", roughness: 0.92, metalness: 0.04 }));
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
+    const paint = () => {
+      (floor.material as THREE.MeshStandardMaterial).color.set(themeGrey().floor);
+    };
+    paint();
+    const stopTheme = subscribeTheme(paint);
     const group = new THREE.Group();
     scene.add(group);
     groupRef.current = group;
     return () => {
+      stopTheme();
       groupRef.current = null;
     };
   }, [stage]);
