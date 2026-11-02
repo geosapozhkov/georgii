@@ -1,6 +1,6 @@
 {
   "description": "We made some images with guys\nfrom the agency Poool. \n\nThanks a lot!\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nEvgenie/Jenia Kashirin & Vladimir/Vova Mathanov\n\nSoft: Plasticity, C4D Redshift,\nAfter Effects.",
-  "descriptionUpdatedAt": 1793646855478,
+  "descriptionUpdatedAt": 1793647092217,
   "images": [
     {
       "id": "1793388312559-92ba8d3558079",
@@ -384,12 +384,13 @@
       "before": 0
     },
     {
-      "id": "1793398799466-21eafa759cebc8",
-      "before": 406
-    },
-    {
       "id": "1793398799536-1c24c326666d1",
       "before": 375
+    },
+    {
+      "id": "1793646828692-f0db228144e65",
+      "before": 96,
+      "hidden": true
     },
     {
       "id": "1793398799286-96696d7ea181b",
