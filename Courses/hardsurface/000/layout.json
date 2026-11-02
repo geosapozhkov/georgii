@@ -1,6 +1,6 @@
 {
   "description": "We made some images with guys\nfrom the agency Poool. \n\nThanks a lot!\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nEvgenie/Jenia Kashirin & Vladimir/Vova Mathanov\n\nSoft: Plasticity, C4D Redshift,\nAfter Effects.",
-  "descriptionUpdatedAt": 1793648460909,
+  "descriptionUpdatedAt": 1793648516408,
   "images": [
     {
       "id": "1793388312559-92ba8d3558079",
@@ -13,7 +13,7 @@
     {
       "id": "1793388312566-fa9710733f81b8",
       "x": 596.25,
-      "y": 5335,
+      "y": 5232,
       "w": 368.1666666666667,
       "h": 465.60067340067343,
       "src": "Courses/hardsurface/000/image-9710733f81b8.png"
@@ -29,7 +29,7 @@
     {
       "id": "1793396799585-9659c281ec2be8",
       "x": 1380.5833333333335,
-      "y": 4949.4388392857145,
+      "y": 4855.4388392857145,
       "w": 956.4166666666667,
       "h": 850.5276785714286,
       "src": "Courses/hardsurface/000/Frame-1288-59c281ec2be8.png"
@@ -262,7 +262,7 @@
     {
       "id": "1793648051468-150e17e9e556",
       "x": 988.4166666666667,
-      "y": 2546.294047619048,
+      "y": 2498.294047619048,
       "w": 1348.5833333333335,
       "h": 760.9863095238096,
       "vimeo": "1242517540",
@@ -287,8 +287,9 @@
       "before": 345
     },
     {
-      "id": "1793396799585-9659c281ec2be8",
-      "before": 270
+      "id": "1793648051468-150e17e9e556",
+      "before": 96,
+      "hidden": true
     },
     {
       "id": "1793393871277-98f3e193e186",
@@ -299,13 +300,12 @@
       "before": 96
     },
     {
-      "id": "1793388312566-fa9710733f81b8",
-      "before": 96
+      "id": "1793396799585-9659c281ec2be8",
+      "before": 270
     },
     {
-      "id": "1793388312599-141ba38b2d4818",
-      "before": 96,
-      "hidden": true
+      "id": "1793388312566-fa9710733f81b8",
+      "before": 96
     },
     {
       "id": "1793396799586-fe879a53c1a26",
@@ -404,6 +404,11 @@
     {
       "id": "1793398799133-aad4833634d4c",
       "before": 96
+    },
+    {
+      "id": "1793388312599-141ba38b2d4818",
+      "before": 96,
+      "hidden": true
     }
   ]
 }
