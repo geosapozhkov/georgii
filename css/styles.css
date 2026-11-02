@@ -1046,11 +1046,10 @@ a.course-group-id:hover {
   position: absolute;
   left: 0;
   top: calc(1.5em + 0.5rem);
-  width: 18rem;
-  max-width: 18rem;
+  width: calc(36vw - 131px);
+  max-width: calc(60vw - 242px);
   margin: 0;
   white-space: pre-wrap;
-  overflow-wrap: break-word;
   z-index: 2;
 }
 .course-description.is-editing {
