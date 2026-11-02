@@ -1377,8 +1377,14 @@ body.course-page main {
     height: auto;
     object-fit: contain;
   }
-  #course-mobile-grid .course-layout-image iframe {
-    aspect-ratio: 16 / 9;
+  #course-mobile-grid .course-layout-image[data-video] {
+    aspect-ratio: var(--video-aspect, 16 / 9);
+  }
+  #course-mobile-grid .course-layout-image[data-video] iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
   #course-mobile-grid .course-layout-image.is-wide .course-video-chrome {
     display: block;
@@ -1401,8 +1407,14 @@ body.course-page main {
     height: auto;
     object-fit: contain;
   }
-  .project-extra-media .course-layout-image iframe {
-    aspect-ratio: 16 / 9;
+  .project-extra-media .course-layout-image[data-video] {
+    aspect-ratio: var(--video-aspect, 16 / 9);
+  }
+  .project-extra-media .course-layout-image[data-video] iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
   .project-extra-media .course-layout-image.is-wide .course-video-chrome {
     display: block;

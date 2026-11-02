@@ -1150,9 +1150,10 @@ function mountCourseVisual(box, data) {
   }
 
   box.dataset.vimeoId = parsed.id;
+  box.dataset.video = '1';
   const iframe = document.createElement('iframe');
   iframe.src = vimeoEmbedSrc(parsed);
-  iframe.setAttribute('allow', 'autoplay; fullscreen');
+  iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
   iframe.setAttribute('frameborder', '0');
   iframe.title = '';
   const chrome = document.createElement('div');
@@ -1213,11 +1214,24 @@ function mountCourseVisual(box, data) {
     }
   });
 
+  const startPlayback = () => {
+    if (!player) return;
+    player.play().catch(() => {});
+  };
+  box.addEventListener('pointerup', (event) => {
+    if (event.target.closest('.course-video-seek, .course-video-volume')) return;
+    startPlayback();
+  });
+
   iframe.addEventListener('load', () => {
     if (!window.Vimeo || !window.Vimeo.Player) return;
     player = new window.Vimeo.Player(iframe);
-    player.setMuted(true).catch(() => {});
-    player.setVolume(0).catch(() => {});
+    const mutedStart = () => {
+      player.setMuted(true).catch(() => {});
+      player.setVolume(0).catch(() => {});
+      startPlayback();
+    };
+    player.ready().then(mutedStart).catch(mutedStart);
     player.on('timeupdate', (update) => {
       if (scrubbing || !update.duration) return;
       duration = update.duration;
@@ -1248,7 +1262,75 @@ function mountCourseVisual(box, data) {
   };
 }
 
+const VIDEO_ASPECTS = [
+  { css: '16 / 9', hw: 9 / 16 },
+  { css: '4 / 3', hw: 3 / 4 },
+  { css: '1 / 1', hw: 1 },
+  { css: '3 / 4', hw: 4 / 3 },
+  { css: '9 / 16', hw: 16 / 9 }
+];
+
+function nearestVideoAspect(heightOverWidth) {
+  const value = Number(heightOverWidth);
+  const usable = Number.isFinite(value) && value > 0 ? value : 9 / 16;
+  let best = VIDEO_ASPECTS[0];
+  let bestScore = Infinity;
+  VIDEO_ASPECTS.forEach((aspect) => {
+    const score = Math.abs(Math.log(usable) - Math.log(aspect.hw));
+    if (score < bestScore) {
+      best = aspect;
+      bestScore = score;
+    }
+  });
+  return best;
+}
+
+function frameForVideo(x, y, w, h, heightOverWidth) {
+  const boxW = Number(w);
+  const boxH = Number(h);
+  const originX = Number(x) || 0;
+  const originY = Number(y) || 0;
+  if (!(boxW > 0) || !(boxH > 0) || !(heightOverWidth > 0)) {
+    return { x: originX, y: originY, w: boxW, h: boxH };
+  }
+  let nextW = boxW;
+  let nextH = boxW * heightOverWidth;
+  if (nextH > boxH + 0.5) {
+    nextH = boxH;
+    nextW = boxH / heightOverWidth;
+  }
+  return {
+    x: originX + (boxW - nextW) / 2,
+    y: originY,
+    w: nextW,
+    h: nextH
+  };
+}
+
+function paintVideoAspect(box, aspect) {
+  box.dataset.video = '1';
+  box.style.setProperty('--video-aspect', aspect.css);
+  box.style.aspectRatio = aspect.css;
+}
+
+function applyVideoAspect(box, data, onAspect) {
+  const parsed = data && data.vimeo
+    ? { id: String(data.vimeo), hash: data.hash || '' }
+    : parseVimeoLink(data && data.src);
+  if (!parsed || !box) return;
+  const w = Number(data && data.w);
+  const h = Number(data && data.h);
+  paintVideoAspect(box, w > 0 && h > 0 ? nearestVideoAspect(h / w) : nearestVideoAspect(9 / 16));
+  vimeoRatio(parsed).then((hw) => {
+    if (!box.isConnected) return;
+    const aspect = nearestVideoAspect(hw);
+    paintVideoAspect(box, aspect);
+    if (typeof onAspect === 'function') onAspect(aspect);
+  });
+}
+
 async function vimeoRatio(video) {
+  const fallback = nearestVideoAspect(9 / 16).hw;
   const page = `https://vimeo.com/${video.id}${video.hash ? `/${video.hash}` : ''}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 2500);
@@ -1256,16 +1338,21 @@ async function vimeoRatio(video) {
     const response = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(page)}`, {
       signal: controller.signal
     });
-    if (!response.ok) return 9 / 16;
+    if (!response.ok) return fallback;
     const data = await response.json();
-    if (data.width && data.height) return data.height / data.width;
+    if (data.width && data.height) return nearestVideoAspect(data.height / data.width).hw;
   } catch (_) {
-    return 9 / 16;
+    return fallback;
   } finally {
     clearTimeout(timer);
   }
-  return 9 / 16;
+  return fallback;
 }
+
+window.parseVimeoLink = parseVimeoLink;
+window.vimeoEmbedSrc = vimeoEmbedSrc;
+window.vimeoRatio = vimeoRatio;
+window.nearestVideoAspect = nearestVideoAspect;
 
 function descriptionText(el) {
   if (!el) return '';
@@ -1458,7 +1545,12 @@ async function showMobileCourseLayout(session) {
     const box = document.createElement('div');
     box.className = 'course-layout-image';
     const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
-    if (visual.vimeo) visual.setWide(true);
+    if (visual.vimeo) {
+      visual.setWide(true);
+      applyVideoAspect(box, data, () => {
+        if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
+      });
+    }
     cell.appendChild(box);
     grid.appendChild(cell);
   });
@@ -1554,13 +1646,26 @@ async function showSavedCourseLayout(session) {
     box.style.height = `${Number(data.h) || 0}px`;
     const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
     layer.appendChild(box);
-    rememberWide({
+    const placed = {
       x: Number(data.x) || 0,
       y: Number(data.y) || 0,
       w: Number(data.w) || 0,
       h: Number(data.h) || 0,
       setWide: visual.setWide
-    });
+    };
+    rememberWide(placed);
+    if (visual.vimeo) {
+      applyVideoAspect(box, data, (aspect) => {
+        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
+        placed.x = fitted.x;
+        placed.w = fitted.w;
+        placed.h = fitted.h;
+        box.style.left = `${fitted.x}px`;
+        box.style.width = `${fitted.w}px`;
+        box.style.height = `${fitted.h}px`;
+        syncWide(placed);
+      });
+    }
   });
   document.body.appendChild(layer);
   extendPageForImages(stored);
@@ -2214,6 +2319,15 @@ function openAdminEditor(session) {
     if (visual.vimeo) {
       item.vimeo = visual.vimeo;
       item.hash = visual.hash;
+      applyVideoAspect(item.el, item, (aspect) => {
+        if (edits.signal.aborted || !item.el.isConnected) return;
+        const fitted = frameForVideo(item.x, item.y, item.w, item.h, aspect.hw);
+        item.x = fitted.x;
+        item.w = fitted.w;
+        item.h = fitted.h;
+        item.ratio = fitted.h > 0 ? fitted.w / fitted.h : item.ratio;
+        applyBox(item);
+      });
     }
     const img = item.el.querySelector('img');
     if (img) {
@@ -2498,13 +2612,26 @@ async function showSavedProjectLayout(session) {
     box.style.height = `${Number(data.h) || 0}px`;
     const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
     layer.appendChild(box);
-    rememberWide({
+    const placed = {
       x: Number(data.x) || 0,
       y: Number(data.y) || 0,
       w: Number(data.w) || 0,
       h: Number(data.h) || 0,
       setWide: visual.setWide
-    });
+    };
+    rememberWide(placed);
+    if (visual.vimeo) {
+      applyVideoAspect(box, data, (aspect) => {
+        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
+        placed.x = fitted.x;
+        placed.w = fitted.w;
+        placed.h = fitted.h;
+        box.style.left = `${fitted.x}px`;
+        box.style.width = `${fitted.w}px`;
+        box.style.height = `${fitted.h}px`;
+        syncWide(placed);
+      });
+    }
   });
   document.body.appendChild(layer);
   extendPageForImages(stored);

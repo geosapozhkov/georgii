@@ -363,7 +363,10 @@ async function loadProject(projectName, subfolder = ''){
         // Изображения не кликабельны - убрали открытие в viewer
       } else if(isVimeo(image.src || image.name)){
         // Встраивание видео Vimeo - всегда fullwidth с таким же UI как у локальных видео
-        const vimeoId = getVimeoId(image.src || image.name);
+        const parsedVimeo = window.parseVimeoLink
+          ? window.parseVimeoLink(image.src || image.name)
+          : null;
+        const vimeoId = parsedVimeo ? parsedVimeo.id : getVimeoId(image.src || image.name);
         if (vimeoId) {
           // Устанавливаем fullwidth для Vimeo видео
           wrap.className = 'cursor-pointer col-span-12 w-full';
@@ -374,8 +377,12 @@ async function loadProject(projectName, subfolder = ''){
           const vimeoContainer = document.createElement('div');
           vimeoContainer.className = 'relative w-full flex items-center justify-center';
           vimeoContainer.setAttribute('data-vimeo-id', vimeoId);
+          vimeoContainer.dataset.video = '1';
           vimeoContainer.style.cursor = 'none';
           vimeoContainer.style.pointerEvents = 'auto';
+          vimeoContainer.style.position = 'relative';
+          vimeoContainer.style.width = '100%';
+          vimeoContainer.style.aspectRatio = '16 / 9';
           
           // Создаем невидимый overlay поверх iframe для перехвата событий мыши
           const mouseOverlay = document.createElement('div');
@@ -388,12 +395,15 @@ async function loadProject(projectName, subfolder = ''){
           // loop=1 - зацикливаем
           // muted=1 - без звука
           // quality=auto - максимальное качество
-          iframe.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&quality=auto`;
-          iframe.setAttribute('allow', 'autoplay');
+          const vimeoSource = parsedVimeo || { id: vimeoId, hash: '' };
+          iframe.src = window.vimeoEmbedSrc
+            ? window.vimeoEmbedSrc(vimeoSource)
+            : `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&playsinline=1&quality=auto`;
+          iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
           iframe.setAttribute('allowfullscreen', '');
           iframe.setAttribute('frameborder', '0');
           iframe.id = `vimeo-player-${vimeoId}`;
-          iframe.style.cssText = 'width:100%; height:auto; aspect-ratio:16/9; border:none; display:block; cursor:none !important; pointer-events:none;';
+          iframe.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; border:none; display:block; cursor:none !important; pointer-events:none;';
           iframe.style.cursor = 'none';
           iframe.style.pointerEvents = 'none';
           
@@ -484,8 +494,23 @@ async function loadProject(projectName, subfolder = ''){
                 isMuted = data.volume === 0;
                 updateVolumeIcon();
               });
+              vimeoPlayer.ready().then(() => vimeoPlayer.play()).catch(() => {
+                vimeoPlayer.play().catch(() => {});
+              });
             }
           });
+          mouseOverlay.addEventListener('pointerup', () => {
+            if (vimeoPlayer) vimeoPlayer.play().catch(() => {});
+          });
+          if (window.vimeoRatio) {
+            window.vimeoRatio(vimeoSource).then((hw) => {
+              const aspect = window.nearestVideoAspect ? window.nearestVideoAspect(hw) : null;
+              if (aspect && vimeoContainer.isConnected) {
+                vimeoContainer.style.aspectRatio = aspect.css;
+                vimeoContainer.style.setProperty('--video-aspect', aspect.css);
+              }
+            });
+          }
           
           // Размещаем элементы: iframe, затем overlay поверх него, затем кнопка звука поверх всего
           vimeoContainer.appendChild(iframe);
