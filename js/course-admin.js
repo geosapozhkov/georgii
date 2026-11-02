@@ -1352,10 +1352,10 @@ function mountCourseVisual(box, data) {
   box.dataset.vimeoId = parsed.id;
   box.dataset.video = '1';
   const iframe = document.createElement('iframe');
-  iframe.src = vimeoEmbedSrc(parsed);
   iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
   iframe.setAttribute('frameborder', '0');
   iframe.title = '';
+  iframe.src = vimeoEmbedSrc(parsed);
   const chrome = document.createElement('div');
   chrome.className = 'course-video-chrome';
   const seek = document.createElement('div');
@@ -1375,6 +1375,65 @@ function mountCourseVisual(box, data) {
   let duration = 0;
   let muted = true;
   let scrubbing = false;
+  let playing = false;
+  let starting = false;
+  let soundOn = false;
+  let playAttempts = 0;
+  let inView = typeof IntersectionObserver !== 'function';
+  let playObserver = null;
+  const playTimers = [];
+
+  const clearPlayTimers = () => {
+    while (playTimers.length) window.clearTimeout(playTimers.pop());
+  };
+
+  const soon = (promise) => Promise.race([
+    promise.catch(() => {}),
+    new Promise((resolve) => setTimeout(resolve, 1200))
+  ]);
+
+  const startPlayback = () => {
+    if (!player || playing || starting || playAttempts > 8) return;
+    playAttempts += 1;
+    starting = true;
+    const prepare = soundOn
+      ? Promise.resolve()
+      : soon(player.setMuted(true)).then(() => soon(player.setVolume(0)));
+    prepare
+      .then(() => {
+        if (!player || playing || !player.setAutopause) return null;
+        return player.setAutopause(false).catch(() => {});
+      })
+      .then(() => {
+        if (!player || playing) return null;
+        return soon(player.play());
+      })
+      .catch(() => {})
+      .then(() => {
+        starting = false;
+      });
+  };
+
+  const later = (delay, fn) => {
+    const id = window.setTimeout(() => {
+      const index = playTimers.indexOf(id);
+      if (index >= 0) playTimers.splice(index, 1);
+      fn();
+    }, delay);
+    playTimers.push(id);
+  };
+
+  const kickPlayback = () => {
+    if (playing) return;
+    startPlayback();
+    if (playTimers.length) return;
+    later(700, () => {
+      if (!playing && inView) startPlayback();
+    });
+    later(1600, () => {
+      if (!playing && inView) startPlayback();
+    });
+  };
 
   seek.addEventListener('pointerdown', (event) => {
     if (!box.classList.contains('is-wide') || !player || !duration) return;
@@ -1405,6 +1464,7 @@ function mountCourseVisual(box, data) {
     event.stopPropagation();
     if (!player || !box.classList.contains('is-wide')) return;
     muted = !muted;
+    soundOn = !muted;
     volume.innerHTML = muted ? VOLUME_OFF : VOLUME_ON;
     if (muted) {
       player.setVolume(0).catch(() => {});
@@ -1414,30 +1474,50 @@ function mountCourseVisual(box, data) {
     }
   });
 
-  const startPlayback = () => {
-    if (!player) return;
-    player.play().catch(() => {});
-  };
   box.addEventListener('pointerup', (event) => {
     if (event.target.closest('.course-video-seek, .course-video-volume')) return;
-    startPlayback();
+    kickPlayback();
   });
+
+  if (typeof IntersectionObserver === 'function') {
+    playObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const visible = entry.intersectionRect ? entry.intersectionRect.height : 0;
+        inView = entry.isIntersecting && (entry.intersectionRatio >= 0.15 || visible >= 80);
+        if (inView) kickPlayback();
+      });
+    }, { threshold: [0, 0.15, 0.4] });
+    playObserver.observe(box);
+  }
 
   iframe.addEventListener('load', () => {
     if (!window.Vimeo || !window.Vimeo.Player) return;
     player = new window.Vimeo.Player(iframe);
-    const mutedStart = () => {
-      player.setMuted(true).catch(() => {});
-      player.setVolume(0).catch(() => {});
-      startPlayback();
+    const arm = () => {
+      kickPlayback();
     };
-    player.ready().then(mutedStart).catch(mutedStart);
+    player.ready().then(arm).catch(arm);
+    player.on('loaded', arm);
+    const markPlaying = () => {
+      playing = true;
+      clearPlayTimers();
+    };
+    player.on('play', markPlaying);
+    player.on('playing', markPlaying);
+    player.on('pause', () => {
+      playing = false;
+      if (!inView || playTimers.length > 4) return;
+      later(400, () => {
+        if (!playing && inView) startPlayback();
+      });
+    });
     player.on('timeupdate', (update) => {
       if (scrubbing || !update.duration) return;
       duration = update.duration;
       fill.style.width = `${(update.percent || 0) * 100}%`;
     });
     player.on('volumechange', (update) => {
+      if (!soundOn) return;
       muted = !update.volume;
       volume.innerHTML = muted ? VOLUME_OFF : VOLUME_ON;
     });
@@ -1449,7 +1529,8 @@ function mountCourseVisual(box, data) {
     setWide(on) {
       const wide = Boolean(on);
       box.classList.toggle('is-wide', wide);
-      if (!wide && player && !muted) {
+      if (!wide && player && (soundOn || !muted)) {
+        soundOn = false;
         muted = true;
         volume.innerHTML = VOLUME_OFF;
         player.setVolume(0).catch(() => {});
@@ -1457,6 +1538,11 @@ function mountCourseVisual(box, data) {
       }
     },
     destroy() {
+      clearPlayTimers();
+      if (playObserver) {
+        playObserver.disconnect();
+        playObserver = null;
+      }
       if (player) player.destroy().catch(() => {});
     }
   };
