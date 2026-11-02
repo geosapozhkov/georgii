@@ -398,7 +398,7 @@ async function loadProject(projectName, subfolder = ''){
           const vimeoSource = parsedVimeo || { id: vimeoId, hash: '' };
           iframe.src = window.vimeoEmbedSrc
             ? window.vimeoEmbedSrc(vimeoSource)
-            : `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&background=0&transparent=1&dnt=1&badge=0&playsinline=1&quality=auto`;
+            : `https://player.vimeo.com/video/${vimeoId}?autoplay=1&loop=1&muted=1&title=0&byline=0&portrait=0&autopause=0&controls=0&progress_bar=0&background=0&transparent=1&dnt=1&badge=0&playsinline=1&quality=auto`;
           iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
           iframe.setAttribute('allowfullscreen', '');
           iframe.setAttribute('frameborder', '0');

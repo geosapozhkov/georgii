@@ -1171,12 +1171,7 @@ body.course-page main {
   display: block;
 }
 .course-video-seek {
-  position: absolute;
-  left: 8px;
-  right: 44px;
-  bottom: 8px;
-  height: 16px;
-  pointer-events: auto;
+  display: none;
 }
 .course-video-seek::before,
 .course-video-seek span {

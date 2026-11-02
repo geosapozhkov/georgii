@@ -1281,6 +1281,7 @@ function vimeoEmbedSrc(video) {
     portrait: '0',
     autopause: '0',
     controls: '0',
+    progress_bar: '0',
     background: '0',
     transparent: '1',
     dnt: '1',
