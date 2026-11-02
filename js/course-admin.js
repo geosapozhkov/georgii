@@ -1271,9 +1271,9 @@ function parseVimeoLink(value) {
   }
 }
 
-function vimeoEmbedSrc(video) {
+function vimeoEmbedSrc(video, options) {
   const params = new URLSearchParams({
-    autoplay: '1',
+    autoplay: options && options.autoplay === false ? '0' : '1',
     loop: '1',
     muted: '1',
     title: '0',
@@ -1349,13 +1349,14 @@ function mountCourseVisual(box, data) {
     return { setWide() {}, destroy() {} };
   }
 
+  const tapToPlay = document.body.classList.contains('course-page') && phoneLayout();
   box.dataset.vimeoId = parsed.id;
   box.dataset.video = '1';
   const iframe = document.createElement('iframe');
   iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
   iframe.setAttribute('frameborder', '0');
   iframe.title = '';
-  iframe.src = vimeoEmbedSrc(parsed);
+  iframe.src = vimeoEmbedSrc(parsed, { autoplay: !tapToPlay });
   const chrome = document.createElement('div');
   chrome.className = 'course-video-chrome';
   const seek = document.createElement('div');
@@ -1379,7 +1380,8 @@ function mountCourseVisual(box, data) {
   let starting = false;
   let soundOn = false;
   let playAttempts = 0;
-  let inView = typeof IntersectionObserver !== 'function';
+  let inView = !tapToPlay && typeof IntersectionObserver !== 'function';
+  let userStarted = false;
   let playObserver = null;
   const playTimers = [];
 
@@ -1474,12 +1476,43 @@ function mountCourseVisual(box, data) {
     }
   });
 
-  box.addEventListener('pointerup', (event) => {
-    if (event.target.closest('.course-video-seek, .course-video-volume')) return;
-    kickPlayback();
-  });
+  const playFromGesture = () => {
+    userStarted = true;
+    playAttempts = 0;
+    playing = false;
+    starting = false;
+    clearPlayTimers();
+    if (!player) return;
+    const attempt = player.play();
+    if (attempt && attempt.catch) attempt.catch(() => startPlayback());
+  };
 
-  if (typeof IntersectionObserver === 'function') {
+  if (tapToPlay) {
+    let gesture = null;
+    box.addEventListener('pointerdown', (event) => {
+      if (event.target.closest('.course-video-seek, .course-video-volume')) return;
+      gesture = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    });
+    box.addEventListener('pointerup', (event) => {
+      if (!gesture || gesture.id !== event.pointerId) return;
+      const dx = event.clientX - gesture.x;
+      const dy = event.clientY - gesture.y;
+      gesture = null;
+      if (event.target.closest('.course-video-seek, .course-video-volume')) return;
+      if (dx * dx + dy * dy > 144) return;
+      playFromGesture();
+    });
+    box.addEventListener('pointercancel', () => {
+      gesture = null;
+    });
+  } else {
+    box.addEventListener('pointerup', (event) => {
+      if (event.target.closest('.course-video-seek, .course-video-volume')) return;
+      kickPlayback();
+    });
+  }
+
+  if (!tapToPlay && typeof IntersectionObserver === 'function') {
     playObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const visible = entry.intersectionRect ? entry.intersectionRect.height : 0;
@@ -1493,24 +1526,43 @@ function mountCourseVisual(box, data) {
   iframe.addEventListener('load', () => {
     if (!window.Vimeo || !window.Vimeo.Player) return;
     player = new window.Vimeo.Player(iframe);
-    const arm = () => {
-      kickPlayback();
-    };
-    player.ready().then(arm).catch(arm);
-    player.on('loaded', arm);
     const markPlaying = () => {
       playing = true;
       clearPlayTimers();
     };
     player.on('play', markPlaying);
     player.on('playing', markPlaying);
-    player.on('pause', () => {
-      playing = false;
-      if (!inView || playTimers.length > 4) return;
-      later(400, () => {
-        if (!playing && inView) startPlayback();
+    if (tapToPlay) {
+      const holdForTap = () => {
+        if (!player) return;
+        if (userStarted) {
+          player.play().catch(() => startPlayback());
+          return;
+        }
+        const pausing = player.pause();
+        if (!pausing || !pausing.then) return;
+        pausing.then(() => {
+          if (userStarted && player) player.play().catch(() => startPlayback());
+        }).catch(() => {
+          if (userStarted && player) player.play().catch(() => startPlayback());
+        });
+      };
+      player.ready().then(holdForTap).catch(holdForTap);
+      player.on('loaded', holdForTap);
+    } else {
+      const arm = () => {
+        kickPlayback();
+      };
+      player.ready().then(arm).catch(arm);
+      player.on('loaded', arm);
+      player.on('pause', () => {
+        playing = false;
+        if (!inView || playTimers.length > 4) return;
+        later(400, () => {
+          if (!playing && inView) startPlayback();
+        });
       });
-    });
+    }
     player.on('timeupdate', (update) => {
       if (scrubbing || !update.duration) return;
       duration = update.duration;
