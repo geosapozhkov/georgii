@@ -1,6 +1,6 @@
 {
   "description": "We made some images with guys\nfrom the agency Poool. \n\nThanks a lot!\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nEvgenie/Jenia Kashirin & Vladimir/Vova Mathanov\n\nSoft: Plasticity, C4D Redshift,\nAfter Effects.",
-  "descriptionUpdatedAt": 1793647092217,
+  "descriptionUpdatedAt": 1793648139308,
   "images": [
     {
       "id": "1793388312559-92ba8d3558079",
@@ -19,14 +19,6 @@
       "src": "Courses/hardsurface/000/image-9710733f81b8.png"
     },
     {
-      "id": "1793388312599-141ba38b2d4818",
-      "x": 1380.5833333333335,
-      "y": 5232,
-      "w": 368.1666666666667,
-      "h": 465.30631084256464,
-      "src": "Courses/hardsurface/000/image-1ba38b2d4818.png"
-    },
-    {
       "id": "1793393871277-98f3e193e186",
       "x": 988.4166666666667,
       "y": 3413,
@@ -37,7 +29,7 @@
     {
       "id": "1793396799585-9659c281ec2be8",
       "x": 1380.5833333333335,
-      "y": 2453.4388392857145,
+      "y": 4855.4388392857145,
       "w": 956.4166666666667,
       "h": 850.5276785714286,
       "src": "Courses/hardsurface/000/Frame-1288-59c281ec2be8.png"
@@ -266,6 +258,15 @@
       "h": 871.6333333333334,
       "vimeo": "1242507629",
       "src": "https://vimeo.com/1242507629?share=copy&fl=sv&fe=ci"
+    },
+    {
+      "id": "1793648051468-150e17e9e556",
+      "x": 988.4166666666667,
+      "y": 2498.294047619048,
+      "w": 1348.5833333333335,
+      "h": 760.9863095238096,
+      "vimeo": "1242517540",
+      "src": "https://vimeo.com/1242517540?share=copy&fl=sv&fe=ci"
     }
   ],
   "mobile": [
