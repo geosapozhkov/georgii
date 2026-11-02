@@ -144,6 +144,9 @@ function writeLayout(key, payload) {
       if (next && !Number(next.descriptionUpdatedAt) && Number(prev.descriptionUpdatedAt)) {
         next = Object.assign({}, next, { descriptionUpdatedAt: prev.descriptionUpdatedAt });
       }
+      if (next && !Number(next.mobileUpdatedAt) && Number(prev.mobileUpdatedAt)) {
+        next = Object.assign({}, next, { mobileUpdatedAt: prev.mobileUpdatedAt });
+      }
     }
   } catch (_) {}
   const raw = JSON.stringify(next);
@@ -524,7 +527,7 @@ function readLocalMobile(session) {
   return null;
 }
 
-function rememberMobile(session, mobile, description, descriptionUpdatedAt) {
+function rememberMobile(session, mobile, description, descriptionUpdatedAt, extra) {
   const key = storageKeyFor(session);
   let data = {};
   try {
@@ -535,6 +538,17 @@ function rememberMobile(session, mobile, description, descriptionUpdatedAt) {
   if (typeof description === 'string') {
     data.description = description;
     if (descriptionUpdatedAt) data.descriptionUpdatedAt = descriptionUpdatedAt;
+  }
+  if (extra && Number(extra.mobileUpdatedAt)) data.mobileUpdatedAt = Number(extra.mobileUpdatedAt);
+  if (extra && Array.isArray(extra.images)) {
+    const images = Array.isArray(data.images) ? data.images.slice() : [];
+    const ids = new Set(images.map((item) => item && item.id));
+    extra.images.forEach((item) => {
+      if (!item || !item.id || ids.has(item.id)) return;
+      images.push(item);
+      ids.add(item.id);
+    });
+    data.images = images;
   }
   writeLayout(key, data);
 }
@@ -574,9 +588,17 @@ async function fetchLayoutDocument(dir) {
 }
 
 function mobilePlanFor(session, doc) {
-  const local = readLocalMobile(session);
-  if (Array.isArray(local)) return local;
-  if (doc && Array.isArray(doc.mobile)) return doc.mobile;
+  const local = readLocalRecord(session);
+  const localPlan = local && Array.isArray(local.mobile) ? local.mobile : null;
+  const filePlan = doc && Array.isArray(doc.mobile) ? doc.mobile : null;
+  const localAt = local && Number(local.mobileUpdatedAt) || 0;
+  const fileAt = doc && Number(doc.mobileUpdatedAt) || 0;
+  if (localAt || fileAt) {
+    if (fileAt >= localAt && filePlan) return filePlan;
+    if (localPlan) return localPlan;
+  }
+  if (localPlan) return localPlan;
+  if (filePlan) return filePlan;
   return null;
 }
 
@@ -775,6 +797,46 @@ async function descriptionCopyChange(session, description) {
   return jsonGitFile('js/project-copy.json', data);
 }
 
+const pendingMobileVideos = new Map();
+
+function queueMobileVideo(session, record) {
+  const key = storageKeyFor(session);
+  const list = pendingMobileVideos.get(key) || [];
+  if (!list.some((item) => item && (item.id === record.id || (record.vimeo && item.vimeo === record.vimeo)))) {
+    list.push(record);
+  }
+  pendingMobileVideos.set(key, list);
+}
+
+function storedVideoRecord(item) {
+  const stored = {
+    id: item.id,
+    x: Number(item.x) || 0,
+    y: Number(item.y) || 0,
+    w: Number(item.w) || 0,
+    h: Number(item.h) || 0,
+    vimeo: String(item.vimeo || ''),
+    src: item.src || ''
+  };
+  if (item.hash) stored.hash = item.hash;
+  return stored;
+}
+
+async function readFilesManifest(dir) {
+  try {
+    const response = await fetch(`${dir.split('/').map((part) => encodeURIComponent(part)).join('/')}/files.json?v=${Date.now()}`, { cache: 'no-store' });
+    if (response.status === 404) return { files: [], cover: '' };
+    if (!response.ok) return null;
+    const data = await response.json();
+    return {
+      files: data && Array.isArray(data.files) ? data.files.filter((name) => typeof name === 'string') : [],
+      cover: data && typeof data.cover === 'string' ? data.cover : ''
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 async function publishMobileOnly(session, mobile) {
   const dir = assetDirFor(session);
   if (!SAFE_ASSET_DIR.test(dir)) return false;
@@ -782,6 +844,16 @@ async function publishMobileOnly(session, mobile) {
   if (!current && session.courseId) return false;
   const body = current ? Object.assign({}, current) : { images: [] };
   if (!Array.isArray(body.images)) body.images = [];
+  const pending = pendingMobileVideos.get(storageKeyFor(session)) || [];
+  const courseVideos = session.courseId ? pending.filter((item) => item && item.vimeo) : [];
+  if (courseVideos.length) {
+    const ids = new Set(body.images.map((item) => item && item.id));
+    courseVideos.forEach((item) => {
+      if (ids.has(item.id)) return;
+      body.images.push(storedVideoRecord(item));
+      ids.add(item.id);
+    });
+  }
   const edited = editedDescription(session);
   const descriptionUpdatedAt = typeof edited === 'string' ? Date.now() : 0;
   if (typeof edited === 'string') {
@@ -789,7 +861,16 @@ async function publishMobileOnly(session, mobile) {
     body.descriptionUpdatedAt = descriptionUpdatedAt;
   } else if (typeof body.description !== 'string') body.description = '';
   if (Array.isArray(mobile)) body.mobile = mobile;
+  body.mobileUpdatedAt = Date.now();
   const files = [jsonGitFile(`${dir}/layout.json`, body)];
+  if (!session.courseId && pending.length) {
+    const manifest = await readFilesManifest(dir);
+    if (!manifest) return false;
+    pending.forEach((item) => {
+      if (item && item.src && !manifest.files.includes(item.src)) manifest.files.unshift(item.src);
+    });
+    files.push(jsonGitFile(`${dir}/files.json`, manifest));
+  }
   const copy = await descriptionCopyChange(session, body.description || '');
   if (!copy) return false;
   files.push(copy);
@@ -803,14 +884,125 @@ async function publishMobileOnly(session, mobile) {
     session,
     Array.isArray(body.mobile) ? body.mobile : null,
     typeof edited === 'string' ? edited : undefined,
-    descriptionUpdatedAt || undefined
+    descriptionUpdatedAt || undefined,
+    { mobileUpdatedAt: body.mobileUpdatedAt, images: courseVideos.map(storedVideoRecord) }
   );
+  pendingMobileVideos.delete(storageKeyFor(session));
   if (session.courseId && typeof edited === 'string') {
     const course = Object.assign({}, publishedCopy[session.courseId]);
     course[session.groupId] = edited;
     publishedCopy[session.courseId] = course;
   }
   return true;
+}
+
+function promptVimeoLink(onLink) {
+  if (document.getElementById('admin-video-link') || typeof onLink !== 'function') return;
+  const form = document.createElement('form');
+  form.id = 'admin-video-link';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute('aria-label', 'vimeo');
+  form.appendChild(input);
+  const close = () => {
+    form.remove();
+    document.removeEventListener('pointerdown', outside, true);
+  };
+  const outside = (event) => {
+    if (form.contains(event.target) || event.target.closest('#admin-video')) return;
+    close();
+  };
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const parsed = parseVimeoLink(input.value);
+    if (!parsed) {
+      input.classList.add('is-wrong');
+      return;
+    }
+    close();
+    onLink(parsed);
+  });
+  input.addEventListener('input', () => input.classList.remove('is-wrong'));
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+    }
+  });
+  document.body.appendChild(form);
+  input.focus();
+  setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
+}
+
+function placedVideoBox(existing, heightOverWidth) {
+  const hw = heightOverWidth > 0 ? heightOverWidth : 9 / 16;
+  const right = (existing || []).reduce((max, item) => Math.max(max, (Number(item.x) || 0) + (Number(item.w) || 0)), 1200);
+  const bottom = (existing || []).reduce((max, item) => Math.max(max, (Number(item.y) || 0) + (Number(item.h) || 0)), 0);
+  const w = Math.max(280, Math.round((hw <= 1 ? 0.62 : 0.28) * Math.max(right, 1200)));
+  const h = Math.max(24, Math.round(w * hw));
+  return { x: 8, y: Math.round(bottom + 120), w, h };
+}
+
+function revealMobileCell(cell) {
+  if (!cell) return;
+  cell.style.display = '';
+  delete cell.dataset.hidden;
+  cell.classList.remove('is-leaving', 'is-held', 'is-dragging');
+  cell.style.transform = '';
+  const grid = cell.parentElement;
+  if (grid && grid.dataset.hiddenIds) {
+    grid.dataset.hiddenIds = grid.dataset.hiddenIds.split('\n').filter((id) => id && id !== cell.dataset.mobileId).join('\n');
+  }
+  cell.scrollIntoView({ block: 'center' });
+  if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
+}
+
+async function addMobileVideo(session, container, parsed) {
+  if (!session || !container || !parsed) return;
+  const stored = session.courseId ? await loadLayoutImages(session) : [];
+  const known = stored.find((item) => String(item.vimeo || '') === parsed.id);
+  const mobileId = session.courseId
+    ? String(known ? known.id : `${Date.now()}-${Math.random().toString(16).slice(2)}`)
+    : parsed.src;
+  const existing = [...container.children].find((cell) => cell.dataset.mobileId === mobileId);
+  if (existing) {
+    revealMobileCell(existing);
+    return;
+  }
+  const ratio = await vimeoRatio(parsed);
+  const record = {
+    id: mobileId,
+    src: known && known.src ? known.src : parsed.src,
+    vimeo: parsed.id,
+    hash: (known && known.hash) || parsed.hash || ''
+  };
+  if (session.courseId) Object.assign(record, known ? {
+    x: known.x,
+    y: known.y,
+    w: known.w,
+    h: known.h
+  } : placedVideoBox(stored, ratio));
+  const cell = document.createElement('div');
+  cell.dataset.mobileId = record.id;
+  cell.dataset.before = String(MOBILE_GAP);
+  cell.style.marginTop = `${MOBILE_GAP}px`;
+  if (!session.courseId) cell.className = 'project-extra-media';
+  const box = document.createElement('div');
+  box.className = 'course-layout-image';
+  const visual = mountCourseVisual(box, record);
+  if (visual.vimeo) {
+    visual.setWide(true);
+    applyVideoAspect(box, record, () => {
+      if (typeof window.__courseMobileFit === 'function') window.__courseMobileFit();
+    });
+  }
+  cell.appendChild(box);
+  container.appendChild(cell);
+  bindMobileHold(cell);
+  if (!known) queueMobileVideo(session, record);
+  revealMobileCell(cell);
 }
 
 function mountMobileSave(session, container) {
@@ -830,8 +1022,15 @@ function mountMobileSave(session, container) {
   saveButton.id = 'admin-save';
   saveButton.type = 'button';
   saveButton.textContent = 'save';
-  tools.append(tokenInput, saveButton);
+  const videoButton = document.createElement('button');
+  videoButton.id = 'admin-video';
+  videoButton.type = 'button';
+  videoButton.textContent = 'video';
+  tools.append(tokenInput, saveButton, videoButton);
   document.body.appendChild(tools);
+  videoButton.addEventListener('click', () => {
+    promptVimeoLink((parsed) => addMobileVideo(session, container, parsed));
+  });
   tokenInput.addEventListener('input', () => tokenInput.classList.remove('is-wrong'));
   const save = async () => {
     if (save.busy) return;
@@ -2017,6 +2216,9 @@ function openAdminEditor(session) {
     if (!mobileKeep) mobileKeep = readLocalMobile(session);
     const layoutPayload = { description, descriptionUpdatedAt, images: layoutImages };
     if (mobileKeep) layoutPayload.mobile = mobileKeep;
+    if (previousDoc && Number(previousDoc.mobileUpdatedAt)) {
+      layoutPayload.mobileUpdatedAt = Number(previousDoc.mobileUpdatedAt);
+    }
     const layoutText = `${JSON.stringify(layoutPayload, null, 2)}\n`;
     files.push({
       path: `${dir}/layout.json`,
@@ -2426,31 +2628,7 @@ function openAdminEditor(session) {
   }
 
   function askVideoLink() {
-    if (document.getElementById('admin-video-link')) return;
-    const form = document.createElement('form');
-    form.id = 'admin-video-link';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.autocomplete = 'off';
-    input.spellcheck = false;
-    input.setAttribute('aria-label', 'vimeo');
-    form.appendChild(input);
-    const close = () => {
-      form.remove();
-      document.removeEventListener('pointerdown', outside, true);
-    };
-    const outside = (event) => {
-      if (form.contains(event.target) || event.target.closest('#admin-video')) return;
-      close();
-    };
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const parsed = parseVimeoLink(input.value);
-      if (!parsed) {
-        input.classList.add('is-wrong');
-        return;
-      }
-      close();
+    promptVimeoLink(async (parsed) => {
       const ratio = await vimeoRatio(parsed);
       if (edits.signal.aborted) return;
       const w = 280;
@@ -2472,16 +2650,6 @@ function openAdminEditor(session) {
       save();
       drawGrid();
     });
-    input.addEventListener('input', () => input.classList.remove('is-wrong'));
-    input.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        close();
-      }
-    });
-    document.body.appendChild(form);
-    input.focus();
-    setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
   }
 
   add.addEventListener('click', () => {
