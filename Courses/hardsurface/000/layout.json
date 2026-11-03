@@ -1,6 +1,6 @@
 {
-  "description": "Обкатал курс Hard Surface и поделал вместе\nс ребятами из студии Пууул девайсы. Придумывали идеи, скетчили, моделили в Plasticity, вайбкодили\nи рендерили в C4D Redshift.\n\nСпасибо большое Евгению/Жене Каширину\nи Владимиру/Вове Матханову за такую возможность!\n\nI ran the Hard Surface course and made devices together with the guys from Poool Studio. We came up with ideas, sketched, modeled in Plasticity, vibecoded some animations and rendered in C4D Redshift.\n\nMany thanks to Evgeny/Jenia Kashirin and Vladimir/Vova Matkhanova for this opportunity!\n\nThanks a lot!\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nSoft: Plasticity, C4D Redshift, After Effects, Claude",
-  "descriptionUpdatedAt": 1793728515567,
+  "description": "Обкатал курс Hard Surface и поделал вместе с ребятами из студии Пууул девайсы. Придумывали идеи, скетчили, моделили в Plasticity, вайбкодили и рендерили в C4D Redshift.\n\nСпасибо большое Евгению/Жене Каширину\nи Владимиру/Вове Матханову за такую возможность!\n\nI ran the Hard Surface course and made devices together with the guys from Poool Studio.\nWe came up with ideas, sketched, modeled in Plasticity, vibecoded some animations\nand rendered in C4D Redshift.\n\nMany thanks to Evgeny/Jenia Kashirin and Vladimir/Vova Matkhanova for this opportunity!\n\nThanks a lot:\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nSoft: Plasticity, C4D Redshift, After Effects, Claude",
+  "descriptionUpdatedAt": 1793728674814,
   "images": [
     {
       "id": "1793388312559-92ba8d3558079",
@@ -172,24 +172,24 @@
     },
     {
       "id": "1793398584730-7bf13c7ff29f6",
-      "x": 8,
-      "y": 1445,
+      "x": 792.3333333333334,
+      "y": 1368,
       "w": 368.1666666666667,
       "h": 78.00398461115691,
       "src": "Courses/hardsurface/000/Frame-1296-bf13c7ff29f6.png"
     },
     {
       "id": "1793398584810-36255e8250b53",
-      "x": 1184.5,
-      "y": 837,
+      "x": 1380.5833333333335,
+      "y": 701,
       "w": 368.1666666666667,
       "h": 368.1666666666667,
       "src": "Courses/hardsurface/000/Frame-1298-6255e8250b53.png"
     },
     {
       "id": "1793398584928-fa3d8fbd29981",
-      "x": 204.08333333333334,
-      "y": 231,
+      "x": 400.1666666666667,
+      "y": 570,
       "w": 368.1666666666667,
       "h": 211.23287865870986,
       "src": "Courses/hardsurface/000/Frame-1295-a3d8fbd29981.png"
