@@ -1,6 +1,6 @@
 {
   "description": "Обкатал курс Hard Surface и поделал вместе с ребятами из студии Пууул девайсы. Придумывали идеи, скетчили, моделили в Plasticity, вайбкодили и рендерили в C4D Redshift.\n\nСпасибо большое Евгению/Жене Каширину\nи Владимиру/Вове Матханову за такую возможность!\n\nI ran the Hard Surface course and made devices together with the guys from Poool Studio.\nWe came up with ideas, sketched, modeled in Plasticity, vibecoded some animations\nand rendered in C4D Redshift.\n\nMany thanks to Evgeny/Jenia Kashirin and Vladimir/Vova Matkhanova for this opportunity!\n\nThanks a lot:\n\nAnton\nMasha\nPolina\nAnya\nSonya\n\nSoft: Plasticity, C4D Redshift, After Effects, Claude",
-  "descriptionUpdatedAt": 1793989098499,
+  "descriptionUpdatedAt": 1793989238876,
   "images": [
     {
       "id": "1793388312559-92ba8d3558079",
@@ -51,25 +51,17 @@
       "src": "Courses/hardsurface/000/Frame-1270-e879a53c1a26.png"
     },
     {
-      "id": "1793397669742-1a6425564855c8",
-      "x": 1576.6666666666667,
-      "y": 8191.034334763948,
-      "w": 368.1666666666667,
-      "h": 616.2446351931331,
-      "src": "Courses/hardsurface/000/Frame-1272-6425564855c8.png"
-    },
-    {
       "id": "1793397669744-35ae8d150d95c",
       "x": 1184.5,
-      "y": 9696,
-      "w": 564.25,
-      "h": 564.25,
+      "y": 9887.083333333334,
+      "w": 368.1666666666667,
+      "h": 368.1666666666667,
       "src": "Courses/hardsurface/000/Frame-1274-5ae8d150d95c.png"
     },
     {
       "id": "1793397669744-007e662a335a28",
       "x": 1380.5833333333335,
-      "y": 10679.666666666668,
+      "y": 10907.666666666668,
       "w": 760.3333333333334,
       "h": 760.3333333333334,
       "src": "Courses/hardsurface/000/Frame-1275-7e662a335a28.png"
@@ -91,6 +83,14 @@
       "src": "Courses/hardsurface/000/Frame-1276-d9f8d455eecf.png"
     },
     {
+      "id": "1793397669755-066c8632a9ecc",
+      "x": 1772.75,
+      "y": 8958.067910637217,
+      "w": 368.1666666666667,
+      "h": 654.1758060421428,
+      "src": "Courses/hardsurface/000/Frame-1271-66c8632a9ecc.png"
+    },
+    {
       "id": "1793397863967-3b3ed4dcbeba98",
       "x": 400.1666666666667,
       "y": 14615,
@@ -101,9 +101,9 @@
     {
       "id": "1793397863968-6875bd3575a998",
       "x": 400.1666666666667,
-      "y": 13553.859338970024,
-      "w": 564.25,
-      "h": 354.7705611068409,
+      "y": 13345.859338970024,
+      "w": 760.3333333333334,
+      "h": 478.05739174993596,
       "src": "Courses/hardsurface/000/Frame-1277-75bd3575a998.png"
     },
     {
@@ -266,7 +266,7 @@
       "x": 400.1666666666667,
       "y": 8040.814814814815,
       "w": 760.3333333333334,
-      "h": 1351.7037037037035,
+      "h": 1351.7037037037037,
       "vimeo": "1244351392",
       "src": "https://vimeo.com/1244351392?share=copy&fl=sv&fe=ci"
     }
