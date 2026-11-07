@@ -554,6 +554,12 @@ function flowLayout() {
 const MOBILE_GAP = 96;
 const MOBILE_LEAD = 48;
 
+function mobileMargin(before, seam) {
+  const gap = Math.max(0, Number(before) || 0);
+  if (!seam || gap > 0) return gap;
+  return -1 / (window.devicePixelRatio || 1);
+}
+
 function readLocalMobile(session) {
   try {
     const data = JSON.parse(localStorage.getItem(storageKeyFor(session)) || '{}');
@@ -674,7 +680,9 @@ function bindMobileHold(cell) {
     if (axis === 'y') {
       const next = Math.max(0, Math.min(1600, Math.round(startBefore + my)));
       cell.dataset.before = String(next);
-      cell.style.marginTop = `${next}px`;
+      let previous = cell.previousElementSibling;
+      while (previous && previous.style.display === 'none') previous = previous.previousElementSibling;
+      cell.style.marginTop = `${mobileMargin(next, Boolean(previous))}px`;
       cell.style.transform = 'scale(0.94)';
       syncPage();
       return;
@@ -761,7 +769,7 @@ function primeMobileGaps(container, course) {
     } else if (course) before += MOBILE_LEAD;
     before = Math.max(0, Math.round(before));
     cell.dataset.before = String(before);
-    cell.style.marginTop = `${before}px`;
+    cell.style.marginTop = `${mobileMargin(before, index > 0)}px`;
     cell.style.marginBottom = '0px';
   });
   container.style.rowGap = '0px';
@@ -1021,8 +1029,8 @@ async function addMobileVideo(session, container, parsed) {
   } : placedVideoBox(stored, ratio));
   const cell = document.createElement('div');
   cell.dataset.mobileId = record.id;
-  cell.dataset.before = String(MOBILE_GAP);
-  cell.style.marginTop = `${MOBILE_GAP}px`;
+    cell.dataset.before = String(MOBILE_GAP);
+    cell.style.marginTop = `${mobileMargin(MOBILE_GAP, true)}px`;
   if (!session.courseId) cell.className = 'project-extra-media';
   const box = document.createElement('div');
   box.className = 'course-layout-image';
@@ -1157,12 +1165,13 @@ async function applyMobileProjectSpacing(session) {
       cell.style.display = 'none';
       return;
     }
+    const seam = seen > 0;
     const before = record && Number.isFinite(Number(record.before))
       ? Number(record.before)
       : (seen === 0 ? 0 : MOBILE_GAP);
     seen += 1;
     cell.dataset.before = String(before);
-    cell.style.marginTop = `${before}px`;
+    cell.style.marginTop = `${mobileMargin(before, seam)}px`;
     cell.style.marginBottom = '0px';
   });
   grid.style.rowGap = '0px';
@@ -2034,6 +2043,7 @@ async function showMobileCourseLayout(session) {
     const record = savedMap.get(id);
     const cell = document.createElement('div');
     cell.dataset.mobileId = id;
+    const seam = seen > 0;
     const before = record && Number.isFinite(Number(record.before))
       ? Number(record.before)
       : (seen === 0 ? MOBILE_LEAD : MOBILE_GAP);
@@ -2042,7 +2052,7 @@ async function showMobileCourseLayout(session) {
       cell.dataset.hidden = '1';
       cell.style.display = 'none';
     } else if (saved) {
-      cell.style.marginTop = `${before}px`;
+      cell.style.marginTop = `${mobileMargin(before, seam)}px`;
       seen += 1;
     } else seen += 1;
     const box = document.createElement('div');
