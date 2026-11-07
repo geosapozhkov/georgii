@@ -1236,9 +1236,100 @@ function descriptionNode(session) {
   return document.getElementById(id);
 }
 
-function extendPageForImages(items) {
-  const bottom = items.reduce((max, item) => Math.max(max, (Number(item.y) || 0) + (Number(item.h) || 0)), 0);
-  if (bottom > 0) document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+// Saved layouts use the pixel grid of the screen they were arranged on.
+// A laptop is narrower than that screen, so the same pixels run past the right edge.
+const LAYOUT_EDGE = 8;
+let placedLayoutItems = null;
+let placedLayoutFitBound = false;
+
+function placedDesignWidth(items) {
+  const right = items.reduce((max, item) => Math.max(max, (Number(item.x) || 0) + (Number(item.w) || 0)), 0);
+  return right > 0 ? right + LAYOUT_EDGE : 0;
+}
+
+function spansViewport(x, w, view) {
+  if (!(view > 0) || !(w > 0)) return false;
+  const rightGap = view - (x + w);
+  return x <= LAYOUT_EDGE + 1 && rightGap <= LAYOUT_EDGE + 1 && rightGap >= -1;
+}
+
+function applyPlacedLayoutFit() {
+  const layer = document.getElementById('course-layout');
+  if (!layer || !placedLayoutItems || document.getElementById('admin-layer')) return;
+  const designWidth = Number(layer.dataset.designWidth) || placedDesignWidth(placedLayoutItems);
+  const paint = (viewWidth) => {
+    const scale = designWidth > viewWidth && viewWidth > 0 ? viewWidth / designWidth : 1;
+    let bottom = 0;
+    placedLayoutItems.forEach((item) => {
+      if (!item.el) return;
+      const x = item.x * scale;
+      const y = item.y * scale;
+      const w = item.w * scale;
+      const h = item.h * scale;
+      item.el.style.left = `${x}px`;
+      item.el.style.top = `${y}px`;
+      item.el.style.width = `${w}px`;
+      item.el.style.height = `${h}px`;
+      item.authoredWide = spansViewport(x, w, viewWidth);
+      bottom = Math.max(bottom, y + h);
+    });
+    if (bottom > 0) document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+  };
+  let view = document.documentElement.clientWidth;
+  paint(view);
+  const narrowed = document.documentElement.clientWidth;
+  if (narrowed !== view) {
+    view = narrowed;
+    paint(view);
+  }
+  const doc = document.documentElement;
+  if (doc.scrollWidth > doc.clientWidth + 1) {
+    paint(Math.max(1, view - (doc.scrollWidth - doc.clientWidth)));
+  }
+  placedLayoutItems.forEach(syncWide);
+}
+
+function bindPlacedLayoutFit() {
+  if (placedLayoutFitBound) return;
+  placedLayoutFitBound = true;
+  window.addEventListener('resize', applyPlacedLayoutFit);
+}
+
+function mountStoredLayout(session, stored) {
+  const layer = document.createElement('div');
+  layer.id = 'course-layout';
+  const items = [];
+  stored.forEach((data) => {
+    const box = document.createElement('div');
+    box.className = 'course-layout-image';
+    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
+    layer.appendChild(box);
+    const placed = {
+      el: box,
+      x: Number(data.x) || 0,
+      y: Number(data.y) || 0,
+      w: Number(data.w) || 0,
+      h: Number(data.h) || 0,
+      setWide: visual.setWide
+    };
+    items.push(placed);
+    rememberWide(placed);
+    if (visual.vimeo) {
+      applyVideoAspect(box, data, (aspect) => {
+        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
+        placed.x = fitted.x;
+        placed.y = fitted.y;
+        placed.w = fitted.w;
+        placed.h = fitted.h;
+        applyPlacedLayoutFit();
+      });
+    }
+  });
+  layer.dataset.designWidth = String(placedDesignWidth(items));
+  placedLayoutItems = items;
+  document.body.appendChild(layer);
+  bindPlacedLayoutFit();
+  applyPlacedLayoutFit();
 }
 
 function parseVimeoLink(value) {
@@ -1314,6 +1405,10 @@ const wideItems = [];
 
 function syncWide(item) {
   if (!item.setWide) return;
+  if (item.authoredWide) {
+    item.setWide(document.documentElement.clientWidth >= 768);
+    return;
+  }
   item.setWide(coversTwelveColumns(item, courseColumns(document.documentElement.clientWidth)));
 }
 
@@ -1868,6 +1963,7 @@ async function showMobileCourseLayout(session) {
 }
 
 function clearPlacedLayout() {
+  placedLayoutItems = null;
   const layer = document.getElementById('course-layout');
   if (layer) layer.remove();
   const mobile = document.getElementById('course-mobile-grid');
@@ -1915,40 +2011,7 @@ async function showSavedCourseLayout(session) {
   if (document.getElementById('course-layout')) return;
   const stored = await loadLayoutImages(session);
   if (!stored.length || document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
-  const layer = document.createElement('div');
-  layer.id = 'course-layout';
-  stored.forEach((data) => {
-    const box = document.createElement('div');
-    box.className = 'course-layout-image';
-    box.style.left = `${Number(data.x) || 0}px`;
-    box.style.top = `${Number(data.y) || 0}px`;
-    box.style.width = `${Number(data.w) || 0}px`;
-    box.style.height = `${Number(data.h) || 0}px`;
-    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
-    layer.appendChild(box);
-    const placed = {
-      x: Number(data.x) || 0,
-      y: Number(data.y) || 0,
-      w: Number(data.w) || 0,
-      h: Number(data.h) || 0,
-      setWide: visual.setWide
-    };
-    rememberWide(placed);
-    if (visual.vimeo) {
-      applyVideoAspect(box, data, (aspect) => {
-        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
-        placed.x = fitted.x;
-        placed.w = fitted.w;
-        placed.h = fitted.h;
-        box.style.left = `${fitted.x}px`;
-        box.style.width = `${fitted.w}px`;
-        box.style.height = `${fitted.h}px`;
-        syncWide(placed);
-      });
-    }
-  });
-  document.body.appendChild(layer);
-  extendPageForImages(stored);
+  mountStoredLayout(session, stored);
 }
 
 function startCourseAdmin(session) {
@@ -2850,40 +2913,7 @@ async function showSavedProjectLayout(session) {
   if (!stored.length || document.getElementById('admin-layer')) return;
   if (phoneLayout()) return;
   if (document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
-  const layer = document.createElement('div');
-  layer.id = 'course-layout';
-  stored.forEach((data) => {
-    const box = document.createElement('div');
-    box.className = 'course-layout-image';
-    box.style.left = `${Number(data.x) || 0}px`;
-    box.style.top = `${Number(data.y) || 0}px`;
-    box.style.width = `${Number(data.w) || 0}px`;
-    box.style.height = `${Number(data.h) || 0}px`;
-    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
-    layer.appendChild(box);
-    const placed = {
-      x: Number(data.x) || 0,
-      y: Number(data.y) || 0,
-      w: Number(data.w) || 0,
-      h: Number(data.h) || 0,
-      setWide: visual.setWide
-    };
-    rememberWide(placed);
-    if (visual.vimeo) {
-      applyVideoAspect(box, data, (aspect) => {
-        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
-        placed.x = fitted.x;
-        placed.w = fitted.w;
-        placed.h = fitted.h;
-        box.style.left = `${fitted.x}px`;
-        box.style.width = `${fitted.w}px`;
-        box.style.height = `${fitted.h}px`;
-        syncWide(placed);
-      });
-    }
-  });
-  document.body.appendChild(layer);
-  extendPageForImages(stored);
+  mountStoredLayout(session, stored);
 }
 
 function startProjectAdmin(session) {
