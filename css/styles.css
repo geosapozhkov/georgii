@@ -66,6 +66,13 @@ body {
     calc(100vw - var(--text-start) - var(--text-lead) - 5.5rem)
   );
 }
+/* Ноутбук: колонка ближе к левому краю и шире, чем формула широкого монитора. */
+@media (min-width: 640px) and (max-width: 1919px) {
+  :root {
+    --text-start: clamp(12rem, 28vw, 28rem);
+    --text-width: min(42rem, calc(100vw - var(--text-start) - var(--text-lead) - 7rem));
+  }
+}
 
 /* Принудительно применяем Booklet Sans ко всем элементам */
 * {
@@ -205,8 +212,8 @@ img, video {
 
 }
 
-/* Случайная сетка только на широком экране. Ниже картинки идут на всю ширину окна. */
-@media (min-width: 1280px) {
+/* Случайная сетка только на широком мониторе. На ноутбуке картинки идут на всю ширину окна. */
+@media (min-width: 1920px) {
   #file-grid > .project-grid-random {
     grid-column-start: var(--gc-start, 1) !important;
     grid-column-end: span var(--gc-span, 4) !important;
@@ -1509,8 +1516,8 @@ body.course-page main {
   }
 }
 
-/* Планшет и узкий ноутбук: картинки на всю ширину окна, а не уменьшенная копия широкого экрана. */
-@media (min-width: 640px) and (max-width: 1279px) {
+/* Планшет и ноутбук: картинки на всю ширину окна, а не уменьшенная копия широкого экрана. */
+@media (min-width: 640px) and (max-width: 1919px) {
   body.course-page #course-works {
     position: absolute;
     margin: 0;
@@ -1579,6 +1586,10 @@ body.course-page main {
     width: auto;
     margin-left: -0.375rem;
     margin-right: -0.375rem;
+  }
+  body.course-page .course-description {
+    width: var(--text-width);
+    max-width: var(--text-width);
   }
 }
 

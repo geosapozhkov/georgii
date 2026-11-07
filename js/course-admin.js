@@ -517,7 +517,7 @@ function phoneLayout() {
 }
 
 function flowLayout() {
-  return window.matchMedia('(max-width: 1279px)').matches;
+  return window.matchMedia('(max-width: 1919px)').matches;
 }
 
 const MOBILE_GAP = 96;
@@ -1999,7 +1999,7 @@ function bindLayoutMode(session) {
   window.__publicLayoutSession = session;
   if (layoutModeBound) return;
   layoutModeBound = true;
-  const query = window.matchMedia('(max-width: 1279px)');
+  const query = window.matchMedia('(max-width: 1919px)');
   const apply = async () => {
     const current = window.__publicLayoutSession;
     if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
