@@ -1306,6 +1306,49 @@ function placedDesignWidth(items) {
   return right > 0 ? right + LAYOUT_EDGE : 0;
 }
 
+function layoutFrames(frames) {
+  const dpr = window.devicePixelRatio || 1;
+  const pixel = 1 / dpr;
+  const edge = (value) => Math.round(value * dpr) / dpr;
+  const painted = [];
+  frames.forEach((frame) => {
+    if (!frame.el) return;
+    const left = edge(frame.x);
+    const top = edge(frame.y);
+    const right = edge(frame.x + frame.w);
+    const bottom = edge(frame.y + frame.h);
+    painted.push({
+      frame,
+      left,
+      top,
+      width: Math.max(pixel, right - left),
+      height: Math.max(pixel, bottom - top)
+    });
+  });
+  // A flush joint is one edge in the layout. Round that shared edge to the same
+  // device pixel and overlap it by one physical pixel so the seam does not open.
+  painted.forEach((box) => {
+    let top = box.top;
+    const bottom = box.top + box.height;
+    painted.forEach((other) => {
+      if (other === box) return;
+      const gap = box.frame.y - (other.frame.y + other.frame.h);
+      if (gap < -0.5 || gap > 0.5) return;
+      const overlap = Math.min(box.frame.x + box.frame.w, other.frame.x + other.frame.w) - Math.max(box.frame.x, other.frame.x);
+      if (overlap <= 0.5) return;
+      const joined = other.top + other.height - pixel;
+      if (joined < top) top = joined;
+    });
+    box.top = top;
+    box.height = Math.max(pixel, bottom - top);
+    box.frame.el.style.left = `${box.left}px`;
+    box.frame.el.style.top = `${box.top}px`;
+    box.frame.el.style.width = `${box.width}px`;
+    box.frame.el.style.height = `${box.height}px`;
+  });
+  return painted;
+}
+
 function spansViewport(x, w, view) {
   if (!(view > 0) || !(w > 0)) return false;
   const rightGap = view - (x + w);
@@ -1328,27 +1371,28 @@ function applyPlacedLayoutFit() {
     layer.style.width = `${viewWidth}px`;
     layer.style.maxWidth = '100%';
     let bottom = designHeight > 0 ? designHeight * scale : 0;
-    placedLayoutItems.forEach((item) => {
-      if (!item.el) return;
-      const x = item.x * scale;
-      const y = item.y * scale;
-      const w = item.w * scale;
-      const h = item.h * scale;
-      item.el.style.left = `${x}px`;
-      item.el.style.top = `${y}px`;
-      item.el.style.width = `${w}px`;
-      item.el.style.height = `${h}px`;
-      item.el.style.maxWidth = 'none';
-      const visual = item.el.querySelector('img, iframe');
+    const frames = placedLayoutItems.filter((item) => item.el).map((item) => ({
+      el: item.el,
+      item,
+      x: item.x * scale,
+      y: item.y * scale,
+      w: item.w * scale,
+      h: item.h * scale
+    }));
+    layoutFrames(frames).forEach((box) => {
+      box.frame.el.style.maxWidth = 'none';
+      const visual = box.frame.el.querySelector('img, iframe');
       if (visual) {
-        visual.style.width = `${w}px`;
-        visual.style.height = `${h}px`;
+        visual.style.width = `${box.width}px`;
+        visual.style.height = `${box.height}px`;
         visual.style.maxWidth = 'none';
         visual.style.maxHeight = 'none';
         visual.style.objectFit = 'fill';
       }
+      const y = box.top;
+      const h = box.height;
       if (y + h > bottom) bottom = y + h;
-      item.authoredWide = spansViewport(x, w, viewWidth);
+      box.frame.item.authoredWide = spansViewport(box.left, box.width, viewWidth);
     });
     layer.style.height = `${bottom}px`;
     document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
@@ -2636,10 +2680,7 @@ function openAdminEditor(session) {
   }
 
   function applyBox(item) {
-    item.el.style.left = `${item.x}px`;
-    item.el.style.top = `${item.y}px`;
-    item.el.style.width = `${item.w}px`;
-    item.el.style.height = `${item.h}px`;
+    layoutFrames(images);
     syncWide(item);
   }
 
