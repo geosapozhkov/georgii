@@ -2680,7 +2680,7 @@ function openAdminEditor(session) {
     const blocked = new Set(tail.map((entry) => entry.item));
     const floor = floorAbove(images, selected, blocked, originY);
     if (selected.y < floor) selected.y = floor;
-    const applied = selected.y - originY;
+    const applied = Math.max(0, selected.y - originY);
     tail.forEach((entry) => {
       entry.item.y = entry.y + applied;
       applyBox(entry.item);
