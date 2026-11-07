@@ -1,6 +1,6 @@
 {
   "description": "Обкатал курс Hard Surface и поделал вместе с ребятами из студии Пууул девайсы. Придумывали идеи, скетчили, моделили в Plasticity, вайбкодили и рендерили в C4D Redshift.\n\nСпасибо большое Евгению/Жене Каширину\nи Владимиру/Вове Матханову за такую возможность!\n\nI ran the Hard Surface course and made devices together with the guys from Poool Studio.\nWe came up with ideas, sketched, modeled in Plasticity, vibecoded some animations\nand rendered in C4D Redshift.\n\nMany thanks to Evgeny/Jenia Kashirin and Vladimir/Vova Matkhanova for this opportunity!\n\nThanks a lot:\n\nAnya\nSonya\nAnton\nMasha\nPolina\n\nSoft: Plasticity, C4D Redshift, After Effects, Claude",
-  "descriptionUpdatedAt": 1794089655359,
+  "descriptionUpdatedAt": 1794090065295,
   "width": 1551,
   "images": [
     {
@@ -293,24 +293,36 @@
   ],
   "mobile": [
     {
-      "id": "1793398584928-fa3d8fbd29981",
-      "before": 446
-    },
-    {
       "id": "1793398584810-36255e8250b53",
       "before": 338
     },
     {
-      "id": "1793398584730-7bf13c7ff29f6",
-      "before": 339
+      "id": "1794072840887-530e8dd159aa4",
+      "before": 96
+    },
+    {
+      "id": "1793398584928-fa3d8fbd29981",
+      "before": 446
+    },
+    {
+      "id": "1794071821715-94614f2ecc608",
+      "before": 408
+    },
+    {
+      "id": "1794073140674-67337f4128f3c8",
+      "before": 394
     },
     {
       "id": "1793388312559-92ba8d3558079",
       "before": 345
     },
     {
+      "id": "1794089516889-30ce3f2f534df8",
+      "before": 385
+    },
+    {
       "id": "1793648051468-150e17e9e556",
-      "before": 96
+      "before": 103
     },
     {
       "id": "1793393871277-98f3e193e186",
@@ -318,27 +330,23 @@
     },
     {
       "id": "1793396799586-55e77a9b3e2788",
-      "before": 96
-    },
-    {
-      "id": "1793396799585-9659c281ec2be8",
-      "before": 270
+      "before": 124
     },
     {
       "id": "1793388312566-fa9710733f81b8",
-      "before": 96
+      "before": 468
     },
     {
       "id": "1793396799586-fe879a53c1a26",
-      "before": 275
+      "before": 184
     },
     {
-      "id": "1793397669755-066c8632a9ecc",
-      "before": 96
+      "id": "1793988998460-a805504d9a5de8",
+      "before": 292
     },
     {
-      "id": "1793397669742-1a6425564855c8",
-      "before": 413
+      "id": "1794089593517-4c58de841f3918",
+      "before": 419
     },
     {
       "id": "1793397669744-35ae8d150d95c",
@@ -346,39 +354,39 @@
     },
     {
       "id": "1793397669744-4146b02c5f4398",
-      "before": 346
+      "before": 397
     },
     {
       "id": "1793397669744-007e662a335a28",
-      "before": 561
+      "before": 412
     },
     {
       "id": "1793397669754-2d9f8d455eecf",
-      "before": 96
-    },
-    {
-      "id": "1793397863968-6875bd3575a998",
-      "before": 313
+      "before": 470
     },
     {
       "id": "1793654510206-579b15b2afb61",
-      "before": 96
+      "before": 340
+    },
+    {
+      "id": "1793397863968-6875bd3575a998",
+      "before": 473
     },
     {
       "id": "1793397863967-3b3ed4dcbeba98",
-      "before": 96
+      "before": 184
     },
     {
       "id": "1793397863982-b6ec9f7d671ed8",
-      "before": 96
-    },
-    {
-      "id": "1793397973637-abbab773096518",
-      "before": 96
+      "before": 507
     },
     {
       "id": "1793397973573-161d626d238f28",
-      "before": 96
+      "before": 334
+    },
+    {
+      "id": "1793397973637-abbab773096518",
+      "before": 632
     },
     {
       "id": "1793397973439-a9b1cdcb2ccfe",
@@ -402,24 +410,24 @@
       "before": 360
     },
     {
-      "id": "1793398799604-0fac522f81d3e8",
-      "before": 0
-    },
-    {
       "id": "1793398799536-1c24c326666d1",
-      "before": 375
+      "before": 78
     },
     {
       "id": "1793646828692-f0db228144e65",
-      "before": 96
+      "before": 483
     },
     {
-      "id": "1793398799286-96696d7ea181b",
-      "before": 96
+      "id": "1793398799604-0fac522f81d3e8",
+      "before": 301
     },
     {
       "id": "1793398799220-c4717150d59eb8",
-      "before": 96
+      "before": 328
+    },
+    {
+      "id": "1793398799286-96696d7ea181b",
+      "before": 0
     },
     {
       "id": "1793398799133-aad4833634d4c",
@@ -431,5 +439,5 @@
       "hidden": true
     }
   ],
-  "mobileUpdatedAt": 1793657301282
+  "mobileUpdatedAt": 1794090065295
 }
