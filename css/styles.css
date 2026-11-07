@@ -30,11 +30,19 @@
   font-style: normal;
 }
 
+/* Страница не шире окна: только вертикальный скролл, без ползунка внизу. */
+html {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   background: #FAFAFA;
   font-family: 'Booklet Sans', sans-serif !important;
   color: #ACACAC;
   min-height: 100vh;
+  overflow-x: clip;
+  max-width: 100%;
   cursor: none !important; /* Скрываем стандартный курсор */
 }
 

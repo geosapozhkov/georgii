@@ -1283,7 +1283,7 @@ function applyPlacedLayoutFit() {
     paint(view);
   }
   const doc = document.documentElement;
-  if (doc.scrollWidth > doc.clientWidth + 1) {
+  if (doc.scrollWidth > doc.clientWidth) {
     paint(Math.max(1, view - (doc.scrollWidth - doc.clientWidth)));
   }
   placedLayoutItems.forEach(syncWide);
