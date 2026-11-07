@@ -2131,6 +2131,22 @@ async function showSavedCourseLayout(session) {
   mountStoredLayout(session, stored);
 }
 
+function imagesBelow(list, item) {
+  return list.filter((other) => other !== item && other.y > item.y + 1);
+}
+
+function floorAbove(list, item, blocked, originY) {
+  let floor = 0;
+  list.forEach((other) => {
+    if (other === item || blocked.has(other)) return;
+    const overlaps = item.x < other.x + other.w - 0.5 && other.x < item.x + item.w - 0.5;
+    if (!overlaps) return;
+    const bottom = other.y + other.h;
+    if (bottom <= originY + 1 && bottom > floor) floor = bottom;
+  });
+  return floor;
+}
+
 function startCourseAdmin(session) {
   if (document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
   const open = () => {
@@ -2636,21 +2652,41 @@ function openAdminEditor(session) {
     syncWide(item);
   }
 
-  function snapLevel(item) {
+  function snapLevel(item, ignore) {
     let best = null;
     images.forEach((other) => {
-      if (other === item || Math.abs(other.h - item.h) > 1) return;
+      if (other === item || (ignore && ignore.has(other)) || Math.abs(other.h - item.h) > 1) return;
       const delta = other.y - item.y;
       if (Math.abs(delta) <= LEVEL_SNAP && (best === null || Math.abs(delta) < Math.abs(best))) best = delta;
     });
     if (best) item.y += best;
   }
 
-  function snapMove(item) {
+  function snapMove(item, ignore) {
     metrics = computeMetrics();
     const span = nearestSpan(item.w);
     item.x = columnLeft(nearestStart(item.x, span));
-    snapLevel(item);
+    snapLevel(item, ignore);
+  }
+
+  function growLayer() {
+    const bottom = images.reduce((max, entry) => Math.max(max, entry.y + entry.h), 0);
+    const height = Math.max(bottom + 120, window.innerHeight);
+    layer.style.height = `${height}px`;
+    document.body.style.minHeight = `${Math.ceil(height)}px`;
+  }
+
+  function moveTail(tail, originY) {
+    const blocked = new Set(tail.map((entry) => entry.item));
+    const floor = floorAbove(images, selected, blocked, originY);
+    if (selected.y < floor) selected.y = floor;
+    const applied = selected.y - originY;
+    tail.forEach((entry) => {
+      entry.item.y = entry.y + applied;
+      applyBox(entry.item);
+    });
+    applyBox(selected);
+    growLayer();
   }
 
   function itemRatio(item, origin) {
@@ -2844,7 +2880,8 @@ function openAdminEditor(session) {
       mode,
       pointerId: event.pointerId,
       start: layerPoint(event),
-      origin: { x: item.x, y: item.y, w: item.w, h: item.h }
+      origin: { x: item.x, y: item.y, w: item.w, h: item.h },
+      tail: imagesBelow(images, item).map((other) => ({ item: other, y: other.y }))
     };
   }
 
@@ -2867,7 +2904,9 @@ function openAdminEditor(session) {
       const rawY = origin.y + (point.y - drag.start.y);
       selected.x = rawX;
       selected.y = rawY;
-      snapMove(selected);
+      const blocked = new Set((drag.tail || []).map((entry) => entry.item));
+      snapMove(selected, blocked);
+      moveTail(drag.tail || [], origin.y);
       placeCursor(event.clientX + (selected.x - rawX), event.clientY + (selected.y - rawY));
     } else {
       const edges = edgesFor(drag.mode);
@@ -2877,7 +2916,7 @@ function openAdminEditor(session) {
         edges.top ? layerRect.top + selected.y : edges.bottom ? layerRect.top + selected.y + selected.h : event.clientY
       );
     }
-    applyBox(selected);
+    if (drag.mode !== 'move') applyBox(selected);
   }
 
   function onPointerUp(event) {
@@ -2995,11 +3034,16 @@ function openAdminEditor(session) {
       selected.x = columnLeft(start);
       moved = true;
     }
-    if (event.key === 'ArrowUp') { selected.y -= step; moved = true; }
-    if (event.key === 'ArrowDown') { selected.y += step; moved = true; }
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      const tail = imagesBelow(images, selected).map((other) => ({ item: other, y: other.y }));
+      const originY = selected.y;
+      selected.y += event.key === 'ArrowDown' ? step : -step;
+      moveTail(tail, originY);
+      moved = true;
+    }
     if (!moved) return;
     event.preventDefault();
-    applyBox(selected);
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') applyBox(selected);
     save();
   }
 
