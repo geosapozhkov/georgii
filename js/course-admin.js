@@ -1270,28 +1270,36 @@ function applyPlacedLayoutFit() {
   const paint = (viewWidth) => {
     const scale = viewWidth > 0 ? viewWidth / designWidth : 1;
     layer.style.left = '0px';
-    layer.style.width = '100%';
+    layer.style.width = `${viewWidth}px`;
+    layer.style.maxWidth = '100%';
     if (designHeight > 0) layer.style.height = `${designHeight * scale}px`;
     placedLayoutItems.forEach((item) => {
       if (!item.el) return;
-      const x = item.x * scale;
-      const y = item.y * scale;
-      const w = item.w * scale;
-      const h = item.h * scale;
-      item.el.style.left = `${(item.x / designWidth) * 100}%`;
-      item.el.style.width = `${(item.w / designWidth) * 100}%`;
-      if (designHeight > 0) {
-        item.el.style.top = `${(item.y / designHeight) * 100}%`;
-        item.el.style.height = `${(item.h / designHeight) * 100}%`;
-      } else {
-        item.el.style.top = `${y}px`;
-        item.el.style.height = `${h}px`;
+      let x = item.x * scale;
+      let y = item.y * scale;
+      let w = item.w * scale;
+      let h = item.h * scale;
+      if (x < 0) x = 0;
+      if (x + w > viewWidth) w = Math.max(1, viewWidth - x);
+      item.el.style.left = `${x}px`;
+      item.el.style.top = `${y}px`;
+      item.el.style.width = `${w}px`;
+      item.el.style.height = `${h}px`;
+      item.el.style.maxWidth = '100%';
+      const visual = item.el.querySelector('img, iframe');
+      if (visual) {
+        visual.style.width = `${w}px`;
+        visual.style.height = `${h}px`;
+        visual.style.maxWidth = '100%';
+        visual.style.maxHeight = '100%';
+        visual.style.objectFit = 'contain';
       }
       item.authoredWide = spansViewport(x, w, viewWidth);
     });
     if (designHeight > 0) document.body.style.minHeight = `${Math.ceil(designHeight * scale + 24)}px`;
   };
   let view = document.documentElement.clientWidth;
+  if (layer.dataset.fitWidth === String(view)) return;
   paint(view);
   const narrowed = document.documentElement.clientWidth;
   if (narrowed !== view) {
@@ -1302,6 +1310,7 @@ function applyPlacedLayoutFit() {
   if (doc.scrollWidth > doc.clientWidth) {
     paint(Math.max(1, view - (doc.scrollWidth - doc.clientWidth)));
   }
+  layer.dataset.fitWidth = String(document.documentElement.clientWidth);
   placedLayoutItems.forEach(syncWide);
 }
 
@@ -1309,6 +1318,11 @@ function bindPlacedLayoutFit() {
   if (placedLayoutFitBound) return;
   placedLayoutFitBound = true;
   window.addEventListener('resize', applyPlacedLayoutFit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', applyPlacedLayoutFit);
+  if (typeof ResizeObserver === 'function') {
+    const observer = new ResizeObserver(() => applyPlacedLayoutFit());
+    observer.observe(document.documentElement);
+  }
 }
 
 function mountStoredLayout(session, stored) {
