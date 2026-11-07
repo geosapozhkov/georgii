@@ -516,6 +516,10 @@ function phoneLayout() {
   return window.matchMedia('(max-width: 639px)').matches;
 }
 
+function flowLayout() {
+  return window.matchMedia('(max-width: 1279px)').matches;
+}
+
 const MOBILE_GAP = 96;
 const MOBILE_LEAD = 48;
 
@@ -1236,9 +1240,199 @@ function descriptionNode(session) {
   return document.getElementById(id);
 }
 
-function extendPageForImages(items) {
-  const bottom = items.reduce((max, item) => Math.max(max, (Number(item.y) || 0) + (Number(item.h) || 0)), 0);
-  if (bottom > 0) document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+// Saved layouts use the pixel grid of the screen they were arranged on.
+// Pictures placed on a narrower window keep that pixel width, so a uniform
+// scale leaves a blank strip at the page edge. Seat them on the current
+// 12-column grid instead: a full-width frame then meets both edges.
+const LAYOUT_EDGE = 8;
+const GRID_GAP = 24;
+const GRID_COLS = 12;
+let placedLayoutItems = null;
+let placedLayoutFitBound = false;
+
+function placedDesignWidth(items) {
+  const right = items.reduce((max, item) => Math.max(max, (Number(item.x) || 0) + (Number(item.w) || 0)), 0);
+  return right > 0 ? right + LAYOUT_EDGE : 0;
+}
+
+function gridFor(width) {
+  const colW = (width - LAYOUT_EDGE * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
+  return {
+    left(index) {
+      return LAYOUT_EDGE + index * (colW + GRID_GAP);
+    },
+    span(count) {
+      return count * colW + (count - 1) * GRID_GAP;
+    }
+  };
+}
+
+function columnDesigns(items) {
+  const found = [];
+  items.forEach((item) => {
+    if (!(item.w > 0) || item.x <= LAYOUT_EDGE + 1) return;
+    let best = null;
+    for (let span = 1; span <= GRID_COLS; span += 1) {
+      const colW = (item.w - (span - 1) * GRID_GAP) / span;
+      if (!(colW > 8)) continue;
+      const design = GRID_COLS * colW + LAYOUT_EDGE * 2 + GRID_GAP * (GRID_COLS - 1);
+      if (design < 900 || design > 4200) continue;
+      for (let start = 0; start <= GRID_COLS - span; start += 1) {
+        const err = Math.abs(LAYOUT_EDGE + start * (colW + GRID_GAP) - item.x);
+        if (!best || err < best.err) best = { err, design: Math.round(design) };
+      }
+    }
+    if (best && best.err < 1.5) found.push(best.design);
+  });
+  return [...new Set(found)];
+}
+
+function seatOnDesigns(item, designs) {
+  let best = null;
+  designs.forEach((design) => {
+    const grid = gridFor(design);
+    for (let span = 1; span <= GRID_COLS; span += 1) {
+      const widthError = Math.abs(grid.span(span) - item.w);
+      for (let start = 0; start <= GRID_COLS - span; start += 1) {
+        const score = Math.abs(grid.left(start) - item.x) + widthError;
+        if (!best || score < best.score) best = { score, start, span };
+      }
+    }
+  });
+  return best && best.score < 4 ? best : null;
+}
+
+function rememberColumnSeats(items) {
+  const designs = columnDesigns(items);
+  items.forEach((item) => {
+    const seat = seatOnDesigns(item, designs);
+    if (!seat) return;
+    item.colStart = seat.start;
+    item.colSpan = seat.span;
+  });
+}
+
+function spansViewport(x, w, view) {
+  if (!(view > 0) || !(w > 0)) return false;
+  const rightGap = view - (x + w);
+  return x <= LAYOUT_EDGE + 1 && rightGap <= LAYOUT_EDGE + 1 && rightGap >= -1;
+}
+
+function placedDesignHeight(items) {
+  return items.reduce((max, item) => Math.max(max, (Number(item.y) || 0) + (Number(item.h) || 0)), 0);
+}
+
+function applyPlacedLayoutFit() {
+  const layer = document.getElementById('course-layout');
+  if (!layer || !placedLayoutItems || document.getElementById('admin-layer')) return;
+  const designWidth = Number(layer.dataset.designWidth) || placedDesignWidth(placedLayoutItems);
+  const designHeight = Number(layer.dataset.designHeight) || placedDesignHeight(placedLayoutItems);
+  if (!(designWidth > 0)) return;
+  const paint = (viewWidth) => {
+    const scale = viewWidth > 0 ? viewWidth / designWidth : 1;
+    const grid = gridFor(viewWidth);
+    layer.style.left = '0px';
+    layer.style.width = `${viewWidth}px`;
+    layer.style.maxWidth = '100%';
+    let bottom = designHeight > 0 ? designHeight * scale : 0;
+    placedLayoutItems.forEach((item) => {
+      if (!item.el) return;
+      const y = item.y * scale;
+      let x;
+      let w;
+      let h;
+      const aspect = item.h > 0 ? item.w / item.h : 0;
+      if (Number.isInteger(item.colSpan) && aspect > 0) {
+        x = grid.left(item.colStart);
+        w = grid.span(item.colSpan);
+        h = w / aspect;
+      } else {
+        x = item.x * scale;
+        w = item.w * scale;
+        h = item.h * scale;
+      }
+      if (x < 0) x = 0;
+      if (x + w > viewWidth) w = Math.max(1, viewWidth - x);
+      item.el.style.left = `${x}px`;
+      item.el.style.top = `${y}px`;
+      item.el.style.width = `${w}px`;
+      item.el.style.height = `${h}px`;
+      item.el.style.maxWidth = 'none';
+      const visual = item.el.querySelector('img, iframe');
+      if (visual) {
+        visual.style.width = `${w}px`;
+        visual.style.height = `${h}px`;
+        visual.style.maxWidth = 'none';
+        visual.style.maxHeight = 'none';
+        visual.style.objectFit = 'fill';
+      }
+      if (y + h > bottom) bottom = y + h;
+      item.authoredWide = spansViewport(x, w, viewWidth);
+    });
+    layer.style.height = `${bottom}px`;
+    document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+  };
+  let view = document.documentElement.clientWidth;
+  if (layer.dataset.fitWidth === String(view)) return;
+  paint(view);
+  const narrowed = document.documentElement.clientWidth;
+  if (narrowed !== view) {
+    view = narrowed;
+    paint(view);
+  }
+  layer.dataset.fitWidth = String(document.documentElement.clientWidth);
+  placedLayoutItems.forEach(syncWide);
+}
+
+function bindPlacedLayoutFit() {
+  if (placedLayoutFitBound) return;
+  placedLayoutFitBound = true;
+  window.addEventListener('resize', applyPlacedLayoutFit);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', applyPlacedLayoutFit);
+  if (typeof ResizeObserver === 'function') {
+    const observer = new ResizeObserver(() => applyPlacedLayoutFit());
+    observer.observe(document.documentElement);
+  }
+}
+
+function mountStoredLayout(session, stored) {
+  const layer = document.createElement('div');
+  layer.id = 'course-layout';
+  const items = [];
+  stored.forEach((data) => {
+    const box = document.createElement('div');
+    box.className = 'course-layout-image';
+    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
+    layer.appendChild(box);
+    const placed = {
+      el: box,
+      x: Number(data.x) || 0,
+      y: Number(data.y) || 0,
+      w: Number(data.w) || 0,
+      h: Number(data.h) || 0,
+      setWide: visual.setWide
+    };
+    items.push(placed);
+    rememberWide(placed);
+    if (visual.vimeo) {
+      applyVideoAspect(box, data, (aspect) => {
+        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
+        placed.x = fitted.x;
+        placed.y = fitted.y;
+        placed.w = fitted.w;
+        placed.h = fitted.h;
+        delete layer.dataset.fitWidth;
+        applyPlacedLayoutFit();
+      });
+    }
+  });
+  rememberColumnSeats(items);
+  layer.dataset.designWidth = String(placedDesignWidth(items));
+  layer.dataset.designHeight = String(placedDesignHeight(items));
+  placedLayoutItems = items;
+  document.body.appendChild(layer);
+  bindPlacedLayoutFit();
+  applyPlacedLayoutFit();
 }
 
 function parseVimeoLink(value) {
@@ -1314,6 +1508,10 @@ const wideItems = [];
 
 function syncWide(item) {
   if (!item.setWide) return;
+  if (item.authoredWide) {
+    item.setWide(document.documentElement.clientWidth >= 768);
+    return;
+  }
   item.setWide(coversTwelveColumns(item, courseColumns(document.documentElement.clientWidth)));
 }
 
@@ -1792,7 +1990,7 @@ async function showMobileCourseLayout(session) {
   applyCourseDescription(session, false);
   if (document.getElementById('course-mobile-grid')) return;
   const stored = await loadLayoutImages(session);
-  if (!stored.length || !phoneLayout() || document.getElementById('course-mobile-grid')) return;
+  if (!stored.length || !flowLayout() || document.getElementById('course-mobile-grid')) return;
   const works = document.getElementById('course-works');
   if (!works) return;
   const saved = mobilePlanFor(session, await fetchLayoutDocument(assetDirFor(session)));
@@ -1843,15 +2041,29 @@ async function showMobileCourseLayout(session) {
   works.appendChild(grid);
 
   const fit = () => {
-    if (!phoneLayout() || !works.isConnected) return;
+    if (!flowLayout() || !works.isConnected) return;
     const host = document.querySelector('.course-name-col') || document.getElementById('course-root');
     const desc = document.getElementById('course-description');
     const title = document.querySelector('.course-name');
     const above = desc && desc.getBoundingClientRect().height ? desc : title;
     if (!host || !above) return;
-    const lead = grid.dataset.explicit === '1' ? 0 : MOBILE_LEAD;
-    const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + lead;
-    works.style.top = `${Math.round(top)}px`;
+    const place = () => {
+      const view = document.documentElement.clientWidth;
+      works.style.left = `${Math.round(-host.getBoundingClientRect().left)}px`;
+      works.style.width = `${view}px`;
+      works.style.maxWidth = `${view}px`;
+      const lead = grid.dataset.explicit === '1' ? 0 : MOBILE_LEAD;
+      const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + lead;
+      works.style.top = `${Math.round(top)}px`;
+    };
+    place();
+    place();
+    const doc = document.documentElement;
+    if (doc.scrollWidth > doc.clientWidth) {
+      const view = doc.clientWidth;
+      works.style.width = `${view}px`;
+      works.style.maxWidth = `${view}px`;
+    }
     const bottom = works.getBoundingClientRect().bottom + window.scrollY;
     const height = `${Math.ceil(bottom + 24)}px`;
     document.body.style.minHeight = height;
@@ -1868,6 +2080,7 @@ async function showMobileCourseLayout(session) {
 }
 
 function clearPlacedLayout() {
+  placedLayoutItems = null;
   const layer = document.getElementById('course-layout');
   if (layer) layer.remove();
   const mobile = document.getElementById('course-mobile-grid');
@@ -1885,7 +2098,7 @@ function bindLayoutMode(session) {
   window.__publicLayoutSession = session;
   if (layoutModeBound) return;
   layoutModeBound = true;
-  const query = window.matchMedia('(max-width: 639px)');
+  const query = window.matchMedia('(max-width: 1279px)');
   const apply = async () => {
     const current = window.__publicLayoutSession;
     if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
@@ -1897,7 +2110,7 @@ function bindLayoutMode(session) {
       return;
     }
     if (window.reloadProjectMedia) await window.reloadProjectMedia();
-    if (!phoneLayout()) showSavedProjectLayout(current);
+    if (!flowLayout()) showSavedProjectLayout(current);
   };
   if (query.addEventListener) query.addEventListener('change', apply);
   else query.addListener(apply);
@@ -1906,7 +2119,7 @@ function bindLayoutMode(session) {
 async function showSavedCourseLayout(session) {
   bindLayoutMode(session);
   refreshSharedDescription(session);
-  if (phoneLayout()) {
+  if (flowLayout()) {
     showMobileCourseLayout(session);
     return;
   }
@@ -1915,40 +2128,7 @@ async function showSavedCourseLayout(session) {
   if (document.getElementById('course-layout')) return;
   const stored = await loadLayoutImages(session);
   if (!stored.length || document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
-  const layer = document.createElement('div');
-  layer.id = 'course-layout';
-  stored.forEach((data) => {
-    const box = document.createElement('div');
-    box.className = 'course-layout-image';
-    box.style.left = `${Number(data.x) || 0}px`;
-    box.style.top = `${Number(data.y) || 0}px`;
-    box.style.width = `${Number(data.w) || 0}px`;
-    box.style.height = `${Number(data.h) || 0}px`;
-    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
-    layer.appendChild(box);
-    const placed = {
-      x: Number(data.x) || 0,
-      y: Number(data.y) || 0,
-      w: Number(data.w) || 0,
-      h: Number(data.h) || 0,
-      setWide: visual.setWide
-    };
-    rememberWide(placed);
-    if (visual.vimeo) {
-      applyVideoAspect(box, data, (aspect) => {
-        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
-        placed.x = fitted.x;
-        placed.w = fitted.w;
-        placed.h = fitted.h;
-        box.style.left = `${fitted.x}px`;
-        box.style.width = `${fitted.w}px`;
-        box.style.height = `${fitted.h}px`;
-        syncWide(placed);
-      });
-    }
-  });
-  document.body.appendChild(layer);
-  extendPageForImages(stored);
+  mountStoredLayout(session, stored);
 }
 
 function startCourseAdmin(session) {
@@ -2845,45 +3025,12 @@ function openAdminEditor(session) {
 async function showSavedProjectLayout(session) {
   if (!session) return;
   bindLayoutMode(session);
-  if (phoneLayout()) return;
+  if (flowLayout()) return;
   const stored = await loadLayoutImages(session);
   if (!stored.length || document.getElementById('admin-layer')) return;
-  if (phoneLayout()) return;
+  if (flowLayout()) return;
   if (document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
-  const layer = document.createElement('div');
-  layer.id = 'course-layout';
-  stored.forEach((data) => {
-    const box = document.createElement('div');
-    box.className = 'course-layout-image';
-    box.style.left = `${Number(data.x) || 0}px`;
-    box.style.top = `${Number(data.y) || 0}px`;
-    box.style.width = `${Number(data.w) || 0}px`;
-    box.style.height = `${Number(data.h) || 0}px`;
-    const visual = mountCourseVisual(box, Object.assign({ storeKey: storageKeyFor(session) }, data));
-    layer.appendChild(box);
-    const placed = {
-      x: Number(data.x) || 0,
-      y: Number(data.y) || 0,
-      w: Number(data.w) || 0,
-      h: Number(data.h) || 0,
-      setWide: visual.setWide
-    };
-    rememberWide(placed);
-    if (visual.vimeo) {
-      applyVideoAspect(box, data, (aspect) => {
-        const fitted = frameForVideo(placed.x, placed.y, placed.w, placed.h, aspect.hw);
-        placed.x = fitted.x;
-        placed.w = fitted.w;
-        placed.h = fitted.h;
-        box.style.left = `${fitted.x}px`;
-        box.style.width = `${fitted.w}px`;
-        box.style.height = `${fitted.h}px`;
-        syncWide(placed);
-      });
-    }
-  });
-  document.body.appendChild(layer);
-  extendPageForImages(stored);
+  mountStoredLayout(session, stored);
 }
 
 function startProjectAdmin(session) {
