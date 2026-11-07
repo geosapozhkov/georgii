@@ -147,6 +147,9 @@ function writeLayout(key, payload) {
       if (next && !Number(next.mobileUpdatedAt) && Number(prev.mobileUpdatedAt)) {
         next = Object.assign({}, next, { mobileUpdatedAt: prev.mobileUpdatedAt });
       }
+      if (next && !(Number(next.width) > 0) && Number(prev.width) > 0) {
+        next = Object.assign({}, next, { width: Number(prev.width) });
+      }
     }
   } catch (_) {}
   const raw = JSON.stringify(next);
@@ -500,6 +503,7 @@ async function publishFileLayout(session, payload) {
       body: JSON.stringify({
         dir,
         description: payload.description || '',
+        width: Number(payload.width) || 0,
         images
       })
     });
@@ -511,6 +515,7 @@ async function publishFileLayout(session, payload) {
 }
 
 const fileLayoutText = new Map();
+const fileLayoutWidth = new Map();
 
 function phoneLayout() {
   return window.matchMedia('(max-width: 639px)').matches;
@@ -1148,6 +1153,7 @@ async function fetchFileLayout(dir) {
     const text = await response.text();
     fileLayoutText.set(dir, text);
     const data = JSON.parse(text);
+    fileLayoutWidth.set(dir, Number(data && data.width) || 0);
     return Array.isArray(data.images) ? data.images.filter((item) => item && (item.src || item.vimeo)) : [];
   } catch (_) {
     return [];
@@ -1183,9 +1189,18 @@ function mergeLayoutImages(local, file) {
 }
 
 async function loadLayoutImages(session) {
-  const local = await hydrateImages(storageKeyFor(session));
-  const file = await fetchFileLayout(assetDirFor(session));
-  return mergeLayoutImages(local, file);
+  const key = storageKeyFor(session);
+  const local = await hydrateImages(key);
+  let localWidth = 0;
+  try {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    localWidth = Number(stored && stored.width) || 0;
+  } catch (_) {}
+  const dir = assetDirFor(session);
+  const file = await fetchFileLayout(dir);
+  const images = mergeLayoutImages(local, file);
+  images.designWidth = fileLayoutWidth.get(dir) || localWidth || 0;
+  return images;
 }
 
 async function refreshFileLayout(session) {
@@ -1240,76 +1255,16 @@ function descriptionNode(session) {
   return document.getElementById(id);
 }
 
-// Saved layouts use the pixel grid of the screen they were arranged on.
-// Pictures placed on a narrower window keep that pixel width, so a uniform
-// scale leaves a blank strip at the page edge. Seat them on the current
-// 12-column grid instead: a full-width frame then meets both edges.
+// The editor always uses 12 columns. A saved layout is that grid in pixels,
+// including the gaps. Scale every edge by the same amount so a narrower
+// window keeps the columns and the spacing instead of restacking the frames.
 const LAYOUT_EDGE = 8;
-const GRID_GAP = 24;
-const GRID_COLS = 12;
 let placedLayoutItems = null;
 let placedLayoutFitBound = false;
 
 function placedDesignWidth(items) {
   const right = items.reduce((max, item) => Math.max(max, (Number(item.x) || 0) + (Number(item.w) || 0)), 0);
   return right > 0 ? right + LAYOUT_EDGE : 0;
-}
-
-function gridFor(width) {
-  const colW = (width - LAYOUT_EDGE * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
-  return {
-    left(index) {
-      return LAYOUT_EDGE + index * (colW + GRID_GAP);
-    },
-    span(count) {
-      return count * colW + (count - 1) * GRID_GAP;
-    }
-  };
-}
-
-function columnDesigns(items) {
-  const found = [];
-  items.forEach((item) => {
-    if (!(item.w > 0) || item.x <= LAYOUT_EDGE + 1) return;
-    let best = null;
-    for (let span = 1; span <= GRID_COLS; span += 1) {
-      const colW = (item.w - (span - 1) * GRID_GAP) / span;
-      if (!(colW > 8)) continue;
-      const design = GRID_COLS * colW + LAYOUT_EDGE * 2 + GRID_GAP * (GRID_COLS - 1);
-      if (design < 900 || design > 4200) continue;
-      for (let start = 0; start <= GRID_COLS - span; start += 1) {
-        const err = Math.abs(LAYOUT_EDGE + start * (colW + GRID_GAP) - item.x);
-        if (!best || err < best.err) best = { err, design: Math.round(design) };
-      }
-    }
-    if (best && best.err < 1.5) found.push(best.design);
-  });
-  return [...new Set(found)];
-}
-
-function seatOnDesigns(item, designs) {
-  let best = null;
-  designs.forEach((design) => {
-    const grid = gridFor(design);
-    for (let span = 1; span <= GRID_COLS; span += 1) {
-      const widthError = Math.abs(grid.span(span) - item.w);
-      for (let start = 0; start <= GRID_COLS - span; start += 1) {
-        const score = Math.abs(grid.left(start) - item.x) + widthError;
-        if (!best || score < best.score) best = { score, start, span };
-      }
-    }
-  });
-  return best && best.score < 4 ? best : null;
-}
-
-function rememberColumnSeats(items) {
-  const designs = columnDesigns(items);
-  items.forEach((item) => {
-    const seat = seatOnDesigns(item, designs);
-    if (!seat) return;
-    item.colStart = seat.start;
-    item.colSpan = seat.span;
-  });
 }
 
 function spansViewport(x, w, view) {
@@ -1330,29 +1285,16 @@ function applyPlacedLayoutFit() {
   if (!(designWidth > 0)) return;
   const paint = (viewWidth) => {
     const scale = viewWidth > 0 ? viewWidth / designWidth : 1;
-    const grid = gridFor(viewWidth);
     layer.style.left = '0px';
     layer.style.width = `${viewWidth}px`;
     layer.style.maxWidth = '100%';
     let bottom = designHeight > 0 ? designHeight * scale : 0;
     placedLayoutItems.forEach((item) => {
       if (!item.el) return;
+      const x = item.x * scale;
       const y = item.y * scale;
-      let x;
-      let w;
-      let h;
-      const aspect = item.h > 0 ? item.w / item.h : 0;
-      if (Number.isInteger(item.colSpan) && aspect > 0) {
-        x = grid.left(item.colStart);
-        w = grid.span(item.colSpan);
-        h = w / aspect;
-      } else {
-        x = item.x * scale;
-        w = item.w * scale;
-        h = item.h * scale;
-      }
-      if (x < 0) x = 0;
-      if (x + w > viewWidth) w = Math.max(1, viewWidth - x);
+      const w = item.w * scale;
+      const h = item.h * scale;
       item.el.style.left = `${x}px`;
       item.el.style.top = `${y}px`;
       item.el.style.width = `${w}px`;
@@ -1426,8 +1368,8 @@ function mountStoredLayout(session, stored) {
       });
     }
   });
-  rememberColumnSeats(items);
-  layer.dataset.designWidth = String(placedDesignWidth(items));
+  const savedWidth = Number(stored.designWidth) || placedDesignWidth(items);
+  layer.dataset.designWidth = String(savedWidth);
   layer.dataset.designHeight = String(placedDesignHeight(items));
   placedLayoutItems = items;
   document.body.appendChild(layer);
@@ -1490,7 +1432,7 @@ function vimeoEmbedSrc(video) {
 function courseColumns(width) {
   const inset = 8;
   const gap = 24;
-  const cols = width >= 768 ? 12 : width >= 640 ? 6 : 4;
+  const cols = 12;
   const colW = (width - inset * 2 - gap * (cols - 1)) / cols;
   return { inset, gap, cols, colW, width };
 }
@@ -2366,6 +2308,7 @@ function openAdminEditor(session) {
       }
       const payload = {
         description,
+        width: editorWidth(),
         images: kept.map((piece) => {
           const stored = {
             id: piece.id,
@@ -2491,7 +2434,7 @@ function openAdminEditor(session) {
     const previousDoc = await fetchLayoutDocument(dir);
     let mobileKeep = previousDoc && Array.isArray(previousDoc.mobile) ? previousDoc.mobile : null;
     if (!mobileKeep) mobileKeep = readLocalMobile(session);
-    const layoutPayload = { description, descriptionUpdatedAt, images: layoutImages };
+    const layoutPayload = { description, descriptionUpdatedAt, width: editorWidth(), images: layoutImages };
     if (mobileKeep) layoutPayload.mobile = mobileKeep;
     if (previousDoc && Number(previousDoc.mobileUpdatedAt)) {
       layoutPayload.mobileUpdatedAt = Number(previousDoc.mobileUpdatedAt);
@@ -2526,7 +2469,7 @@ function openAdminEditor(session) {
       const img = picture.item.el.querySelector('img');
       if (img) img.src = picture.path.split('/').map((part) => encodeURIComponent(part)).join('/');
     }
-    writeLayout(key, { description, descriptionUpdatedAt, images: layoutImages });
+    writeLayout(key, { description, descriptionUpdatedAt, width: layoutPayload.width, images: layoutImages });
     return true;
   }
 
@@ -2570,11 +2513,15 @@ function openAdminEditor(session) {
     leaveAdmin();
   });
 
+  function editorWidth() {
+    return Math.round((metrics && metrics.width) || document.documentElement.clientWidth);
+  }
+
   function computeMetrics() {
     const width = document.documentElement.clientWidth;
     const inset = 8;
     const gap = 24;
-    const cols = width >= 768 ? 12 : width >= 640 ? 6 : 4;
+    const cols = 12;
     const colW = (width - inset * 2 - gap * (cols - 1)) / cols;
     const bottom = images.reduce((max, entry) => Math.max(max, entry.y + entry.h), window.innerHeight);
     const height = Math.max(bottom + 120, document.documentElement.scrollHeight, window.innerHeight);

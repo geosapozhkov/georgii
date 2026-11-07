@@ -218,8 +218,11 @@ class Handler(SimpleHTTPRequestHandler):
                         raise ValueError
                     piece['src'] = src
                 clean.append(piece)
+            width = body.get('width')
             folder.mkdir(parents=True, exist_ok=True)
             payload = {'description': description, 'images': clean}
+            if isinstance(width, (int, float)) and not isinstance(width, bool) and 320 <= width <= 8000:
+                payload['width'] = int(round(width))
             (folder / 'layout.json').write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
                 encoding='utf-8'
