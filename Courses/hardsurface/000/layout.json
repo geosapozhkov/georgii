@@ -1,11 +1,11 @@
 {
   "description": "Обкатал курс Hard Surface и поделал вместе с ребятами из студии Пууул девайсы. Придумывали идеи, скетчили, моделили в Plasticity, вайбкодили и рендерили в C4D Redshift.\n\nСпасибо большое Евгению/Жене Каширину\nи Владимиру/Вове Матханову за такую возможность!\n\nI ran the Hard Surface course and made devices together with the guys from Poool Studio.\nWe came up with ideas, sketched, modeled in Plasticity, vibecoded some animations\nand rendered in C4D Redshift.\n\nMany thanks to Evgeny/Jenia Kashirin and Vladimir/Vova Matkhanova for this opportunity!\n\nThanks a lot:\n\nAnya\nSonya\nAnton\nMasha\nPolina\n\nSoft: Plasticity, C4D Redshift, After Effects, Claude",
-  "descriptionUpdatedAt": 1794073236850,
+  "descriptionUpdatedAt": 1794073301195,
   "images": [
     {
       "id": "1793388312559-92ba8d3558079",
       "x": 400.1666666666667,
-      "y": 2266.6369614512473,
+      "y": 1862.6369614512473,
       "w": 564.25,
       "h": 1003.367006802721,
       "src": "Courses/hardsurface/000/image-2ba8d3558079.png"
@@ -20,8 +20,8 @@
     },
     {
       "id": "1793393871277-98f3e193e186",
-      "x": 1380.5833333333335,
-      "y": 3667,
+      "x": 988.4166666666667,
+      "y": 3413,
       "w": 368.1666666666667,
       "h": 327.39550374687764,
       "src": "Courses/hardsurface/000/image-98f3e193e186.png"
@@ -164,8 +164,8 @@
     },
     {
       "id": "1793398584810-36255e8250b53",
-      "x": 204.08333333333334,
-      "y": 519.9166666666667,
+      "x": 400.1666666666667,
+      "y": 554,
       "w": 564.25,
       "h": 564.25,
       "src": "Courses/hardsurface/000/Frame-1298-6255e8250b53.png"
@@ -173,7 +173,7 @@
     {
       "id": "1793398584928-fa3d8fbd29981",
       "x": 1184.5,
-      "y": 1870,
+      "y": 1588,
       "w": 368.1666666666667,
       "h": 211.23287865870986,
       "src": "Courses/hardsurface/000/Frame-1295-a3d8fbd29981.png"
@@ -237,10 +237,10 @@
     },
     {
       "id": "1793648051468-150e17e9e556",
-      "x": 1576.6666666666667,
-      "y": 2430.294047619048,
-      "w": 368.1666666666667,
-      "h": 654.5185185185186,
+      "x": 1448.680933779762,
+      "y": 2498.294047619048,
+      "w": 428.0547991071429,
+      "h": 760.9863095238096,
       "vimeo": "1242517540",
       "src": "https://vimeo.com/1242517540?share=copy&fl=sv&fe=ci"
     },
@@ -267,14 +267,14 @@
       "x": 1184.5,
       "y": 1006.5925925925926,
       "w": 172.08333333333334,
-      "h": 305.92592592592587,
+      "h": 305.9259259259259,
       "vimeo": "1244687605",
       "src": "https://vimeo.com/1244687605?share=copy&fl=sv&fe=ci"
     },
     {
       "id": "1794072840887-530e8dd159aa4",
-      "x": 400.1666666666667,
-      "y": 1203,
+      "x": 8,
+      "y": 1148,
       "w": 368.1666666666667,
       "h": 654.5185185185185,
       "vimeo": "1244691850",
