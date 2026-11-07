@@ -255,6 +255,16 @@ function githubAuthFailure(error) {
   return !detail.includes('rate limit');
 }
 
+function gitRetryable(error) {
+  if (!error || githubAuthFailure(error)) return false;
+  const status = Number(error.status) || 0;
+  return !status || status === 403 || status === 408 || status === 409 || status === 422 || status === 429 || status >= 500;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function eachLimit(items, limit, worker) {
   if (!items.length) return;
   let index = 0;
@@ -271,21 +281,24 @@ async function eachLimit(items, limit, worker) {
 async function commitRepoFiles(files, message, onProgress) {
   let left = files.filter((file) => file.count).length;
   if (onProgress) onProgress(left);
-  await eachLimit(files, 3, async (file) => {
-    if (file.delete) {
-      file.sha = null;
-    } else if (!file.sha) {
-      const blob = await githubRequest(`/repos/${GITHUB_REPO}/git/blobs`, {
-        method: 'POST',
-        body: JSON.stringify({ content: file.base64, encoding: 'base64' })
-      });
-      file.sha = blob.sha;
-    }
-    if (file.count) {
-      left -= 1;
-      if (onProgress) onProgress(Math.max(0, left));
-    }
-  });
+  const uploadBlobs = async (batch) => {
+    await eachLimit(batch, 3, async (file) => {
+      if (file.delete) {
+        file.sha = null;
+      } else if (!file.sha) {
+        const blob = await githubRequest(`/repos/${GITHUB_REPO}/git/blobs`, {
+          method: 'POST',
+          body: JSON.stringify({ content: file.base64, encoding: 'base64' })
+        });
+        file.sha = blob.sha;
+      }
+      if (file.count && !file.counted) {
+        file.counted = true;
+        left -= 1;
+        if (onProgress) onProgress(Math.max(0, left));
+      }
+    });
+  };
 
   const writeCommit = async (batch) => {
     const ref = await githubRequest(`/repos/${GITHUB_REPO}/git/ref/heads/${GITHUB_BRANCH}`);
@@ -322,27 +335,39 @@ async function commitRepoFiles(files, message, onProgress) {
         method: 'PATCH',
         body: JSON.stringify({ sha: commit.sha })
       });
+      const updated = await githubRequest(`/repos/${GITHUB_REPO}/git/ref/heads/${GITHUB_BRANCH}`);
+      if (!updated.object || updated.object.sha !== commit.sha) {
+        const error = new Error('github');
+        error.status = 409;
+        error.step = 'ref';
+        throw error;
+      }
     } catch (error) {
       error.step = 'ref';
       throw error;
     }
   };
 
+  // GitHub often rejects the branch update until the new commit is visible.
+  // Keep trying instead of failing the first save.
+  const delays = [0, 600, 1200, 2000, 3200, 5000, 8000, 12000];
   let batch = files;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  let lastError = null;
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt]) await wait(delays[attempt]);
     try {
+      await uploadBlobs(batch);
       await writeCommit(batch);
       return;
     } catch (error) {
-      if (!error || error.status !== 422 || attempt === 2) throw error;
+      lastError = error;
+      if (!gitRetryable(error) || attempt === delays.length - 1) throw error;
       if (error.step === 'tree' && batch.some((file) => file.delete)) {
         batch = batch.filter((file) => !file.delete);
-        continue;
       }
-      if (error.step === 'ref') continue;
-      throw error;
     }
   }
+  throw lastError;
 }
 
 async function pictureFile(item) {
@@ -516,6 +541,7 @@ async function publishFileLayout(session, payload) {
 
 const fileLayoutText = new Map();
 const fileLayoutWidth = new Map();
+const fileLayoutUpdatedAt = new Map();
 
 function phoneLayout() {
   return window.matchMedia('(max-width: 639px)').matches;
@@ -1154,6 +1180,7 @@ async function fetchFileLayout(dir) {
     fileLayoutText.set(dir, text);
     const data = JSON.parse(text);
     fileLayoutWidth.set(dir, Number(data && data.width) || 0);
+    fileLayoutUpdatedAt.set(dir, Number(data && data.descriptionUpdatedAt) || 0);
     return Array.isArray(data.images) ? data.images.filter((item) => item && (item.src || item.vimeo)) : [];
   } catch (_) {
     return [];
@@ -1188,18 +1215,30 @@ function mergeLayoutImages(local, file) {
   return merged.filter(usable);
 }
 
+function chooseLayoutImages(local, file, localAt, fileAt) {
+  const usable = (item) => item && (item.src || item.vimeo);
+  const localItems = (local || []).filter(usable);
+  if (Number(localAt) > Number(fileAt) && localItems.length) return localItems;
+  return mergeLayoutImages(local || [], file || []);
+}
+
 async function loadLayoutImages(session) {
   const key = storageKeyFor(session);
   const local = await hydrateImages(key);
   let localWidth = 0;
+  let localAt = 0;
   try {
     const stored = JSON.parse(localStorage.getItem(key) || '{}');
     localWidth = Number(stored && stored.width) || 0;
+    localAt = Number(stored && stored.descriptionUpdatedAt) || 0;
   } catch (_) {}
   const dir = assetDirFor(session);
   const file = await fetchFileLayout(dir);
-  const images = mergeLayoutImages(local, file);
-  images.designWidth = fileLayoutWidth.get(dir) || localWidth || 0;
+  const fileAt = fileLayoutUpdatedAt.get(dir) || 0;
+  const images = chooseLayoutImages(local, file, localAt, fileAt);
+  images.designWidth = localAt > fileAt
+    ? (localWidth || fileLayoutWidth.get(dir) || 0)
+    : (fileLayoutWidth.get(dir) || localWidth || 0);
   return images;
 }
 
@@ -2377,6 +2416,7 @@ function openAdminEditor(session) {
 
   async function publishToGithub(onProgress) {
     await waitForIncoming();
+    await saveTail.catch(() => false);
     if (!tokenInput.hidden) {
       const typed = tokenInput.value.trim().replace(/^bearer\s+/i, '').trim();
       if (typed) {
@@ -2479,8 +2519,12 @@ function openAdminEditor(session) {
     saveButton.classList.remove('is-wrong');
     saveButton.classList.add('is-saving');
     const saved = await publishToGithub((left) => {
-      if (left > 0) saveButton.dataset.counting = '1';
-      if (saveButton.dataset.counting === '1') saveButton.textContent = String(left);
+      if (left > 0) {
+        saveButton.dataset.counting = '1';
+        saveButton.textContent = String(left);
+        return;
+      }
+      saveButton.textContent = 'save';
     });
     if (saved !== true) {
       leaveAdmin.busy = false;
