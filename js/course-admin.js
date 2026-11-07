@@ -517,7 +517,7 @@ function phoneLayout() {
 }
 
 function flowLayout() {
-  return window.matchMedia('(max-width: 1919px)').matches;
+  return window.matchMedia('(max-width: 1279px)').matches;
 }
 
 const MOBILE_GAP = 96;
@@ -1257,27 +1257,39 @@ function spansViewport(x, w, view) {
   return x <= LAYOUT_EDGE + 1 && rightGap <= LAYOUT_EDGE + 1 && rightGap >= -1;
 }
 
+function placedDesignHeight(items) {
+  return items.reduce((max, item) => Math.max(max, (Number(item.y) || 0) + (Number(item.h) || 0)), 0);
+}
+
 function applyPlacedLayoutFit() {
   const layer = document.getElementById('course-layout');
   if (!layer || !placedLayoutItems || document.getElementById('admin-layer')) return;
   const designWidth = Number(layer.dataset.designWidth) || placedDesignWidth(placedLayoutItems);
+  const designHeight = Number(layer.dataset.designHeight) || placedDesignHeight(placedLayoutItems);
+  if (!(designWidth > 0)) return;
   const paint = (viewWidth) => {
-    const scale = designWidth > viewWidth && viewWidth > 0 ? viewWidth / designWidth : 1;
-    let bottom = 0;
+    const scale = viewWidth > 0 ? viewWidth / designWidth : 1;
+    layer.style.left = '0px';
+    layer.style.width = '100%';
+    if (designHeight > 0) layer.style.height = `${designHeight * scale}px`;
     placedLayoutItems.forEach((item) => {
       if (!item.el) return;
       const x = item.x * scale;
       const y = item.y * scale;
       const w = item.w * scale;
       const h = item.h * scale;
-      item.el.style.left = `${x}px`;
-      item.el.style.top = `${y}px`;
-      item.el.style.width = `${w}px`;
-      item.el.style.height = `${h}px`;
+      item.el.style.left = `${(item.x / designWidth) * 100}%`;
+      item.el.style.width = `${(item.w / designWidth) * 100}%`;
+      if (designHeight > 0) {
+        item.el.style.top = `${(item.y / designHeight) * 100}%`;
+        item.el.style.height = `${(item.h / designHeight) * 100}%`;
+      } else {
+        item.el.style.top = `${y}px`;
+        item.el.style.height = `${h}px`;
+      }
       item.authoredWide = spansViewport(x, w, viewWidth);
-      bottom = Math.max(bottom, y + h);
     });
-    if (bottom > 0) document.body.style.minHeight = `${Math.ceil(bottom + 24)}px`;
+    if (designHeight > 0) document.body.style.minHeight = `${Math.ceil(designHeight * scale + 24)}px`;
   };
   let view = document.documentElement.clientWidth;
   paint(view);
@@ -1330,6 +1342,7 @@ function mountStoredLayout(session, stored) {
     }
   });
   layer.dataset.designWidth = String(placedDesignWidth(items));
+  layer.dataset.designHeight = String(placedDesignHeight(items));
   placedLayoutItems = items;
   document.body.appendChild(layer);
   bindPlacedLayoutFit();
@@ -1999,7 +2012,7 @@ function bindLayoutMode(session) {
   window.__publicLayoutSession = session;
   if (layoutModeBound) return;
   layoutModeBound = true;
-  const query = window.matchMedia('(max-width: 1919px)');
+  const query = window.matchMedia('(max-width: 1279px)');
   const apply = async () => {
     const current = window.__publicLayoutSession;
     if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
