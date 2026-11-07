@@ -516,6 +516,10 @@ function phoneLayout() {
   return window.matchMedia('(max-width: 639px)').matches;
 }
 
+function flowLayout() {
+  return window.matchMedia('(max-width: 1279px)').matches;
+}
+
 const MOBILE_GAP = 96;
 const MOBILE_LEAD = 48;
 
@@ -1887,7 +1891,7 @@ async function showMobileCourseLayout(session) {
   applyCourseDescription(session, false);
   if (document.getElementById('course-mobile-grid')) return;
   const stored = await loadLayoutImages(session);
-  if (!stored.length || !phoneLayout() || document.getElementById('course-mobile-grid')) return;
+  if (!stored.length || !flowLayout() || document.getElementById('course-mobile-grid')) return;
   const works = document.getElementById('course-works');
   if (!works) return;
   const saved = mobilePlanFor(session, await fetchLayoutDocument(assetDirFor(session)));
@@ -1938,15 +1942,29 @@ async function showMobileCourseLayout(session) {
   works.appendChild(grid);
 
   const fit = () => {
-    if (!phoneLayout() || !works.isConnected) return;
+    if (!flowLayout() || !works.isConnected) return;
     const host = document.querySelector('.course-name-col') || document.getElementById('course-root');
     const desc = document.getElementById('course-description');
     const title = document.querySelector('.course-name');
     const above = desc && desc.getBoundingClientRect().height ? desc : title;
     if (!host || !above) return;
-    const lead = grid.dataset.explicit === '1' ? 0 : MOBILE_LEAD;
-    const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + lead;
-    works.style.top = `${Math.round(top)}px`;
+    const place = () => {
+      const view = document.documentElement.clientWidth;
+      works.style.left = `${Math.round(-host.getBoundingClientRect().left)}px`;
+      works.style.width = `${view}px`;
+      works.style.maxWidth = `${view}px`;
+      const lead = grid.dataset.explicit === '1' ? 0 : MOBILE_LEAD;
+      const top = above.getBoundingClientRect().bottom - host.getBoundingClientRect().top + lead;
+      works.style.top = `${Math.round(top)}px`;
+    };
+    place();
+    place();
+    const doc = document.documentElement;
+    if (doc.scrollWidth > doc.clientWidth) {
+      const view = doc.clientWidth;
+      works.style.width = `${view}px`;
+      works.style.maxWidth = `${view}px`;
+    }
     const bottom = works.getBoundingClientRect().bottom + window.scrollY;
     const height = `${Math.ceil(bottom + 24)}px`;
     document.body.style.minHeight = height;
@@ -1981,7 +1999,7 @@ function bindLayoutMode(session) {
   window.__publicLayoutSession = session;
   if (layoutModeBound) return;
   layoutModeBound = true;
-  const query = window.matchMedia('(max-width: 639px)');
+  const query = window.matchMedia('(max-width: 1279px)');
   const apply = async () => {
     const current = window.__publicLayoutSession;
     if (!current || document.getElementById('admin-layer') || document.getElementById('admin-lock') || document.getElementById('mobile-admin')) return;
@@ -1993,7 +2011,7 @@ function bindLayoutMode(session) {
       return;
     }
     if (window.reloadProjectMedia) await window.reloadProjectMedia();
-    if (!phoneLayout()) showSavedProjectLayout(current);
+    if (!flowLayout()) showSavedProjectLayout(current);
   };
   if (query.addEventListener) query.addEventListener('change', apply);
   else query.addListener(apply);
@@ -2002,7 +2020,7 @@ function bindLayoutMode(session) {
 async function showSavedCourseLayout(session) {
   bindLayoutMode(session);
   refreshSharedDescription(session);
-  if (phoneLayout()) {
+  if (flowLayout()) {
     showMobileCourseLayout(session);
     return;
   }
@@ -2908,10 +2926,10 @@ function openAdminEditor(session) {
 async function showSavedProjectLayout(session) {
   if (!session) return;
   bindLayoutMode(session);
-  if (phoneLayout()) return;
+  if (flowLayout()) return;
   const stored = await loadLayoutImages(session);
   if (!stored.length || document.getElementById('admin-layer')) return;
-  if (phoneLayout()) return;
+  if (flowLayout()) return;
   if (document.getElementById('admin-layer') || document.getElementById('course-layout')) return;
   mountStoredLayout(session, stored);
 }

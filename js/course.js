@@ -9,7 +9,7 @@ let pinResize = null;
 function pinLeftToCourses(block) {
   const place = () => {
     if (window.innerWidth >= 640) {
-      block.style.marginLeft = 'calc(40vw + 226px)';
+      block.style.marginLeft = 'calc(var(--text-start) + var(--text-lead))';
       return;
     }
     block.style.marginLeft = 'var(--mobile-edge)';
